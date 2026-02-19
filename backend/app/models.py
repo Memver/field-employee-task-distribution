@@ -10,12 +10,108 @@ def get_datetime_utc() -> datetime:
     return datetime.now(timezone.utc)
 
 
-# Shared properties
+class RoleBase(SQLModel):
+    name: str
+
+
+class Role(RoleBase, table=True):
+    id: int = Field(primary_key=True)
+
+
+class GradeBase(SQLModel):
+    name: str
+    level: int
+
+
+class Grade(GradeBase, table=True):
+    id: int = Field(primary_key=True)
+
+
+class LocationBase(SQLModel):
+    address: str
+
+
+class Location(LocationBase, table=True):
+    id: int = Field(primary_key=True)
+
+
+class PriorityBase(SQLModel):
+    name: str
+    level: int
+
+
+class Priority(PriorityBase, table=True):
+    id: int = Field(primary_key=True)
+
+
+class TaskStatusBase(SQLModel):
+    name: str
+
+
+class TaskStatus(TaskStatusBase, table=True):
+    id: int = Field(primary_key=True)
+
+
 class UserBase(SQLModel):
-    email: EmailStr = Field(unique=True, index=True, max_length=255)
-    is_active: bool = True
-    is_superuser: bool = False
-    full_name: str | None = Field(default=None, max_length=255)
+    login: str
+    name: str
+    surname: str
+    middle_name: str
+
+
+class User(UserBase, table=True):
+    id: int = Field(primary_key=True)
+    role_id: int
+    hashed_password: str
+
+
+class EmployeeBase(SQLModel):
+    pass
+
+
+class Employee(EmployeeBase, table=True):
+    id: int = Field(primary_key=True)
+    user_id: int
+    grade_id: int
+    start_location_id: int
+
+
+class TaskTypeBase(SQLModel):
+    name: str
+    execution_time: int
+
+
+class TaskType(TaskTypeBase, table=True):
+    id: int = Field(primary_key=True)
+    min_grade_id: int
+    priority_id: int
+
+
+class AgentPointBase(SQLModel):
+    created_time: datetime
+    is_cards_delivered: bool
+    days_since_last_card_gived: int
+    approved_applications: int
+    cards_gived: int
+
+
+class AgentPoint(AgentPointBase, table=True):
+    id: int = Field(primary_key=True)
+    location_id: int
+
+
+class TaskBase(SQLModel):
+    start_time: datetime
+    finish_time: datetime
+    comment: str
+
+
+class Task(TaskBase, table=True):
+    id: int = Field(primary_key=True)
+    employee_id: int
+    task_type_id: int
+    agent_point_id: int
+    task_status_id: int
 
 
 # Properties to receive via API on creation
@@ -45,17 +141,6 @@ class UpdatePassword(SQLModel):
     new_password: str = Field(min_length=8, max_length=128)
 
 
-# Database model, database table inferred from class name
-class User(UserBase, table=True):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    hashed_password: str
-    created_at: datetime | None = Field(
-        default_factory=get_datetime_utc,
-        sa_type=DateTime(timezone=True),  # type: ignore
-    )
-    items: list["Item"] = Relationship(back_populates="owner", cascade_delete=True)
-
-
 # Properties to return via API, id is always required
 class UserPublic(UserBase):
     id: uuid.UUID
@@ -64,47 +149,6 @@ class UserPublic(UserBase):
 
 class UsersPublic(SQLModel):
     data: list[UserPublic]
-    count: int
-
-
-# Shared properties
-class ItemBase(SQLModel):
-    title: str = Field(min_length=1, max_length=255)
-    description: str | None = Field(default=None, max_length=255)
-
-
-# Properties to receive on item creation
-class ItemCreate(ItemBase):
-    pass
-
-
-# Properties to receive on item update
-class ItemUpdate(ItemBase):
-    title: str | None = Field(default=None, min_length=1, max_length=255)  # type: ignore
-
-
-# Database model, database table inferred from class name
-class Item(ItemBase, table=True):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    created_at: datetime | None = Field(
-        default_factory=get_datetime_utc,
-        sa_type=DateTime(timezone=True),  # type: ignore
-    )
-    owner_id: uuid.UUID = Field(
-        foreign_key="user.id", nullable=False, ondelete="CASCADE"
-    )
-    owner: User | None = Relationship(back_populates="items")
-
-
-# Properties to return via API, id is always required
-class ItemPublic(ItemBase):
-    id: uuid.UUID
-    owner_id: uuid.UUID
-    created_at: datetime | None = None
-
-
-class ItemsPublic(SQLModel):
-    data: list[ItemPublic]
     count: int
 
 
