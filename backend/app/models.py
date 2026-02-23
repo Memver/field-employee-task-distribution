@@ -29,6 +29,8 @@ class Grade(GradeBase, table=True):
 
 class LocationBase(SQLModel):
     address: str
+    latitude: float
+    longitude: float
 
 
 class Location(LocationBase, table=True):
@@ -49,6 +51,8 @@ class TaskStatusBase(SQLModel):
 
 
 class TaskStatus(TaskStatusBase, table=True):
+    __tablename__ = "task_status"
+
     id: int = Field(primary_key=True)
 
 
@@ -82,6 +86,8 @@ class TaskTypeBase(SQLModel):
 
 
 class TaskType(TaskTypeBase, table=True):
+    __tablename__ = "task_type"
+
     id: int = Field(primary_key=True)
     min_grade_id: int
     priority_id: int
@@ -96,6 +102,8 @@ class AgentPointBase(SQLModel):
 
 
 class AgentPoint(AgentPointBase, table=True):
+    __tablename__ = "agent_point"
+
     id: int = Field(primary_key=True)
     location_id: int
 
