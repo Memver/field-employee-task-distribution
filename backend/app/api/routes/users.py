@@ -1,7 +1,7 @@
 import uuid
 from typing import Any
 
-from app import crud
+from app.services import user as service
 from app.api.deps import CurrentUser, SessionDep, get_current_active_superuser
 from app.core.config import settings
 from app.core.security import get_password_hash, verify_password
@@ -16,7 +16,6 @@ from app.models import (
     UserUpdate,
     UserUpdateMe,
 )
-from app.utils import generate_new_account_email, send_email
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import col, delete, func, select
 
@@ -139,7 +138,7 @@ def register_user(session: SessionDep, user_create: UserCreate) -> Any:
     """
     Create new user without the need to be logged in.
     """
-    user = crud.create_user(session=session, user_create=user_create)
+    user = service.create(session=session, user_create=user_create)
     return user
 
 
