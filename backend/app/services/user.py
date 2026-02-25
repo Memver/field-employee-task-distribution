@@ -3,15 +3,15 @@ from typing import Any
 
 from app.core.security import get_password_hash, verify_password
 from app.models import User, UserCreate, UserUpdate
-from app.repositories import user
+from app.repositories import user as repository
 from sqlmodel import Session, select
 
 
 def create(*, session: Session, user_create: UserCreate) -> User:
-    db_obj = User.model_validate(
+    user = User.model_validate(
         user_create, update={"hashed_password": get_password_hash(user_create.password)}
     )
-    return user.create(session, db_obj)
+    return repository.create(session=session, user=user)
 
 
 # def update_user(*, session: Session, db_user: User, user_in: UserUpdate) -> Any:

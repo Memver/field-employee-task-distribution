@@ -21,7 +21,7 @@ class RoleBase(SQLModel):
 
 
 class Role(RoleBase, table=True):
-    id: int = Field(primary_key=True)
+    id: int = Field(default=None, primary_key=True)
 
 
 class GradeBase(SQLModel):
@@ -30,7 +30,7 @@ class GradeBase(SQLModel):
 
 
 class Grade(GradeBase, table=True):
-    id: int = Field(primary_key=True)
+    id: int = Field(default=None, primary_key=True)
 
 
 class LocationBase(SQLModel):
@@ -43,7 +43,7 @@ class LocationBase(SQLModel):
 
 
 class Location(LocationBase, table=True):
-    id: int = Field(primary_key=True)
+    id: int = Field(default=None, primary_key=True)
 
 
 class PriorityBase(SQLModel):
@@ -52,7 +52,7 @@ class PriorityBase(SQLModel):
 
 
 class Priority(PriorityBase, table=True):
-    id: int = Field(primary_key=True)
+    id: int = Field(default=None, primary_key=True)
 
 
 class TaskStatusBase(SQLModel):
@@ -62,7 +62,7 @@ class TaskStatusBase(SQLModel):
 class TaskStatus(TaskStatusBase, table=True):
     __tablename__ = "task_status"
 
-    id: int = Field(primary_key=True)
+    id: int = Field(default=None, primary_key=True)
 
 
 class UserBase(SQLModel):
@@ -87,7 +87,7 @@ class UserBase(SQLModel):
 
 
 class User(UserBase, table=True):
-    id: int = Field(primary_key=True)
+    id: int = Field(default=None, primary_key=True)
     role_id: int = Field(
         foreign_key="role.id",
         nullable=False,
@@ -100,7 +100,7 @@ class EmployeeBase(SQLModel):
 
 
 class Employee(EmployeeBase, table=True):
-    id: int = Field(primary_key=True)
+    id: int = Field(default=None, primary_key=True)
     user_id: int = Field(
         foreign_key="user.id",
         unique=True,
@@ -131,7 +131,7 @@ class TaskTypeBase(SQLModel):
 class TaskType(TaskTypeBase, table=True):
     __tablename__ = "task_type"
 
-    id: int = Field(primary_key=True)
+    id: int = Field(default=None, primary_key=True)
     min_grade_id: int = Field(
         foreign_key="grade.id",
         nullable=False,
@@ -153,7 +153,7 @@ class AgentPointBase(SQLModel):
 class AgentPoint(AgentPointBase, table=True):
     __tablename__ = "agent_point"
 
-    id: int = Field(primary_key=True)
+    id: int = Field(default=None, primary_key=True)
     location_id: int
 
 
@@ -164,7 +164,7 @@ class TaskBase(SQLModel):
 
 
 class Task(TaskBase, table=True):
-    id: int = Field(primary_key=True)
+    id: int = Field(default=None, primary_key=True)
     employee_id: int
     task_type_id: int
     agent_point_id: int
@@ -174,6 +174,10 @@ class Task(TaskBase, table=True):
 # Properties to receive via API on creation
 class UserCreate(UserBase):
     password: str = Field(min_length=8, max_length=128)
+    role_id: int = Field(
+        foreign_key="role.id",
+        nullable=False,
+    )
 
 
 # Properties to receive via API on update, all are optional
@@ -194,8 +198,7 @@ class UpdatePassword(SQLModel):
 
 # Properties to return via API, id is always required
 class UserPublic(UserBase):
-    id: uuid.UUID
-    created_at: datetime | None = None
+    id: int
 
 
 class UsersPublic(SQLModel):
