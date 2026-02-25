@@ -1,9 +1,11 @@
+from typing import Optional
 import uuid
 from datetime import datetime, timezone
 
 from pydantic import EmailStr
 from sqlalchemy import DateTime
 from sqlmodel import Field, Relationship, SQLModel
+from sqlmodel import SQLModel, Field, Column, Index, CheckConstraint, UniqueConstraint
 
 
 def get_datetime_utc() -> datetime:
@@ -11,7 +13,11 @@ def get_datetime_utc() -> datetime:
 
 
 class RoleBase(SQLModel):
-    name: str
+    name: str = Field(
+        max_length=64,
+        unique=True,
+        nullable=False,
+    )
 
 
 class Role(RoleBase, table=True):
@@ -19,8 +25,8 @@ class Role(RoleBase, table=True):
 
 
 class GradeBase(SQLModel):
-    name: str
-    level: int
+    name: str = Field(max_length=64, unique=True, nullable=False)
+    level: int = Field(gt=0, unique=True, nullable=False)
 
 
 class Grade(GradeBase, table=True):
@@ -28,9 +34,12 @@ class Grade(GradeBase, table=True):
 
 
 class LocationBase(SQLModel):
-    address: str
-    latitude: float
-    longitude: float
+    address: str = Field(
+        max_length=255,
+        nullable=False,
+    )
+    latitude: float | None = Field(default=None, ge=-90, le=90)
+    longitude: float | None = Field(default=None, ge=-180, le=180)
 
 
 class Location(LocationBase, table=True):
@@ -38,8 +47,8 @@ class Location(LocationBase, table=True):
 
 
 class PriorityBase(SQLModel):
-    name: str
-    level: int
+    name: str = Field(max_length=32, unique=True, nullable=False)
+    level: int = Field(gt=0, unique=True, nullable=False)
 
 
 class Priority(PriorityBase, table=True):
@@ -47,7 +56,7 @@ class Priority(PriorityBase, table=True):
 
 
 class TaskStatusBase(SQLModel):
-    name: str
+    name: str = Field(max_length=32, unique=True, nullable=False)
 
 
 class TaskStatus(TaskStatusBase, table=True):
@@ -57,15 +66,32 @@ class TaskStatus(TaskStatusBase, table=True):
 
 
 class UserBase(SQLModel):
-    login: str
-    name: str
-    surname: str
-    middle_name: str
+    login: str = Field(
+        min_length=3,
+        max_length=32,
+        unique=True,
+        nullable=False,
+    )
+    name: str = Field(
+        max_length=64,
+        nullable=False,
+    )
+    surname: str = Field(
+        max_length=64,
+        nullable=False,
+    )
+    middle_name: str = Field(
+        max_length=64,
+        nullable=False,
+    )
 
 
 class User(UserBase, table=True):
     id: int = Field(primary_key=True)
-    role_id: int
+    role_id: int = Field(
+        foreign_key="role.id",
+        nullable=False,
+    )
     hashed_password: str
 
 
@@ -75,22 +101,45 @@ class EmployeeBase(SQLModel):
 
 class Employee(EmployeeBase, table=True):
     id: int = Field(primary_key=True)
-    user_id: int
-    grade_id: int
-    start_location_id: int
+    user_id: int = Field(
+        foreign_key="user.id",
+        unique=True,
+        nullable=False,
+    )
+    grade_id: int = Field(
+        foreign_key="grade.id",
+        nullable=False,
+    )
+    start_location_id: int = Field(
+        foreign_key="location.id",
+        nullable=False,
+    )
 
 
 class TaskTypeBase(SQLModel):
-    name: str
-    execution_time: int
+    name: str = Field(
+        max_length=255,
+        unique=True,
+        nullable=False,
+    )
+    execution_time: int = Field(
+        gt=0,
+        nullable=False,
+    )
 
 
 class TaskType(TaskTypeBase, table=True):
     __tablename__ = "task_type"
 
     id: int = Field(primary_key=True)
-    min_grade_id: int
-    priority_id: int
+    min_grade_id: int = Field(
+        foreign_key="grade.id",
+        nullable=False,
+    )
+    priority_id: int = Field(
+        foreign_key="priority.id",
+        nullable=False,
+    )
 
 
 class AgentPointBase(SQLModel):
