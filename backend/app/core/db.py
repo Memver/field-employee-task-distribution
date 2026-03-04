@@ -11,18 +11,11 @@ def init_db(session: Session) -> None:
 
     SQLModel.metadata.create_all(engine)
 
-    # TODO: пусть заработает выполнение sql скрипта из файла
-
-    print("start")
-
     with open("/app/backend/app/db/db.sql", "r", encoding="utf-8") as file:
         sql_script = file.read()
 
     session.exec(text(sql_script))
     session.commit()
-
-    print(sql_script)
-    print("finish")
 
     # role = session.exec(select(Role).where(Role.name == "ADMIN")).first()
     # if not role:
