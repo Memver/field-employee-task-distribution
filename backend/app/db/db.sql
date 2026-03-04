@@ -1,39 +1,3 @@
-CREATE TABLE public.role (
-    id INTEGER PRIMARY KEY,
-    name VARCHAR
-);
-
-CREATE TABLE public.grade (
-    id INTEGER PRIMARY KEY,
-    name VARCHAR,
-    level INTEGER 
-);
-
-CREATE TABLE public.location (
-    id INTEGER PRIMARY KEY,
-    address TEXT,
-    lat DECIMAL(10, 8),
-    lon DECIMAL(11, 8) 
-);
-
-CREATE TABLE public.user (
-    id INTEGER PRIMARY KEY,
-    role_id INTEGER,
-    login VARCHAR,
-    hashed_password VARCHAR,
-    name VARCHAR,
-    surname VARCHAR,
-    middle_name VARCHAR,
-    is_superuser BOOLEAN,
-);
-
-CREATE TABLE public.employee (
-    id INTEGER PRIMARY KEY,
-    user_id INTEGER,
-    grade_id INTEGER,
-    start_location_id INTEGER,
-);
-
 INSERT INTO public.role
 (
 	id, name

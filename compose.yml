@@ -11,9 +11,6 @@ services:
       timeout: 10s
     volumes:
       - app-db-data:/var/lib/postgresql/data/pgdata
-      - type: bind
-        source: ./db/db.sql
-        target: /docker-entrypoint-initdb.d/db.sql
     env_file:
       - .env
     environment:
@@ -145,6 +142,7 @@ services:
 
   #     # Enable redirection for HTTP and HTTPS
   #     - traefik.http.routers.${STACK_NAME?Variable not set}-frontend-http.middlewares=https-redirect
+
 volumes:
   app-db-data:
 
