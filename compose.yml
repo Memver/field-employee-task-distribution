@@ -1,7 +1,7 @@
 services:
 
   db:
-    image: postgres:18
+    image: postgres:17
     restart: always
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
@@ -11,6 +11,9 @@ services:
       timeout: 10s
     volumes:
       - app-db-data:/var/lib/postgresql/data/pgdata
+      - type: bind
+        source: ./db/db.sql
+        target: /docker-entrypoint-initdb.d/db.sql
     env_file:
       - .env
     environment:

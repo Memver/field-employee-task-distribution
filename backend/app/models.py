@@ -1,11 +1,18 @@
-from typing import Optional
 import uuid
 from datetime import datetime, timezone
+from typing import Optional
 
 from pydantic import EmailStr
 from sqlalchemy import DateTime
-from sqlmodel import Field, Relationship, SQLModel
-from sqlmodel import Column, Index, CheckConstraint, UniqueConstraint
+from sqlmodel import (
+    CheckConstraint,
+    Column,
+    Field,
+    Index,
+    Relationship,
+    SQLModel,
+    UniqueConstraint,
+)
 
 
 def get_datetime_utc() -> datetime:
@@ -38,8 +45,8 @@ class LocationBase(SQLModel):
         max_length=255,
         nullable=False,
     )
-    latitude: float | None = Field(default=None, ge=-90, le=90)
-    longitude: float | None = Field(default=None, ge=-180, le=180)
+    lat: float | None = Field(default=None, ge=-90, le=90)
+    lon: float | None = Field(default=None, ge=-180, le=180)
 
 
 class Location(LocationBase, table=True):
@@ -84,6 +91,7 @@ class UserBase(SQLModel):
         max_length=64,
         nullable=False,
     )
+    is_superuser: bool = False
 
 
 class User(UserBase, table=True):
@@ -145,35 +153,61 @@ class TaskType(TaskTypeBase, table=True):
 class AgentPointBase(SQLModel):
     created_time: datetime
     is_cards_delivered: bool
-    days_since_last_card_gived: int
-    approved_applications: int
-    cards_gived: int
+    days_since_last_card_gived: int = Field(
+        ge=0,
+        nullable=False,
+    )
+    approved_applications: int = Field(
+        ge=0,
+        nullable=False,
+    )
+    cards_gived: int = Field(
+        ge=0,
+        nullable=False,
+    )
 
 
 class AgentPoint(AgentPointBase, table=True):
     __tablename__ = "agent_point"
 
     id: int = Field(default=None, primary_key=True)
-    location_id: int
+    location_id: int = Field(
+        foreign_key="location.id",
+        nullable=False,
+    )
 
 
 class TaskBase(SQLModel):
     start_time: datetime
     finish_time: datetime
-    comment: str
+    comment: str = Field(
+        max_length=4096,
+    )
 
 
 class Task(TaskBase, table=True):
     id: int = Field(default=None, primary_key=True)
-    employee_id: int
-    task_type_id: int
-    agent_point_id: int
-    task_status_id: int
+    employee_id: int = Field(
+        foreign_key="employee.id",
+        nullable=False,
+    )
+    task_type_id: int = Field(
+        foreign_key="task_type.id",
+        nullable=False,
+    )
+    agent_point_id: int = Field(
+        foreign_key="agent_point.id",
+        nullable=False,
+    )
+    task_status_id: int = Field(
+        foreign_key="task_status.id",
+        nullable=False,
+    )
 
 
 # Properties to receive via API on creation
 class UserCreate(UserBase):
-    password: str = Field(min_length=8, max_length=128)
+    password: str = Field(min_length=1, max_length=128)
     role_id: int = Field(
         foreign_key="role.id",
         nullable=False,
@@ -203,6 +237,18 @@ class UserPublic(UserBase):
 
 class UsersPublic(SQLModel):
     data: list[UserPublic]
+    count: int
+
+
+class EmployeePublic(EmployeeBase):
+    id: int
+    user_id: int
+    grade_id: int
+    start_location_id: int
+
+
+class EmployeesPublic(SQLModel):
+    data: list[EmployeePublic]
     count: int
 
 
