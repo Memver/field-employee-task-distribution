@@ -94,9 +94,6 @@ class UserBase(SQLModel):
     is_superuser: bool = False
 
 
-# TODO: написать ondelete для каждого foreign_key.
-
-
 class User(UserBase, table=True):
     id: int = Field(default=None, primary_key=True)
     role_id: int = Field(
@@ -105,7 +102,7 @@ class User(UserBase, table=True):
     )
     hashed_password: str
 
-    role: Role = Relationship()
+    role: Role | None = Relationship()
 
 
 class EmployeeBase(SQLModel):
@@ -126,9 +123,9 @@ class Employee(EmployeeBase, table=True):
         nullable=False,
     )
 
-    user: User = Relationship(back_populates="employee")
-    grade: Grade = Relationship()
-    start_location: Location = Relationship()
+    user: User | None = Relationship(back_populates="employee")
+    grade: Grade | None = Relationship()
+    start_location: Location | None = Relationship()
 
 
 class TaskTypeBase(SQLModel):
@@ -156,6 +153,9 @@ class TaskType(TaskTypeBase, table=True):
         nullable=False,
     )
 
+    min_grade: Grade | None = Relationship()
+    priority: Priority | None = Relationship()
+
 
 class AgentPointBase(SQLModel):
     created_time: datetime
@@ -182,6 +182,8 @@ class AgentPoint(AgentPointBase, table=True):
         foreign_key="location.id",
         nullable=False,
     )
+
+    location: Location | None = Relationship()
 
 
 class TaskBase(SQLModel):
@@ -211,12 +213,16 @@ class Task(TaskBase, table=True):
         nullable=False,
     )
 
+    employee: Employee | None = Relationship(back_populates="tasks")
+    task_type: TaskType | None = Relationship()
+    agent_point: AgentPoint | None = Relationship(back_populates="tasks")
+    task_status: TaskStatus | None = Relationship()
+
 
 # Properties to receive via API on creation
 class UserCreate(UserBase):
     password: str = Field(min_length=1, max_length=128)
     role_id: int = Field(
-        foreign_key="role.id",
         nullable=False,
     )
 
@@ -285,6 +291,7 @@ class TaskStatusesPublic(SQLModel):
 # Properties to return via API, id is always required
 class UserPublic(UserBase):
     id: int
+    role_id: int
 
 
 class UsersPublic(SQLModel):
