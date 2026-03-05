@@ -11,7 +11,7 @@ def init_db(session: Session) -> None:
 
     SQLModel.metadata.create_all(engine)
 
-    users = session.exec(select(User).limit(2))
+    users = session.exec(select(User).limit(2)).all()
     if not users:
         with open("/app/backend/app/db/db.sql", "r", encoding="utf-8") as file:
             sql_script = file.read()

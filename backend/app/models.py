@@ -45,8 +45,8 @@ class LocationBase(SQLModel):
         max_length=255,
         nullable=False,
     )
-    lat: float | None = Field(default=None, ge=-90, le=90)
-    lon: float | None = Field(default=None, ge=-180, le=180)
+    lat: Optional["float"] = Field(default=None, ge=-90, le=90)
+    lon: Optional["float"] = Field(default=None, ge=-180, le=180)
 
 
 class Location(LocationBase, table=True):
@@ -102,7 +102,11 @@ class User(UserBase, table=True):
     )
     hashed_password: str
 
-    role: Role | None = Relationship()
+    role: Optional["Role"] = Relationship()
+
+    employee: Optional["Employee"] = Relationship(
+        back_populates="user", cascade_delete=True
+    )
 
 
 class EmployeeBase(SQLModel):
@@ -123,9 +127,11 @@ class Employee(EmployeeBase, table=True):
         nullable=False,
     )
 
-    user: User | None = Relationship(back_populates="employee")
-    grade: Grade | None = Relationship()
-    start_location: Location | None = Relationship()
+    user: Optional["User"] = Relationship(back_populates="employee")
+    grade: Optional["Grade"] = Relationship()
+    start_location: Optional["Location"] = Relationship()
+
+    tasks: list[Optional["Task"]] = Relationship(back_populates="employee")
 
 
 class TaskTypeBase(SQLModel):
@@ -153,8 +159,8 @@ class TaskType(TaskTypeBase, table=True):
         nullable=False,
     )
 
-    min_grade: Grade | None = Relationship()
-    priority: Priority | None = Relationship()
+    min_grade: Optional["Grade"] = Relationship()
+    priority: Optional["Priority"] = Relationship()
 
 
 class AgentPointBase(SQLModel):
@@ -183,7 +189,9 @@ class AgentPoint(AgentPointBase, table=True):
         nullable=False,
     )
 
-    location: Location | None = Relationship()
+    location: Optional["Location"] = Relationship()
+
+    tasks: list[Optional["Task"]] = Relationship(back_populates="agent_point")
 
 
 class TaskBase(SQLModel):
@@ -213,10 +221,10 @@ class Task(TaskBase, table=True):
         nullable=False,
     )
 
-    employee: Employee | None = Relationship(back_populates="tasks")
-    task_type: TaskType | None = Relationship()
-    agent_point: AgentPoint | None = Relationship(back_populates="tasks")
-    task_status: TaskStatus | None = Relationship()
+    employee: Optional["Employee"] = Relationship(back_populates="tasks")
+    task_type: Optional["TaskType"] = Relationship()
+    agent_point: Optional["AgentPoint"] = Relationship(back_populates="tasks")
+    task_status: Optional["TaskStatus"] = Relationship()
 
 
 # Properties to receive via API on creation
@@ -229,13 +237,13 @@ class UserCreate(UserBase):
 
 # Properties to receive via API on update, all are optional
 class UserUpdate(UserBase):
-    email: EmailStr | None = Field(default=None, max_length=255)  # type: ignore
-    password: str | None = Field(default=None, min_length=8, max_length=128)
+    email: Optional["EmailStr"] = Field(default=None, max_length=255)  # type: ignore
+    password: Optional["str"] = Field(default=None, min_length=8, max_length=128)
 
 
 class UserUpdateMe(SQLModel):
-    full_name: str | None = Field(default=None, max_length=255)
-    email: EmailStr | None = Field(default=None, max_length=255)
+    full_name: Optional["str"] = Field(default=None, max_length=255)
+    email: Optional["EmailStr"] = Field(default=None, max_length=255)
 
 
 class UpdatePassword(SQLModel):
@@ -358,7 +366,7 @@ class Token(SQLModel):
 
 # Contents of JWT token
 class TokenPayload(SQLModel):
-    sub: str | None = None
+    sub: Optional["str"] = None
 
 
 class NewPassword(SQLModel):
