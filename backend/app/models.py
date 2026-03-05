@@ -94,6 +94,9 @@ class UserBase(SQLModel):
     is_superuser: bool = False
 
 
+# TODO: написать ondelete для каждого foreign_key.
+
+
 class User(UserBase, table=True):
     id: int = Field(default=None, primary_key=True)
     role_id: int = Field(
@@ -101,6 +104,8 @@ class User(UserBase, table=True):
         nullable=False,
     )
     hashed_password: str
+
+    role: Role = Relationship()
 
 
 class EmployeeBase(SQLModel):
@@ -110,9 +115,7 @@ class EmployeeBase(SQLModel):
 class Employee(EmployeeBase, table=True):
     id: int = Field(default=None, primary_key=True)
     user_id: int = Field(
-        foreign_key="user.id",
-        unique=True,
-        nullable=False,
+        foreign_key="user.id", unique=True, nullable=False, ondelete="CASCADE"
     )
     grade_id: int = Field(
         foreign_key="grade.id",
@@ -122,6 +125,10 @@ class Employee(EmployeeBase, table=True):
         foreign_key="location.id",
         nullable=False,
     )
+
+    user: User = Relationship(back_populates="employee")
+    grade: Grade = Relationship()
+    start_location: Location = Relationship()
 
 
 class TaskTypeBase(SQLModel):
@@ -178,8 +185,8 @@ class AgentPoint(AgentPointBase, table=True):
 
 
 class TaskBase(SQLModel):
-    start_time: datetime
-    finish_time: datetime
+    start_time: datetime = Field(ge=datetime(2021, 1, 1))
+    finish_time: datetime = Field(ge=datetime(2021, 1, 1))
     comment: str = Field(
         max_length=4096,
     )
@@ -230,6 +237,51 @@ class UpdatePassword(SQLModel):
     new_password: str = Field(min_length=8, max_length=128)
 
 
+class RolePublic(RoleBase):
+    id: int
+
+
+class RolesPublic(SQLModel):
+    data: list[RolePublic]
+    count: int
+
+
+class GradePublic(GradeBase):
+    id: int
+
+
+class GradesPublic(SQLModel):
+    data: list[GradePublic]
+    count: int
+
+
+class LocationPublic(LocationBase):
+    id: int
+
+
+class LocationsPublic(SQLModel):
+    data: list[LocationPublic]
+    count: int
+
+
+class PriorityPublic(PriorityBase):
+    id: int
+
+
+class PrioritiesPublic(SQLModel):
+    data: list[PriorityPublic]
+    count: int
+
+
+class TaskStatusPublic(TaskStatusBase):
+    id: int
+
+
+class TaskStatusesPublic(SQLModel):
+    data: list[TaskStatusPublic]
+    count: int
+
+
 # Properties to return via API, id is always required
 class UserPublic(UserBase):
     id: int
@@ -249,6 +301,40 @@ class EmployeePublic(EmployeeBase):
 
 class EmployeesPublic(SQLModel):
     data: list[EmployeePublic]
+    count: int
+
+
+class TaskTypePublic(TaskTypeBase):
+    id: int
+    min_grade_id: int
+    priority_id: int
+
+
+class TaskTypesPublic(SQLModel):
+    data: list[TaskTypePublic]
+    count: int
+
+
+class AgentPointPublic(AgentPointBase):
+    id: int
+    location_id: int
+
+
+class AgentPointsPublic(SQLModel):
+    data: list[AgentPointPublic]
+    count: int
+
+
+class TaskPublic(TaskBase):
+    id: int
+    employee_id: int
+    task_type_id: int
+    agent_point_id: int
+    task_status_id: int
+
+
+class TasksPublic(SQLModel):
+    data: list[TaskPublic]
     count: int
 
 
