@@ -53,12 +53,12 @@ class Location(LocationBase, table=True):
     id: int = Field(default=None, primary_key=True)
 
 
-class LocationDistanceBase(SQLModel):
+class LocationsEdgeBase(SQLModel):
     distance: float = Field(ge=0, nullable=False)
     time: int = Field(ge=0, nullable=False)
 
 
-class LocationDistance(LocationDistanceBase):
+class LocationsEdge(LocationsEdgeBase):
     id: int = Field(default=None, primary_key=True)
     from_location_id: int = Field(
         foreign_key="location.id",
