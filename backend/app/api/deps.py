@@ -10,6 +10,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jwt.exceptions import InvalidTokenError
 from pydantic import ValidationError
+from sqlalchemy.orm import joinedload
 from sqlmodel import Session
 
 reusable_oauth2 = OAuth2PasswordBearer(
@@ -37,7 +38,10 @@ def get_current_user(session: SessionDep, token: TokenDep) -> User:
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Could not validate credentials",
         )
-    user = session.get(User, token_data.sub)
+    user = session.get(User, token_data.sub, options=[joinedload(User.role)])
+    print("dsfffdsfasdfj;ksdfa;dfsahsdfsdflkjdsflkjflsdkjkj;sf///")
+    print(user)
+    print("///dsfffdsfasdfj;ksdfa;dfsahsdfsdflkjdsflkjflsdkjkj;sf")
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user

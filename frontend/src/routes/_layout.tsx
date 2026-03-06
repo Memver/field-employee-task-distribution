@@ -1,6 +1,6 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router"
 
-import { Footer } from "@/components/Common/Footer"
+import { Header } from "@/components/Common/Header"
 import AppSidebar from "@/components/Sidebar/AppSidebar"
 import {
   SidebarInset,
@@ -23,14 +23,12 @@ export const Route = createFileRoute("/_layout")({
 function Layout() {
   return (
         <div>
-        <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b px-4">
-        </header>
+        <Header />
         <main className="flex-1 p-6 md:p-8">
           <div className="mx-auto max-w-7xl">
             <Outlet />
           </div>
         </main>
-        <Footer />
         </div>
 
   )

@@ -84,7 +84,10 @@ def read_user_me(current_user: CurrentUser) -> Any:
     """
     Get current user.
     """
-    return current_user
+    user = UserPublic.model_validate(
+        current_user, update={"role": current_user.role.name}
+    )
+    return user
 
 
 # @router.delete("/me", response_model=Message)

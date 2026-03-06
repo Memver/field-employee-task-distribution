@@ -85,7 +85,7 @@ INSERT INTO public.user
     (6, 3, 'bobylev', '$argon2id$v=19$m=65536,t=3,p=4$Cr2d+zOfstb+PKyeE4mQ+w$FDbg5dHzox+LloOT4IM1h5BWZ4q+WZ5CWSGURU2DDwA', 'Ипполит', 'Бобылёв', 'Альбертович', false),
     (7, 3, 'belyaeva', '$argon2id$v=19$m=65536,t=3,p=4$Cr2d+zOfstb+PKyeE4mQ+w$FDbg5dHzox+LloOT4IM1h5BWZ4q+WZ5CWSGURU2DDwA', 'Евгения', 'Беляева', 'Антоновна', false),
     (8, 3, 'nikolaev', '$argon2id$v=19$m=65536,t=3,p=4$Cr2d+zOfstb+PKyeE4mQ+w$FDbg5dHzox+LloOT4IM1h5BWZ4q+WZ5CWSGURU2DDwA', 'Азарий', 'Николаев', 'Платонович', false),
-	(9, 1, 'admin', '$argon2id$v=19$m=65536,t=3,p=4$Cr2d+zOfstb+PKyeE4mQ+w$FDbg5dHzox+LloOT4IM1h5BWZ4q+WZ5CWSGURU2DDwA', 'a', 'a', 'a', true);
+	(9, 1, 'admin', '$argon2id$v=19$m=65536,t=3,p=4$Cr2d+zOfstb+PKyeE4mQ+w$FDbg5dHzox+LloOT4IM1h5BWZ4q+WZ5CWSGURU2DDwA', 'Имя', 'Фамилия', 'Отчество', true);
 
 INSERT INTO public.employee
 (

@@ -299,7 +299,7 @@ class TaskStatusesPublic(SQLModel):
 # Properties to return via API, id is always required
 class UserPublic(UserBase):
     id: int
-    role_id: int
+    role: str
 
 
 class UsersPublic(SQLModel):
