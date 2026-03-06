@@ -53,6 +53,26 @@ class Location(LocationBase, table=True):
     id: int = Field(default=None, primary_key=True)
 
 
+class LocationDistanceBase(SQLModel):
+    distance: float = Field(ge=0, nullable=False)
+    time: int = Field(ge=0, nullable=False)
+
+
+class LocationDistance(LocationDistanceBase):
+    id: int = Field(default=None, primary_key=True)
+    from_location_id: int = Field(
+        foreign_key="location.id",
+        nullable=False,
+    )
+    to_location_id: int = Field(
+        foreign_key="location.id",
+        nullable=False,
+    )
+
+    from_location: Optional["Location"] = Relationship()
+    to_location: Optional["Location"] = Relationship()
+
+
 class PriorityBase(SQLModel):
     name: str = Field(max_length=32, unique=True, nullable=False)
     level: int = Field(gt=0, unique=True, nullable=False)
