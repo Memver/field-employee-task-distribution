@@ -11,9 +11,11 @@
     "test:ui": "bun run --filter frontend test:ui"
   },
   "dependencies": {
+    "@tanstack/react-query": "5.90.21",
+    "@tanstack/react-query-devtools": "5.91.1",
     "leaflet": "^1.9.4",
-    "react": "^19.0.0-rc.1",
-    "react-dom": "^19.0.0-rc.1",
-    "react-leaflet": "^5.0.0-rc.2"
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "react-leaflet": "^5.0.0"
   }
 }
