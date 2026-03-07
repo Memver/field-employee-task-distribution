@@ -374,6 +374,20 @@ class TasksPublic(SQLModel):
     count: int
 
 
+class TaskMePublic(TaskBase):
+    id: int
+    agent_point: AgentPoint
+
+
+class TasksMePublic(SQLModel):
+    data: list[TaskMePublic]
+    count: int
+    route: Optional[object] = Field(
+        sa_column=Column(Geography(geometry_type="LINESTRING", srid=4326))
+    )
+    employee: Employee
+
+
 # Generic message
 class Message(SQLModel):
     message: str

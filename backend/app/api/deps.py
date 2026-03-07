@@ -38,7 +38,9 @@ def get_current_user(session: SessionDep, token: TokenDep) -> User:
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Could not validate credentials",
         )
-    user = session.get(User, token_data.sub, options=[joinedload(User.role)])
+    user = session.get(
+        User, token_data.sub, options=[joinedload(User.role), joinedload(User.employee)]
+    )
     print("dsfffdsfasdfj;ksdfa;dfsahsdfsdflkjdsflkjflsdkjkj;sf///")
     print(user)
     print("///dsfffdsfasdfj;ksdfa;dfsahsdfsdflkjdsflkjflsdkjkj;sf")

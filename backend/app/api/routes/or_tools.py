@@ -82,7 +82,7 @@ dimension_name = "Distance"
 routing.AddDimension(
     transit_callback_index,
     0,  # no slack
-    1_040_0000,  # vehicle maximum travel distance (in meters) 130 км * 8 часов
+    130_0000,  # vehicle maximum travel distance (in meters) 130 км макс скорость
     True,  # start cumul to zero
     dimension_name,
 )
