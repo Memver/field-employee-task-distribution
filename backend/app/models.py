@@ -353,7 +353,7 @@ class TaskTypesPublic(SQLModel):
 
 class AgentPointPublic(AgentPointBase):
     id: int
-    location_id: int
+    location: LocationPublic
 
 
 class AgentPointsPublic(SQLModel):
@@ -376,16 +376,15 @@ class TasksPublic(SQLModel):
 
 class TaskMePublic(TaskBase):
     id: int
-    agent_point: AgentPoint
+    agent_point: AgentPointPublic
 
 
 class TasksMePublic(SQLModel):
-    data: list[TaskMePublic]
-    count: int
+    tasks: list[TaskMePublic]
     route: Optional[object] = Field(
         sa_column=Column(Geography(geometry_type="LINESTRING", srid=4326))
     )
-    employee: Employee
+    start_location: LocationPublic
 
 
 # Generic message
