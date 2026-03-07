@@ -14,7 +14,7 @@ from app.models import (
     TasksPublic,
 )
 from fastapi import APIRouter
-from sqlalchemy.orm import joinedload, load_only
+from sqlalchemy.orm import load_only, selectinload
 from sqlmodel import func, select
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
@@ -38,20 +38,11 @@ def read_tasks(session: SessionDep, skip: int = 0, limit: int = 100) -> Any:
     return TasksPublic(data=tasks, count=count)
 
 
-@router.get("/{task_id}", response_model=TaskPublic)
-def read_task_by_id(task_id: int, session: SessionDep) -> Any:
-    """
-    Get a specific task by id.
-    """
-    task = session.get(Task, task_id)
-    return task
-
-
 from typing import Any, List, Optional
 
 from geoalchemy2.functions import ST_Collect, ST_MakeLine
 from sqlalchemy import and_, or_, select
-from sqlalchemy.orm import joinedload, load_only
+from sqlalchemy.orm import load_only, selectinload
 
 
 @router.get("/me", response_model=TasksMePublic)
@@ -74,12 +65,26 @@ def read_tasks_me(
     statement = (
         select(Task)
         .where(Task.employee_id == current_employee.id)
+        .options(
+            selectinload(Task.agent_point),
+        )
         .offset(skip)
         .limit(limit)
-        .options(joinedload(Task.agent_point).joinedload(AgentPoint.location))
         .order_by(Task.start_time)
     )
+    #     statement = (
+    #     select(Task)
+    #     .where(Task.employee_id == current_employee.id)
+    #     .offset(skip)
+    #     .limit(limit)
+    #     .options(
+    #         selectinload(Task.agent_point).selectinload(AgentPoint.location),
+    #     )
+    #     .order_by(Task.start_time)
+    # )
     tasks = session.exec(statement).all()
+
+    print(tasks)
 
     # Prepare task list for response
     tasks_me_public = []
@@ -87,6 +92,8 @@ def read_tasks_me(
 
     # Add start location
     location_ids.append(current_employee.start_location_id)
+
+    print(location_ids)
 
     for task in tasks:
         tasks_me_public.append(TaskMePublic.model_validate(task))
@@ -151,11 +158,24 @@ def read_tasks_me(
                 collect_stmt = select(ST_Collect(route_parts))
                 route = session.exec(collect_stmt).first()
 
+    print(tasks)
+    print(route)
+    print(start_location)
+
     return TasksMePublic(
         tasks=tasks_me_public,
         route=route,
         start_location=LocationPublic.model_validate(start_location),
     )
+
+
+@router.get("/{task_id}", response_model=TaskPublic)
+def read_task_by_id(task_id: int, session: SessionDep) -> Any:
+    """
+    Get a specific task by id.
+    """
+    task = session.get(Task, task_id)
+    return task
 
 
 @router.delete("/{task_id}")
