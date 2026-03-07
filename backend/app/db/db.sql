@@ -1,3 +1,5 @@
+CREATE EXTENSION IF NOT EXISTS postgis;
+
 INSERT INTO public.role
 (
 	id, name
