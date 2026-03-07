@@ -176,11 +176,6 @@ INSERT INTO public.task
 	-- Задача AGENT_TRAINING для employee_id 7 (Беляева) к agent_point_id 2 (Восточно-Кругликовская, 64/2)
 	(4, 7, 2, 2, 2, '2023-11-11 15:43:00', '2023-11-11 17:43:00', '');
 
-COPY location_edge(id, from_location_id, to_location_id, distance, time, route)
-FROM './location_edge.csv'
-DELIMITER ','
-CSV HEADER;
-
 ALTER SEQUENCE public.role_id_seq RESTART WITH 100;
 ALTER SEQUENCE public.grade_id_seq RESTART WITH 100;
 ALTER SEQUENCE public.location_id_seq RESTART WITH 100;
