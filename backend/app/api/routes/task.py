@@ -72,8 +72,8 @@ def create_user(*, session: SessionDep, user_in: UserCreate) -> Any:
         data = {}
         data["distance_matrix"] = distance_matrix
         data["num_vehicles"] = 8
-        data["starts"] = [1, 1, 1, 2, 2, 2, 3, 3]
-        data["ends"] = [1, 1, 1, 2, 2, 2, 3, 3]
+        data["starts"] = [0, 0, 0, 1, 1, 1, 2, 2]
+        data["ends"] = data["starts"]
         return data
 
     def print_solution(data, manager, routing, solution):
