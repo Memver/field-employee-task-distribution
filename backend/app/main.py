@@ -1,10 +1,11 @@
 import sentry_sdk
-from fastapi import FastAPI
-from fastapi.routing import APIRoute
-from starlette.middleware.cors import CORSMiddleware
-
 from app.api.main import api_router
 from app.core.config import settings
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
+from fastapi.routing import APIRoute
+from starlette.exceptions import HTTPException as StarletteHTTPException
+from starlette.middleware.cors import CORSMiddleware
 
 
 def custom_generate_unique_id(route: APIRoute) -> str:
@@ -31,3 +32,18 @@ if settings.all_cors_origins:
     )
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
+
+
+@app.exception_handler(StarletteHTTPException)
+async def starlette_http_exception_handler(
+    request: Request, exc: StarletteHTTPException
+):
+    if exc.status_code == 404:
+        print(f"404 ошибка на пути: {request.url.path}")
+        print(f"Метод: {request.method}")
+        print(f"Детали: {exc.detail}")
+
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"detail2": exc.detail},
+    )

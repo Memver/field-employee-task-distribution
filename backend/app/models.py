@@ -1,11 +1,19 @@
-from typing import Optional
 import uuid
 from datetime import datetime, timezone
+from typing import Optional
 
+from geoalchemy2 import Geography
 from pydantic import EmailStr
 from sqlalchemy import DateTime
-from sqlmodel import Field, Relationship, SQLModel
-from sqlmodel import Column, Index, CheckConstraint, UniqueConstraint
+from sqlmodel import (
+    CheckConstraint,
+    Column,
+    Field,
+    Index,
+    Relationship,
+    SQLModel,
+    UniqueConstraint,
+)
 
 
 def get_datetime_utc() -> datetime:
@@ -38,12 +46,32 @@ class LocationBase(SQLModel):
         max_length=255,
         nullable=False,
     )
-    latitude: float | None = Field(default=None, ge=-90, le=90)
-    longitude: float | None = Field(default=None, ge=-180, le=180)
+    lat: Optional["float"] = Field(default=None, ge=-90, le=90)
+    lon: Optional["float"] = Field(default=None, ge=-180, le=180)
 
 
 class Location(LocationBase, table=True):
     id: int = Field(default=None, primary_key=True)
+
+
+class LocationEdgeBase(SQLModel):
+    distance: float = Field(ge=0, nullable=False)
+    time: int = Field(ge=0, nullable=False)
+    route: Optional[object] = Field(
+        sa_column=Column(Geography(geometry_type="LINESTRING", srid=4326))
+    )
+
+
+class LocationEdge(LocationEdgeBase, table=True):
+    __tablename__ = "location_edge"
+
+    id: int = Field(default=None, primary_key=True)
+    from_location_id: int = Field(
+        nullable=False,
+    )
+    to_location_id: int = Field(
+        nullable=False,
+    )
 
 
 class PriorityBase(SQLModel):
@@ -84,6 +112,7 @@ class UserBase(SQLModel):
         max_length=64,
         nullable=False,
     )
+    is_superuser: bool = False
 
 
 class User(UserBase, table=True):
@@ -94,6 +123,12 @@ class User(UserBase, table=True):
     )
     hashed_password: str
 
+    role: Optional["Role"] = Relationship()
+
+    employee: Optional["Employee"] = Relationship(
+        back_populates="user", cascade_delete=True
+    )
+
 
 class EmployeeBase(SQLModel):
     pass
@@ -102,9 +137,7 @@ class EmployeeBase(SQLModel):
 class Employee(EmployeeBase, table=True):
     id: int = Field(default=None, primary_key=True)
     user_id: int = Field(
-        foreign_key="user.id",
-        unique=True,
-        nullable=False,
+        foreign_key="user.id", unique=True, nullable=False, ondelete="CASCADE"
     )
     grade_id: int = Field(
         foreign_key="grade.id",
@@ -114,6 +147,12 @@ class Employee(EmployeeBase, table=True):
         foreign_key="location.id",
         nullable=False,
     )
+
+    user: Optional["User"] = Relationship(back_populates="employee")
+    grade: Optional["Grade"] = Relationship()
+    start_location: Optional["Location"] = Relationship()
+
+    tasks: list[Optional["Task"]] = Relationship(back_populates="employee")
 
 
 class TaskTypeBase(SQLModel):
@@ -141,54 +180,91 @@ class TaskType(TaskTypeBase, table=True):
         nullable=False,
     )
 
+    min_grade: Optional["Grade"] = Relationship()
+    priority: Optional["Priority"] = Relationship()
+
 
 class AgentPointBase(SQLModel):
     created_time: datetime
     is_cards_delivered: bool
-    days_since_last_card_gived: int
-    approved_applications: int
-    cards_gived: int
+    days_since_last_card_gived: int = Field(
+        ge=0,
+        nullable=False,
+    )
+    approved_applications: int = Field(
+        ge=0,
+        nullable=False,
+    )
+    cards_gived: int = Field(
+        ge=0,
+        nullable=False,
+    )
 
 
 class AgentPoint(AgentPointBase, table=True):
     __tablename__ = "agent_point"
 
     id: int = Field(default=None, primary_key=True)
-    location_id: int
+    location_id: int = Field(
+        foreign_key="location.id",
+        nullable=False,
+    )
+
+    location: Optional["Location"] = Relationship()
+
+    tasks: list[Optional["Task"]] = Relationship(back_populates="agent_point")
 
 
 class TaskBase(SQLModel):
-    start_time: datetime
-    finish_time: datetime
-    comment: str
+    start_time: datetime = Field(ge=datetime(2021, 1, 1))
+    finish_time: datetime = Field(ge=datetime(2021, 1, 1))
+    comment: str = Field(
+        max_length=4096,
+    )
 
 
 class Task(TaskBase, table=True):
     id: int = Field(default=None, primary_key=True)
-    employee_id: int
-    task_type_id: int
-    agent_point_id: int
-    task_status_id: int
+    employee_id: int = Field(
+        foreign_key="employee.id",
+        nullable=False,
+    )
+    task_type_id: int = Field(
+        foreign_key="task_type.id",
+        nullable=False,
+    )
+    agent_point_id: int = Field(
+        foreign_key="agent_point.id",
+        nullable=False,
+    )
+    task_status_id: int = Field(
+        foreign_key="task_status.id",
+        nullable=False,
+    )
+
+    employee: Optional["Employee"] = Relationship(back_populates="tasks")
+    task_type: Optional["TaskType"] = Relationship()
+    agent_point: Optional["AgentPoint"] = Relationship(back_populates="tasks")
+    task_status: Optional["TaskStatus"] = Relationship()
 
 
 # Properties to receive via API on creation
 class UserCreate(UserBase):
-    password: str = Field(min_length=8, max_length=128)
+    password: str = Field(min_length=1, max_length=128)
     role_id: int = Field(
-        foreign_key="role.id",
         nullable=False,
     )
 
 
 # Properties to receive via API on update, all are optional
 class UserUpdate(UserBase):
-    email: EmailStr | None = Field(default=None, max_length=255)  # type: ignore
-    password: str | None = Field(default=None, min_length=8, max_length=128)
+    email: Optional["EmailStr"] = Field(default=None, max_length=255)  # type: ignore
+    password: Optional["str"] = Field(default=None, min_length=8, max_length=128)
 
 
 class UserUpdateMe(SQLModel):
-    full_name: str | None = Field(default=None, max_length=255)
-    email: EmailStr | None = Field(default=None, max_length=255)
+    full_name: Optional["str"] = Field(default=None, max_length=255)
+    email: Optional["EmailStr"] = Field(default=None, max_length=255)
 
 
 class UpdatePassword(SQLModel):
@@ -196,14 +272,119 @@ class UpdatePassword(SQLModel):
     new_password: str = Field(min_length=8, max_length=128)
 
 
+class RolePublic(RoleBase):
+    id: int
+
+
+class RolesPublic(SQLModel):
+    data: list[RolePublic]
+    count: int
+
+
+class GradePublic(GradeBase):
+    id: int
+
+
+class GradesPublic(SQLModel):
+    data: list[GradePublic]
+    count: int
+
+
+class LocationPublic(LocationBase):
+    id: int
+
+
+class LocationsPublic(SQLModel):
+    data: list[LocationPublic]
+    count: int
+
+
+class PriorityPublic(PriorityBase):
+    id: int
+
+
+class PrioritiesPublic(SQLModel):
+    data: list[PriorityPublic]
+    count: int
+
+
+class TaskStatusPublic(TaskStatusBase):
+    id: int
+
+
+class TaskStatusesPublic(SQLModel):
+    data: list[TaskStatusPublic]
+    count: int
+
+
 # Properties to return via API, id is always required
 class UserPublic(UserBase):
     id: int
+    role: str
 
 
 class UsersPublic(SQLModel):
     data: list[UserPublic]
     count: int
+
+
+class EmployeePublic(EmployeeBase):
+    id: int
+    user_id: int
+    grade_id: int
+    start_location_id: int
+
+
+class EmployeesPublic(SQLModel):
+    data: list[EmployeePublic]
+    count: int
+
+
+class TaskTypePublic(TaskTypeBase):
+    id: int
+    min_grade_id: int
+    priority_id: int
+
+
+class TaskTypesPublic(SQLModel):
+    data: list[TaskTypePublic]
+    count: int
+
+
+class AgentPointPublic(AgentPointBase):
+    id: int
+    location: LocationPublic
+
+
+class AgentPointsPublic(SQLModel):
+    data: list[AgentPointPublic]
+    count: int
+
+
+class TaskPublic(TaskBase):
+    id: int
+    employee_id: int
+    task_type_id: int
+    agent_point_id: int
+    task_status_id: int
+
+
+class TasksPublic(SQLModel):
+    data: list[TaskPublic]
+    count: int
+
+
+class TaskMePublic(TaskBase):
+    id: int
+    agent_point: AgentPointPublic
+
+
+class TasksMePublic(SQLModel):
+    tasks: list[TaskMePublic]
+    route: Optional[object] = Field(
+        sa_column=Column(Geography(geometry_type="LINESTRING", srid=4326))
+    )
+    start_location: LocationPublic
 
 
 # Generic message
@@ -219,7 +400,7 @@ class Token(SQLModel):
 
 # Contents of JWT token
 class TokenPayload(SQLModel):
-    sub: str | None = None
+    sub: Optional["str"] = None
 
 
 class NewPassword(SQLModel):
