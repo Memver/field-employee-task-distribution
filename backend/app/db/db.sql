@@ -87,7 +87,8 @@ INSERT INTO public.user
     (6, 3, 'bobylev', '$argon2id$v=19$m=65536,t=3,p=4$Cr2d+zOfstb+PKyeE4mQ+w$FDbg5dHzox+LloOT4IM1h5BWZ4q+WZ5CWSGURU2DDwA', 'Ипполит', 'Бобылёв', 'Альбертович', false),
     (7, 3, 'belyaeva', '$argon2id$v=19$m=65536,t=3,p=4$Cr2d+zOfstb+PKyeE4mQ+w$FDbg5dHzox+LloOT4IM1h5BWZ4q+WZ5CWSGURU2DDwA', 'Евгения', 'Беляева', 'Антоновна', false),
     (8, 3, 'nikolaev', '$argon2id$v=19$m=65536,t=3,p=4$Cr2d+zOfstb+PKyeE4mQ+w$FDbg5dHzox+LloOT4IM1h5BWZ4q+WZ5CWSGURU2DDwA', 'Азарий', 'Николаев', 'Платонович', false),
-	(9, 1, 'admin', '$argon2id$v=19$m=65536,t=3,p=4$Cr2d+zOfstb+PKyeE4mQ+w$FDbg5dHzox+LloOT4IM1h5BWZ4q+WZ5CWSGURU2DDwA', 'Валерий', 'Евдокимов', 'Данилович', true);
+	(9, 1, 'admin', '$argon2id$v=19$m=65536,t=3,p=4$Cr2d+zOfstb+PKyeE4mQ+w$FDbg5dHzox+LloOT4IM1h5BWZ4q+WZ5CWSGURU2DDwA', 'Валерий', 'Евдокимов', 'Данилович', true),
+	(10, 2, 'manager', '$argon2id$v=19$m=65536,t=3,p=4$Cr2d+zOfstb+PKyeE4mQ+w$FDbg5dHzox+LloOT4IM1h5BWZ4q+WZ5CWSGURU2DDwA', 'Адам', 'Бобылёв', 'Тихонович', false);
 
 INSERT INTO public.employee
 (
@@ -170,7 +171,7 @@ INSERT INTO public.task
 	point 0 = location id 1
 
 	Objective: 3197397
-	
+
 	Route for vehicle 0:
 	0 ->  9 ->  26 ->  19 ->  4 ->  16 ->  24 ->  22 ->  29 -> 0
 	Distance of the route: 28039m

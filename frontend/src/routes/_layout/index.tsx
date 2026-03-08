@@ -14,6 +14,9 @@ import iconShadow from "leaflet/dist/images/marker-shadow.png";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { TasksService } from "@/client";
 import { renderToString } from "react-dom/server";
+import { ChevronRight } from "lucide-react";
+import { Link as RouterLink, useRouterState } from "@tanstack/react-router";
+import { LoadingButton } from "@/components/ui/loading-button";
 
 const DefaultIcon = L.icon({
   iconUrl: icon,
@@ -85,6 +88,38 @@ function parseLineString(wktString: string): [number, number][] {
 
 function Dashboard() {
   const { user: currentUser } = useAuth();
+
+  if (currentUser?.role === "EMPLOYEE_MANAGER") {
+    return (
+      <div className="flex flex-col items-start gap-10 text-xl">
+        <RouterLink to="/admin" className="flex items-center gap-2">
+          <ChevronRight />
+          Пользователи
+        </RouterLink>
+        <RouterLink to="/locations" className="flex items-center gap-2">
+          <ChevronRight />
+          Локации
+        </RouterLink>
+        <RouterLink to="/employees" className="flex items-center gap-2">
+          <ChevronRight />
+          Выездные сотрудники
+        </RouterLink>
+        <RouterLink to="/agent-points" className="flex items-center gap-2">
+          <ChevronRight />
+          Точки
+        </RouterLink>
+        <RouterLink to="/task-types" className="flex items-center gap-2">
+          <ChevronRight />
+          Справочники
+        </RouterLink>
+        <RouterLink to="/tasks" className="flex items-center gap-2">
+          <ChevronRight />
+          Задачи
+        </RouterLink>
+        <LoadingButton type="submit">Распределить задачи</LoadingButton>
+      </div>
+    );
+  }
 
   const { data: data } = useSuspenseQuery(getTasksQueryOptions());
 

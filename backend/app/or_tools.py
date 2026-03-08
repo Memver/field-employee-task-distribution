@@ -1,4 +1,4 @@
-from app.api.routes.distance_matrix import distance_matrix
+from app.distance_matrix import distance_matrix
 from ortools.constraint_solver import pywrapcp, routing_enums_pb2
 
 """Simple Vehicles Routing Problem (VRP).

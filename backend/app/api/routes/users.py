@@ -32,8 +32,12 @@ def read_users(session: SessionDep, skip: int = 0, limit: int = 100) -> Any:
 
     statement = select(User).offset(skip).limit(limit)
     users = session.exec(statement).all()
+    users_role_str = [
+        UserPublic.model_validate(user, update={"role": user.role.name})
+        for user in users
+    ]
 
-    return UsersPublic(data=users, count=count)
+    return UsersPublic(data=users_role_str, count=count)
 
 
 @router.post("/", response_model=UserPublic)
@@ -47,7 +51,23 @@ def create_user(*, session: SessionDep, user_in: UserCreate) -> Any:
     session.add(user)
     session.commit()
     session.refresh(user)
-    return user
+    user_out = User.model_validate(user, update={"role": user.role.name})
+    return user_out
+
+
+@router.put("/", response_model=UserPublic)
+def update_user(*, session: SessionDep, user_in: UserCreate) -> Any:
+    """
+    Update user.
+    """
+    user = User.model_validate(
+        user_in, update={"hashed_password": get_password_hash(user_in.password)}
+    )
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+    user_out = User.model_validate(user, update={"role": user.role.name})
+    return user_out
 
 
 # @router.patch("/me", response_model=UserPublic)
