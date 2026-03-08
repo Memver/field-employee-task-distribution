@@ -1,23 +1,11 @@
-import { Link as RouterLink } from "@tanstack/react-router";
-import { ChevronsUpDown, LogOut, Settings } from "lucide-react";
-
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import useAuth from "@/hooks/useAuth";
-import { getInitials } from "@/utils";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import useAuth from "@/hooks/useAuth"
 
 interface UserInfoProps {
-  name?: string;
-  surname?: string;
-  middle_name?: string;
-  role?: string;
+  name?: string
+  surname?: string
+  middle_name?: string
+  role?: string
 }
 
 function UserInfo({ name, surname, middle_name, role }: UserInfoProps) {
@@ -30,18 +18,18 @@ function UserInfo({ name, surname, middle_name, role }: UserInfoProps) {
         <p className="text-xs truncate w-full opacity-70">{role}</p>
       </div>
       <Avatar className="size-8">
-        <AvatarFallback className="bg-blue-400 text-white"></AvatarFallback>
+        <AvatarFallback className="bg-blue-400 text-white" />
       </Avatar>
     </div>
-  );
+  )
 }
 
 export function User({ user }: { user: any }) {
-  const { logout } = useAuth();
+  const { logout } = useAuth()
 
-  console.log(user);
+  console.log(user)
 
-  if (!user) return null;
+  if (!user) return null
 
   return (
     <UserInfo
@@ -50,5 +38,5 @@ export function User({ user }: { user: any }) {
       middle_name={user?.middle_name}
       role={user?.role}
     />
-  );
+  )
 }

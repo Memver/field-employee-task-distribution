@@ -1,9 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod"
-import {
-  createFileRoute,
-  Link as RouterLink,
-  redirect,
-} from "@tanstack/react-router"
+import { createFileRoute, redirect } from "@tanstack/react-router"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 
@@ -24,10 +20,8 @@ import useAuth, { isLoggedIn } from "@/hooks/useAuth"
 
 const formSchema = z.object({
   username: z.string(),
-  password: z
-    .string()
-    .min(1, { message: "Password is required" })
-    // .min(8, { message: "Password must be at least 8 characters" }),
+  password: z.string().min(1, { message: "Password is required" }),
+  // .min(8, { message: "Password must be at least 8 characters" }),
 }) satisfies z.ZodType<AccessToken>
 
 type FormData = z.infer<typeof formSchema>
@@ -86,10 +80,7 @@ function Login() {
                 <FormItem>
                   <FormLabel>Логин</FormLabel>
                   <FormControl>
-                    <Input 
-                      placeholder="Логин"
-                      {...field}
-                    />
+                    <Input placeholder="Логин" {...field} />
                   </FormControl>
                   <FormMessage className="text-xs" />
                 </FormItem>

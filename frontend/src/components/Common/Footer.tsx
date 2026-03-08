@@ -1,5 +1,5 @@
 export function Footer() {
-  const currentYear = new Date().getFullYear();
+  const _currentYear = new Date().getFullYear()
 
   return (
     <footer className="border-t py-4 px-6">
@@ -7,5 +7,5 @@ export function Footer() {
         Footer
       </div>
     </footer>
-  );
+  )
 }

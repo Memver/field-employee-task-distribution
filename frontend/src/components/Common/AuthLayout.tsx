@@ -1,7 +1,3 @@
-
-import { Logo } from "@/components/Common/Logo"
-import { Footer } from "./Footer"
-
 interface AuthLayoutProps {
   children: React.ReactNode
 }
