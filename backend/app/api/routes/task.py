@@ -1,5 +1,7 @@
-from typing import Any
+from typing import Any, List, Optional
 
+import shapely
+import shapely.wkb
 from app.api.deps import CurrentUser, SessionDep
 from app.models import (
     AgentPoint,
@@ -14,7 +16,10 @@ from app.models import (
     TasksPublic,
 )
 from fastapi import APIRouter
-from sqlalchemy.orm import load_only, selectinload
+from geoalchemy2.functions import ST_Collect, ST_MakeLine
+from shapely.ops import linemerge
+from sqlalchemy import and_, or_, select
+from sqlalchemy.orm import joinedload, load_only, selectinload
 from sqlmodel import func, select
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
@@ -38,13 +43,6 @@ def read_tasks(session: SessionDep, skip: int = 0, limit: int = 100) -> Any:
     return TasksPublic(data=tasks, count=count)
 
 
-from typing import Any, List, Optional
-
-from geoalchemy2.functions import ST_Collect, ST_MakeLine
-from sqlalchemy import and_, or_, select
-from sqlalchemy.orm import load_only, selectinload
-
-
 @router.get("/me", response_model=TasksMePublic)
 def read_tasks_me(
     session: SessionDep,
@@ -65,12 +63,10 @@ def read_tasks_me(
     statement = (
         select(Task)
         .where(Task.employee_id == current_employee.id)
-        .options(
-            selectinload(Task.agent_point),
-        )
+        .options(joinedload(Task.agent_point).selectinload(AgentPoint.location))
+        .order_by(Task.start_time)
         .offset(skip)
         .limit(limit)
-        .order_by(Task.start_time)
     )
     #     statement = (
     #     select(Task)
@@ -154,9 +150,17 @@ def read_tasks_me(
 
             # Combine all route parts into a single LineString if we have parts
             if route_parts:
-                # Use ST_Collect to combine all route parts
-                collect_stmt = select(ST_Collect(route_parts))
-                route = session.exec(collect_stmt).first()
+                # Convert WKB elements to Shapely geometries
+                geometries = []
+                for wkb_element in route_parts:
+                    # Assuming WKBElement contains WKB data
+                    geom = shapely.wkb.loads(bytes(wkb_element.data))
+                    geometries.append(geom)
+
+                # Merge all LineStrings into one
+                merged = linemerge(geometries)
+                # Convert to WKT string instead of WKB binary
+                route = shapely.wkt.dumps(merged)
 
     print(tasks)
     print(route)
