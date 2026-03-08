@@ -23,7 +23,7 @@ function UserInfo({
     >
       <div className="flex flex-col items-start min-w-0">
         <p className="text-sm font-medium truncate w-full opacity-70">
-          {`${name} ${surname} ${middle_name}`}
+          {`${surname} ${name} ${middle_name}`}
         </p>
         <p className="text-xs truncate w-full opacity-70">{role}</p>
       </div>

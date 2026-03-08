@@ -88,6 +88,19 @@ function Dashboard() {
 
   const { data: data } = useSuspenseQuery(getTasksQueryOptions());
 
+  if (currentUser?.role !== "FIELD_EMPLOYEE" || !data || !data.start_location) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="text-center">
+          <p className="text-gray-500 text-lg">Нет данных о маршруте</p>
+          <p className="text-gray-400 text-sm mt-2">
+            Информация о начальной точке отсутствует
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   const position = [data.start_location.lat, data.start_location.lon];
 
   const routePoints = data?.route ? parseLineString(data.route) : [];

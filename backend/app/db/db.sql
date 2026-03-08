@@ -170,6 +170,7 @@ INSERT INTO public.task
 	point 0 = location id 1
 
 	Objective: 3197397
+	
 	Route for vehicle 0:
 	0 ->  9 ->  26 ->  19 ->  4 ->  16 ->  24 ->  22 ->  29 -> 0
 	Distance of the route: 28039m
@@ -182,9 +183,6 @@ INSERT INTO public.task
 
 	Route for vehicle 3:
 	1 ->  7 ->  13 ->  6 ->  17 ->  25 ->  11 ->  3 -> 1
-	Distance of the route: 30511m
-	Number of visits: 7
-
 	Distance of the route: 30511m
 	Number of visits: 7
 
