@@ -85,45 +85,10 @@ function parseLineString(wktString: string): [number, number][] {
     return [lat, lon] as [number, number];
   });
 }
-
-function Dashboard() {
-  const { user: currentUser } = useAuth();
-
-  if (currentUser?.role === "EMPLOYEE_MANAGER") {
-    return (
-      <div className="flex flex-col items-start gap-10 text-xl">
-        <RouterLink to="/admin" className="flex items-center gap-2">
-          <ChevronRight />
-          Пользователи
-        </RouterLink>
-        <RouterLink to="/locations" className="flex items-center gap-2">
-          <ChevronRight />
-          Локации
-        </RouterLink>
-        <RouterLink to="/employees" className="flex items-center gap-2">
-          <ChevronRight />
-          Выездные сотрудники
-        </RouterLink>
-        <RouterLink to="/agent-points" className="flex items-center gap-2">
-          <ChevronRight />
-          Точки
-        </RouterLink>
-        <RouterLink to="/task-types" className="flex items-center gap-2">
-          <ChevronRight />
-          Справочники
-        </RouterLink>
-        <RouterLink to="/tasks" className="flex items-center gap-2">
-          <ChevronRight />
-          Задачи
-        </RouterLink>
-        <LoadingButton type="submit">Распределить задачи</LoadingButton>
-      </div>
-    );
-  }
-
+function FieldEmployeeDashboard() {
   const { data: data } = useSuspenseQuery(getTasksQueryOptions());
 
-  if (currentUser?.role !== "FIELD_EMPLOYEE" || !data || !data.start_location) {
+  if (!data || !data.tasks || data.route == "GEOMETRYCOLLECTION EMPTY") {
     return (
       <div className="flex justify-center items-center h-screen">
         <div className="text-center">
@@ -201,6 +166,56 @@ function Dashboard() {
           {/* <LoadingButton type="submit">Сформировать отчет</LoadingButton> */}
           {/* <div>"Карусель сотрудников"</div> */}
         </div>
+      </div>
+    </div>
+  );
+}
+
+function Dashboard() {
+  const { user: currentUser } = useAuth();
+
+  if (currentUser?.role === "EMPLOYEE_MANAGER") {
+    return (
+      <div className="flex flex-col items-start gap-10 text-xl">
+        <RouterLink to="/admin" className="flex items-center gap-2">
+          <ChevronRight />
+          Пользователи
+        </RouterLink>
+        <RouterLink to="/locations" className="flex items-center gap-2">
+          <ChevronRight />
+          Локации
+        </RouterLink>
+        <RouterLink to="/employees" className="flex items-center gap-2">
+          <ChevronRight />
+          Выездные сотрудники
+        </RouterLink>
+        <RouterLink to="/agent-points" className="flex items-center gap-2">
+          <ChevronRight />
+          Точки
+        </RouterLink>
+        <RouterLink to="/task-types" className="flex items-center gap-2">
+          <ChevronRight />
+          Справочники
+        </RouterLink>
+        <RouterLink to="/tasks" className="flex items-center gap-2">
+          <ChevronRight />
+          Задачи
+        </RouterLink>
+        <LoadingButton type="submit">Распределить задачи</LoadingButton>
+      </div>
+    );
+  }
+  if (currentUser?.role === "FIELD_EMPLOYEE") {
+    return <FieldEmployeeDashboard />;
+  }
+
+  return (
+    <div className="flex justify-center items-center h-screen">
+      <div className="text-center">
+        <p className="text-gray-500 text-lg">Нет данных о маршруте</p>
+        <p className="text-gray-400 text-sm mt-2">
+          Информация о начальной точке отсутствует
+        </p>
       </div>
     </div>
   );
