@@ -1,3 +1,4 @@
+from app.distance_matrix import distance_matrix
 from typing import Any, List, Optional
 
 import shapely
@@ -23,6 +24,20 @@ from sqlalchemy.orm import joinedload, load_only, selectinload
 from sqlmodel import func, select
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
+
+
+@router.post("/")
+def distribute_tasks(*, session: SessionDep) -> Message:
+    last_location = location_service.read_last(session)
+
+    if last_location.lat is None:
+        geocoding()
+
+    distance_matrix = api.get_distance_matrix()
+
+    solve(distance_matrix, num_vehicles, starts, ends, max_visits_per_vehicle)
+
+    return Message(message="Task distributed successfully")
 
 
 @router.get(

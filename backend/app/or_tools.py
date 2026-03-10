@@ -10,15 +10,17 @@ from ortools.constraint_solver import pywrapcp, routing_enums_pb2
     """
 
 
-def create_data_model():
+def create_data_model(
+    distance_matrix, num_vehicles, starts, ends, max_visits_per_vehicle
+):
     """Stores the data for the problem."""
     data = {}
     data["distance_matrix"] = distance_matrix
-    data["num_vehicles"] = 8
-    data["starts"] = [0, 0, 0, 1, 1, 1, 2, 2]
-    data["ends"] = data["starts"]
+    data["num_vehicles"] = num_vehicles
+    data["starts"] = starts
+    data["ends"] = ends
     # Добавляем ограничение на количество посещений
-    data["max_visits_per_vehicle"] = 8
+    data["max_visits_per_vehicle"] = max_visits_per_vehicle
     return data
 
 
@@ -50,78 +52,81 @@ def print_solution(data, manager, routing, solution):
     print(f"Maximum of the route distances: {max_route_distance}m")
 
 
-"""Entry point of the program."""
-# Instantiate the data problem.
-data = create_data_model()
+def solve(distance_matrix, num_vehicles, starts, ends, max_visits_per_vehicle):
+    """Entry point of the program."""
+    # Instantiate the data problem.
+    data = create_data_model(
+        distance_matrix, num_vehicles, starts, ends, max_visits_per_vehicle
+    )
 
-# Create the routing index manager.
-manager = pywrapcp.RoutingIndexManager(
-    len(data["distance_matrix"]), data["num_vehicles"], data["starts"], data["ends"]
-)
+    # Create the routing index manager.
+    manager = pywrapcp.RoutingIndexManager(
+        len(data["distance_matrix"]), data["num_vehicles"], data["starts"], data["ends"]
+    )
 
-# Create Routing Model.
-routing = pywrapcp.RoutingModel(manager)
+    # Create Routing Model.
+    routing = pywrapcp.RoutingModel(manager)
 
+    # Create and register a transit callback.
+    def distance_callback(from_index, to_index):
+        """Returns the distance between the two nodes."""
+        # Convert from routing variable Index to distance matrix NodeIndex.
+        from_node = manager.IndexToNode(from_index)
+        to_node = manager.IndexToNode(to_index)
+        return int(
+            data["distance_matrix"][from_node][to_node] * 1000
+        )  # Convert to meters
 
-# Create and register a transit callback.
-def distance_callback(from_index, to_index):
-    """Returns the distance between the two nodes."""
-    # Convert from routing variable Index to distance matrix NodeIndex.
-    from_node = manager.IndexToNode(from_index)
-    to_node = manager.IndexToNode(to_index)
-    return int(data["distance_matrix"][from_node][to_node] * 1000)  # Convert to meters
+    transit_callback_index = routing.RegisterTransitCallback(distance_callback)
 
+    # Define cost of each arc.
+    routing.SetArcCostEvaluatorOfAllVehicles(transit_callback_index)
 
-transit_callback_index = routing.RegisterTransitCallback(distance_callback)
+    # Add Distance constraint.
+    dimension_name = "Distance"
+    routing.AddDimension(
+        transit_callback_index,
+        0,  # no slack
+        130_0000,  # vehicle maximum travel distance (in meters) 130 км макс скорость
+        True,  # start cumul to zero
+        dimension_name,
+    )
+    distance_dimension = routing.GetDimensionOrDie(dimension_name)
+    distance_dimension.SetGlobalSpanCostCoefficient(100)
 
-# Define cost of each arc.
-routing.SetArcCostEvaluatorOfAllVehicles(transit_callback_index)
+    # Добавляем ограничение на количество посещений (каждая точка - 1 посещение)
+    def visit_callback(from_index, to_index):
+        """Returns 1 for each visit (except returning to depot)."""
+        from_node = manager.IndexToNode(from_index)
+        to_node = manager.IndexToNode(to_index)
+        # Возвращаем 1 за каждое посещение, но 0 если возвращаемся в депо
+        return 1 if to_node not in [0, 1, 2] else 0
 
-# Add Distance constraint.
-dimension_name = "Distance"
-routing.AddDimension(
-    transit_callback_index,
-    0,  # no slack
-    130_0000,  # vehicle maximum travel distance (in meters) 130 км макс скорость
-    True,  # start cumul to zero
-    dimension_name,
-)
-distance_dimension = routing.GetDimensionOrDie(dimension_name)
-distance_dimension.SetGlobalSpanCostCoefficient(100)
+    visit_callback_index = routing.RegisterTransitCallback(visit_callback)
 
+    # Добавляем dimension для количества посещений
+    routing.AddDimension(
+        visit_callback_index,
+        0,  # no slack
+        data[
+            "max_visits_per_vehicle"
+        ],  # максимальное количество посещений на транспорт
+        True,  # start cumul to zero
+        "Visits",
+    )
 
-# Добавляем ограничение на количество посещений (каждая точка - 1 посещение)
-def visit_callback(from_index, to_index):
-    """Returns 1 for each visit (except returning to depot)."""
-    from_node = manager.IndexToNode(from_index)
-    to_node = manager.IndexToNode(to_index)
-    # Возвращаем 1 за каждое посещение, но 0 если возвращаемся в депо
-    return 1 if to_node not in [0, 1, 2] else 0
+    # Setting first solution heuristic.
+    search_parameters = pywrapcp.DefaultRoutingSearchParameters()
+    search_parameters.first_solution_strategy = (
+        routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC
+    )
+    search_parameters.time_limit.seconds = 10  # Добавляем ограничение по времени
 
+    # Solve the problem.
+    solution = routing.SolveWithParameters(search_parameters)
 
-visit_callback_index = routing.RegisterTransitCallback(visit_callback)
-
-# Добавляем dimension для количества посещений
-routing.AddDimension(
-    visit_callback_index,
-    0,  # no slack
-    data["max_visits_per_vehicle"],  # максимальное количество посещений на транспорт
-    True,  # start cumul to zero
-    "Visits",
-)
-
-# Setting first solution heuristic.
-search_parameters = pywrapcp.DefaultRoutingSearchParameters()
-search_parameters.first_solution_strategy = (
-    routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC
-)
-search_parameters.time_limit.seconds = 10  # Добавляем ограничение по времени
-
-# Solve the problem.
-solution = routing.SolveWithParameters(search_parameters)
-
-# Print solution on console.
-if solution:
-    print_solution(data, manager, routing, solution)
-else:
-    print("No solution found !")
+    # Print solution on console.
+    if solution:
+        print_solution(data, manager, routing, solution)
+    else:
+        print("No solution found !")
