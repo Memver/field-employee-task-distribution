@@ -4,18 +4,30 @@ from app.api.deps import CurrentUser, SessionDep
 from app.core.security import get_password_hash
 from app.models import (
     Message,
-    UpdatePassword,
     User,
     UserCreate,
     UserPublic,
     UsersPublic,
     UserUpdate,
-    UserUpdateMe,
 )
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from sqlmodel import func, select
 
 router = APIRouter(prefix="/users", tags=["users"])
+
+
+@router.post("/", response_model=UserPublic)
+def create_user(*, session: SessionDep, user_in: UserCreate) -> Any:
+    """
+    Create new user.
+    """
+    user = User.model_validate(
+        user_in, update={"hashed_password": get_password_hash(user_in.password)}
+    )
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+    return user
 
 
 @router.get(
@@ -32,42 +44,8 @@ def read_users(session: SessionDep, skip: int = 0, limit: int = 100) -> Any:
 
     statement = select(User).offset(skip).limit(limit)
     users = session.exec(statement).all()
-    users_role_str = [
-        UserPublic.model_validate(user, update={"role": user.role.name})
-        for user in users
-    ]
 
-    return UsersPublic(data=users_role_str, count=count)
-
-
-@router.post("/", response_model=UserPublic)
-def create_user(*, session: SessionDep, user_in: UserCreate) -> Any:
-    """
-    Create new user.
-    """
-    user = User.model_validate(
-        user_in, update={"hashed_password": get_password_hash(user_in.password)}
-    )
-    session.add(user)
-    session.commit()
-    session.refresh(user)
-    user_out = User.model_validate(user, update={"role": user.role.name})
-    return user_out
-
-
-@router.put("/", response_model=UserPublic)
-def update_user(*, session: SessionDep, user_in: UserCreate) -> Any:
-    """
-    Update user.
-    """
-    user = User.model_validate(
-        user_in, update={"hashed_password": get_password_hash(user_in.password)}
-    )
-    session.add(user)
-    session.commit()
-    session.refresh(user)
-    user_out = User.model_validate(user, update={"role": user.role.name})
-    return user_out
+    return UsersPublic(data=users, count=count)
 
 
 # @router.patch("/me", response_model=UserPublic)
@@ -104,9 +82,7 @@ def read_user_me(current_user: CurrentUser) -> Any:
     """
     Get current user.
     """
-    user = UserPublic.model_validate(
-        current_user, update={"role": current_user.role.name}
-    )
+    user = UserPublic.model_validate(current_user)
     return user
 
 
@@ -157,6 +133,44 @@ def read_user_by_id(
 #     session.commit()
 #     session.refresh(db_user)
 #     return db_user
+
+
+@router.put(
+    "/{id}",
+    response_model=UserPublic,
+)
+def update_user(
+    *,
+    session: SessionDep,
+    id: int,
+    user_in: UserUpdate,
+) -> Any:
+    """
+    Update a user.
+    """
+
+    db_user = session.get(User, id)
+    if not db_user:
+        raise HTTPException(
+            status_code=404,
+            detail="The user with this id does not exist in the system",
+        )
+
+    user_data = user_in.model_dump(exclude_unset=True)
+
+    extra_data = {}
+    if "password" in user_data:
+        password = user_data["password"]
+        hashed_password = get_password_hash(password)
+        extra_data["hashed_password"] = hashed_password
+
+    db_user.sqlmodel_update(user_data, update=extra_data)
+
+    session.add(db_user)
+    session.commit()
+    session.refresh(db_user)
+
+    return db_user
 
 
 @router.delete("/{user_id}")

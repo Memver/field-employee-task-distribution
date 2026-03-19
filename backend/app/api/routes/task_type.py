@@ -1,11 +1,30 @@
 from typing import Any
 
-from app.api.deps import SessionDep
-from app.models import Message, TaskType, TaskTypePublic, TaskTypesPublic
-from fastapi import APIRouter
+from app.api.deps import CurrentUser, SessionDep
+from app.models import (
+    Message,
+    TaskType,
+    TaskTypeCreate,
+    TaskTypePublic,
+    TaskTypesPublic,
+    TaskTypeUpdate,
+)
+from fastapi import APIRouter, HTTPException
 from sqlmodel import func, select
 
 router = APIRouter(prefix="/task-types", tags=["task-types"])
+
+
+@router.post("/", response_model=TaskTypePublic)
+def create_task_type(*, session: SessionDep, task_type_in: TaskTypeCreate) -> Any:
+    """
+    Create new task_type.
+    """
+    task_type = TaskType.model_validate(task_type_in)
+    session.add(task_type)
+    session.commit()
+    session.refresh(task_type)
+    return task_type
 
 
 @router.get(
@@ -32,6 +51,28 @@ def read_task_type_by_id(task_type_id: int, session: SessionDep) -> Any:
     Get a specific task_type by id.
     """
     task_type = session.get(TaskType, task_type_id)
+    return task_type
+
+
+@router.put("/{id}", response_model=TaskTypePublic)
+def update_task_type(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,
+    id: int,
+    task_type_in: TaskTypeUpdate,
+) -> Any:
+    """
+    Update an task_type.
+    """
+    task_type = session.get(TaskType, id)
+    if not task_type:
+        raise HTTPException(status_code=404, detail="TaskType not found")
+    update_dict = task_type_in.model_dump(exclude_unset=True)
+    task_type.sqlmodel_update(update_dict)
+    session.add(task_type)
+    session.commit()
+    session.refresh(task_type)
     return task_type
 
 

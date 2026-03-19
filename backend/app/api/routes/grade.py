@@ -1,11 +1,30 @@
 from typing import Any
 
-from app.api.deps import SessionDep
-from app.models import Grade, GradePublic, GradesPublic, Message
-from fastapi import APIRouter
+from app.api.deps import CurrentUser, SessionDep
+from app.models import (
+    Grade,
+    GradeCreate,
+    GradePublic,
+    GradesPublic,
+    GradeUpdate,
+    Message,
+)
+from fastapi import APIRouter, HTTPException
 from sqlmodel import func, select
 
 router = APIRouter(prefix="/grades", tags=["grades"])
+
+
+@router.post("/", response_model=GradePublic)
+def create_grade(*, session: SessionDep, grade_in: GradeCreate) -> Any:
+    """
+    Create new grade.
+    """
+    grade = Grade.model_validate(grade_in)
+    session.add(grade)
+    session.commit()
+    session.refresh(grade)
+    return grade
 
 
 @router.get(
@@ -32,6 +51,28 @@ def read_grade_by_id(grade_id: int, session: SessionDep) -> Any:
     Get a specific grade by id.
     """
     grade = session.get(Grade, grade_id)
+    return grade
+
+
+@router.put("/{id}", response_model=GradePublic)
+def update_grade(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,
+    id: int,
+    grade_in: GradeUpdate,
+) -> Any:
+    """
+    Update an grade.
+    """
+    grade = session.get(Grade, id)
+    if not grade:
+        raise HTTPException(status_code=404, detail="Grade not found")
+    update_dict = grade_in.model_dump(exclude_unset=True)
+    grade.sqlmodel_update(update_dict)
+    session.add(grade)
+    session.commit()
+    session.refresh(grade)
     return grade
 
 

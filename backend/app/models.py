@@ -248,28 +248,12 @@ class Task(TaskBase, table=True):
     task_status: Optional["TaskStatus"] = Relationship()
 
 
-# Properties to receive via API on creation
-class UserCreate(UserBase):
-    password: str = Field(min_length=1, max_length=128)
-    role_id: int = Field(
-        nullable=False,
-    )
+class RoleCreate(RoleBase):
+    pass
 
 
-# Properties to receive via API on update, all are optional
-class UserUpdate(UserBase):
-    email: Optional["EmailStr"] = Field(default=None, max_length=255)  # type: ignore
-    password: Optional["str"] = Field(default=None, min_length=8, max_length=128)
-
-
-class UserUpdateMe(SQLModel):
-    full_name: Optional["str"] = Field(default=None, max_length=255)
-    email: Optional["EmailStr"] = Field(default=None, max_length=255)
-
-
-class UpdatePassword(SQLModel):
-    current_password: str = Field(min_length=8, max_length=128)
-    new_password: str = Field(min_length=8, max_length=128)
+class RoleUpdate(RoleBase):
+    pass
 
 
 class RolePublic(RoleBase):
@@ -281,6 +265,14 @@ class RolesPublic(SQLModel):
     count: int
 
 
+class GradeCreate(GradeBase):
+    pass
+
+
+class GradeUpdate(GradeBase):
+    pass
+
+
 class GradePublic(GradeBase):
     id: int
 
@@ -288,6 +280,14 @@ class GradePublic(GradeBase):
 class GradesPublic(SQLModel):
     data: list[GradePublic]
     count: int
+
+
+class LocationCreate(LocationBase):
+    pass
+
+
+class LocationUpdate(LocationBase):
+    pass
 
 
 class LocationPublic(LocationBase):
@@ -299,6 +299,14 @@ class LocationsPublic(SQLModel):
     count: int
 
 
+class PriorityCreate(PriorityBase):
+    pass
+
+
+class PriorityUpdate(PriorityBase):
+    pass
+
+
 class PriorityPublic(PriorityBase):
     id: int
 
@@ -306,6 +314,14 @@ class PriorityPublic(PriorityBase):
 class PrioritiesPublic(SQLModel):
     data: list[PriorityPublic]
     count: int
+
+
+class TaskStatusCreate(TaskStatusBase):
+    pass
+
+
+class TaskStatusUpdate(TaskStatusBase):
+    pass
 
 
 class TaskStatusPublic(TaskStatusBase):
@@ -317,10 +333,27 @@ class TaskStatusesPublic(SQLModel):
     count: int
 
 
+# Properties to receive via API on creation
+class UserCreate(UserBase):
+    password: str = Field(min_length=1, max_length=128)
+    role_id: int = Field(nullable=False)
+
+
+# Properties to receive via API on update, all are optional
+class UserUpdate(UserBase):
+    password: str = Field(min_length=1, max_length=128)
+    role_id: int = Field(nullable=False)
+
+
+class UserUpdateMe(SQLModel):
+    full_name: Optional["str"] = Field(default=None, max_length=255)
+    email: Optional["EmailStr"] = Field(default=None, max_length=255)
+
+
 # Properties to return via API, id is always required
 class UserPublic(UserBase):
     id: int
-    role: str
+    role: RolePublic
 
 
 class UsersPublic(SQLModel):
@@ -328,11 +361,23 @@ class UsersPublic(SQLModel):
     count: int
 
 
+class EmployeeCreate(EmployeeBase):
+    user_id: int = Field(nullable=False)
+    grade_id: int = Field(nullable=False)
+    start_location_id: int = Field(nullable=False)
+
+
+class EmployeeUpdate(EmployeeBase):
+    user_id: int = Field(nullable=False)
+    grade_id: int = Field(nullable=False)
+    start_location_id: int = Field(nullable=False)
+
+
 class EmployeePublic(EmployeeBase):
     id: int
-    user_id: int
-    grade_id: int
-    start_location_id: int
+    user_id: int = Field(nullable=False)
+    grade_id: int = Field(nullable=False)
+    start_location_id: int = Field(nullable=False)
 
 
 class EmployeesPublic(SQLModel):
@@ -340,15 +385,33 @@ class EmployeesPublic(SQLModel):
     count: int
 
 
+class TaskTypeCreate(TaskTypeBase):
+    min_grade_id: int = Field(nullable=False)
+    priority_id: int = Field(nullable=False)
+
+
+class TaskTypeUpdate(TaskTypeBase):
+    min_grade_id: int = Field(nullable=False)
+    priority_id: int = Field(nullable=False)
+
+
 class TaskTypePublic(TaskTypeBase):
     id: int
-    min_grade_id: int
-    priority_id: int
+    min_grade_id: int = Field(nullable=False)
+    priority_id: int = Field(nullable=False)
 
 
 class TaskTypesPublic(SQLModel):
     data: list[TaskTypePublic]
     count: int
+
+
+class AgentPointCreate(AgentPointBase):
+    location_id: int = Field(nullable=False)
+
+
+class AgentPointUpdate(AgentPointBase):
+    location_id: int = Field(nullable=False)
 
 
 class AgentPointPublic(AgentPointBase):
@@ -361,12 +424,26 @@ class AgentPointsPublic(SQLModel):
     count: int
 
 
+class TaskCreate(TaskBase):
+    employee_id: int = Field(nullable=False)
+    task_type_id: int = Field(nullable=False)
+    agent_point_id: int = Field(nullable=False)
+    task_status_id: int = Field(nullable=False)
+
+
+class TaskUpdate(TaskBase):
+    employee_id: int = Field(nullable=False)
+    task_type_id: int = Field(nullable=False)
+    agent_point_id: int = Field(nullable=False)
+    task_status_id: int = Field(nullable=False)
+
+
 class TaskPublic(TaskBase):
     id: int
-    employee_id: int
-    task_type_id: int
-    agent_point_id: int
-    task_status_id: int
+    employee_id: int = Field(nullable=False)
+    task_type_id: int = Field(nullable=False)
+    agent_point_id: int = Field(nullable=False)
+    task_status_id: int = Field(nullable=False)
 
 
 class TasksPublic(SQLModel):
@@ -405,4 +482,9 @@ class TokenPayload(SQLModel):
 
 class NewPassword(SQLModel):
     token: str
+    new_password: str = Field(min_length=8, max_length=128)
+
+
+class UpdatePassword(SQLModel):
+    current_password: str = Field(min_length=8, max_length=128)
     new_password: str = Field(min_length=8, max_length=128)

@@ -1,32 +1,43 @@
-from app.distance_matrix import distance_matrix
-from typing import Any, List, Optional
+from typing import Any
 
 import shapely
 import shapely.wkb
 from app.api.deps import CurrentUser, SessionDep
 from app.models import (
-    AgentPoint,
     Location,
     LocationEdge,
     LocationPublic,
     Message,
     Task,
+    TaskCreate,
     TaskMePublic,
     TaskPublic,
     TasksMePublic,
     TasksPublic,
+    TaskUpdate,
 )
-from fastapi import APIRouter
-from geoalchemy2.functions import ST_Collect, ST_MakeLine
+from fastapi import APIRouter, HTTPException
 from shapely.ops import linemerge
-from sqlalchemy import and_, or_, select
-from sqlalchemy.orm import joinedload, load_only, selectinload
+from sqlalchemy import and_, or_
+from sqlalchemy.orm import joinedload, load_only
 from sqlmodel import func, select
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
 
 
-@router.post("/")
+@router.post("/", response_model=TaskPublic)
+def create_task(*, session: SessionDep, task_in: TaskCreate) -> Any:
+    """
+    Create new task.
+    """
+    task = Task.model_validate(task_in)
+    session.add(task)
+    session.commit()
+    session.refresh(task)
+    return task
+
+
+@router.post("/distribute")
 def distribute_tasks(*, session: SessionDep) -> Message:
     last_location = location_service.read_last(session)
 
@@ -78,7 +89,7 @@ def read_tasks_me(
     statement = (
         select(Task)
         .where(Task.employee_id == current_employee.id)
-        .options(joinedload(Task.agent_point).selectinload(AgentPoint.location))
+        .options(joinedload(Task.task).selectinload(Task.location))
         .order_by(Task.start_time)
         .offset(skip)
         .limit(limit)
@@ -89,7 +100,7 @@ def read_tasks_me(
     #     .offset(skip)
     #     .limit(limit)
     #     .options(
-    #         selectinload(Task.agent_point).selectinload(AgentPoint.location),
+    #         selectinload(Task.task).selectinload(Task.location),
     #     )
     #     .order_by(Task.start_time)
     # )
@@ -109,8 +120,8 @@ def read_tasks_me(
     for task in tasks:
         tasks_me_public.append(TaskMePublic.model_validate(task))
         # Add task location
-        if task.agent_point and task.agent_point.location:
-            location_ids.append(task.agent_point.location.id)
+        if task.task and task.task.location:
+            location_ids.append(task.task.location.id)
 
     # Add start location again to complete the route (return to start)
     location_ids.append(current_employee.start_location_id)
@@ -194,6 +205,28 @@ def read_task_by_id(task_id: int, session: SessionDep) -> Any:
     Get a specific task by id.
     """
     task = session.get(Task, task_id)
+    return task
+
+
+@router.put("/{id}", response_model=TaskPublic)
+def update_task(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,
+    id: int,
+    task_in: TaskUpdate,
+) -> Any:
+    """
+    Update an task.
+    """
+    task = session.get(Task, id)
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    update_dict = task_in.model_dump(exclude_unset=True)
+    task.sqlmodel_update(update_dict)
+    session.add(task)
+    session.commit()
+    session.refresh(task)
     return task
 
 

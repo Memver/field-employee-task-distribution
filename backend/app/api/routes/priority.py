@@ -1,11 +1,30 @@
 from typing import Any
 
-from app.api.deps import SessionDep
-from app.models import Message, PrioritiesPublic, Priority, PriorityPublic
-from fastapi import APIRouter
+from app.api.deps import CurrentUser, SessionDep
+from app.models import (
+    Message,
+    PrioritiesPublic,
+    Priority,
+    PriorityCreate,
+    PriorityPublic,
+    PriorityUpdate,
+)
+from fastapi import APIRouter, HTTPException
 from sqlmodel import func, select
 
 router = APIRouter(prefix="/priorities", tags=["priorities"])
+
+
+@router.post("/", response_model=PriorityPublic)
+def create_priority(*, session: SessionDep, priority_in: PriorityCreate) -> Any:
+    """
+    Create new priority.
+    """
+    priority = Priority.model_validate(priority_in)
+    session.add(priority)
+    session.commit()
+    session.refresh(priority)
+    return priority
 
 
 @router.get(
@@ -32,6 +51,28 @@ def read_priority_by_id(priority_id: int, session: SessionDep) -> Any:
     Get a specific priority by id.
     """
     priority = session.get(Priority, priority_id)
+    return priority
+
+
+@router.put("/{id}", response_model=PriorityPublic)
+def update_priority(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,
+    id: int,
+    priority_in: PriorityUpdate,
+) -> Any:
+    """
+    Update an priority.
+    """
+    priority = session.get(Priority, id)
+    if not priority:
+        raise HTTPException(status_code=404, detail="Priority not found")
+    update_dict = priority_in.model_dump(exclude_unset=True)
+    priority.sqlmodel_update(update_dict)
+    session.add(priority)
+    session.commit()
+    session.refresh(priority)
     return priority
 
 

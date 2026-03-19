@@ -1,11 +1,30 @@
 from typing import Any
 
-from app.api.deps import SessionDep
-from app.models import Location, LocationPublic, LocationsPublic, Message
-from fastapi import APIRouter
+from app.api.deps import CurrentUser, SessionDep
+from app.models import (
+    Location,
+    LocationCreate,
+    LocationPublic,
+    LocationsPublic,
+    LocationUpdate,
+    Message,
+)
+from fastapi import APIRouter, HTTPException
 from sqlmodel import func, select
 
 router = APIRouter(prefix="/locations", tags=["locations"])
+
+
+@router.post("/", response_model=LocationPublic)
+def create_location(*, session: SessionDep, location_in: LocationCreate) -> Any:
+    """
+    Create new location.
+    """
+    location = Location.model_validate(location_in)
+    session.add(location)
+    session.commit()
+    session.refresh(location)
+    return location
 
 
 @router.get(
@@ -32,6 +51,28 @@ def read_location_by_id(location_id: int, session: SessionDep) -> Any:
     Get a specific location by id.
     """
     location = session.get(Location, location_id)
+    return location
+
+
+@router.put("/{id}", response_model=LocationPublic)
+def update_location(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,
+    id: int,
+    location_in: LocationUpdate,
+) -> Any:
+    """
+    Update an location.
+    """
+    location = session.get(Location, id)
+    if not location:
+        raise HTTPException(status_code=404, detail="Location not found")
+    update_dict = location_in.model_dump(exclude_unset=True)
+    location.sqlmodel_update(update_dict)
+    session.add(location)
+    session.commit()
+    session.refresh(location)
     return location
 
 
