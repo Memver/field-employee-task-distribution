@@ -1,4 +1,4 @@
-FROM python:3.10
+FROM python:3.10-alpine3.23-dev
 
 ENV PYTHONUNBUFFERED=1
 
