@@ -5,7 +5,7 @@ import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 
-import { TaskTypesService, type TaskTypePublic, type TaskTypeUpdate } from "@/client"
+import { type EmployeePublic, type EmployeeUpdate, EmployeesService } from "@/client"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -17,47 +17,54 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
 import useCustomToast from "@/hooks/useCustomToast"
 import { handleError } from "@/utils"
 
 const formSchema = z.object({
-  name: z.string().min(1),
-  execution_time: z.coerce.number().int().positive(),
-  min_grade_id: z.coerce.number().int().positive(),
-  priority_id: z.coerce.number().int().positive(),
+  user_id: z.coerce.number().int().positive(),
+  grade_id: z.coerce.number().int().positive(),
+  start_location_id: z.coerce.number().int().positive(),
 })
 
 type FormData = z.infer<typeof formSchema>
 
 interface Props {
-  taskType: TaskTypePublic
+  employee: EmployeePublic
   onSuccess: () => void
 }
 
-const EditUser = ({ taskType, onSuccess }: Props) => {
+const EditUser = ({ employee, onSuccess }: Props) => {
   const [isOpen, setIsOpen] = useState(false)
   const queryClient = useQueryClient()
   const { showSuccessToast, showErrorToast } = useCustomToast()
+
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
-    defaultValues: taskType,
+    defaultValues: employee,
     mode: "onBlur",
     criteriaMode: "all",
   })
 
   const mutation = useMutation({
-    mutationFn: (data: TaskTypeUpdate) =>
-      TaskTypesService.updateTaskType({ id: taskType.id, requestBody: data }),
+    mutationFn: (data: EmployeeUpdate) =>
+      EmployeesService.updateEmployee({ id: employee.id, requestBody: data }),
     onSuccess: () => {
-      showSuccessToast("Task type updated successfully")
+      showSuccessToast("Employee updated successfully")
       setIsOpen(false)
       onSuccess()
     },
     onError: handleError.bind(showErrorToast),
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ["task-types"] }),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ["employees"] }),
   })
 
   const onSubmit = (data: FormData) => mutation.mutate(data)
@@ -70,19 +77,16 @@ const EditUser = ({ taskType, onSuccess }: Props) => {
       <DialogContent className="sm:max-w-md">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
-            <DialogHeader><DialogTitle>Редактировать тип задачи</DialogTitle><DialogDescription>Обновите поля.</DialogDescription></DialogHeader>
+            <DialogHeader><DialogTitle>Редактировать сотрудника</DialogTitle><DialogDescription>Обновите связанные id.</DialogDescription></DialogHeader>
             <div className="grid gap-4 py-4">
-              <FormField control={form.control} name="name" render={({ field }) => (
-                <FormItem><FormLabel>Название</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+              <FormField control={form.control} name="user_id" render={({ field }) => (
+                <FormItem><FormLabel>ID пользователя</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
               )} />
-              <FormField control={form.control} name="execution_time" render={({ field }) => (
-                <FormItem><FormLabel>Время выполнения</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+              <FormField control={form.control} name="grade_id" render={({ field }) => (
+                <FormItem><FormLabel>ID грейда</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
               )} />
-              <FormField control={form.control} name="min_grade_id" render={({ field }) => (
-                <FormItem><FormLabel>ID мин. грейда</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
-              )} />
-              <FormField control={form.control} name="priority_id" render={({ field }) => (
-                <FormItem><FormLabel>ID приоритета</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+              <FormField control={form.control} name="start_location_id" render={({ field }) => (
+                <FormItem><FormLabel>ID стартовой локации</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
               )} />
             </div>
             <DialogFooter>
@@ -97,3 +101,4 @@ const EditUser = ({ taskType, onSuccess }: Props) => {
 }
 
 export default EditUser
+

@@ -13,9 +13,10 @@ import { Route as SignupRouteImport } from './routes/signup'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as RecoverPasswordRouteImport } from './routes/recover-password'
 import { Route as LoginRouteImport } from './routes/login'
-import { Route as EmployeesRouteImport } from './routes/employees'
 import { Route as LayoutRouteImport } from './routes/_layout'
 import { Route as LayoutIndexRouteImport } from './routes/_layout/index'
+import { Route as LayoutTasksRouteImport } from './routes/_layout/tasks'
+import { Route as LayoutTaskTypesRouteImport } from './routes/_layout/task-types'
 import { Route as LayoutTaskStatusesRouteImport } from './routes/_layout/task-statuses'
 import { Route as LayoutSettingsRouteImport } from './routes/_layout/settings'
 import { Route as LayoutRolesRouteImport } from './routes/_layout/roles'
@@ -23,6 +24,8 @@ import { Route as LayoutPrioritiesRouteImport } from './routes/_layout/prioritie
 import { Route as LayoutLocationsRouteImport } from './routes/_layout/locations'
 import { Route as LayoutItemsRouteImport } from './routes/_layout/items'
 import { Route as LayoutGradesRouteImport } from './routes/_layout/grades'
+import { Route as LayoutEmployeesRouteImport } from './routes/_layout/employees'
+import { Route as LayoutAgentPointsRouteImport } from './routes/_layout/agent-points'
 import { Route as LayoutAdminRouteImport } from './routes/_layout/admin'
 
 const SignupRoute = SignupRouteImport.update({
@@ -45,11 +48,6 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const EmployeesRoute = EmployeesRouteImport.update({
-  id: '/employees',
-  path: '/employees',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const LayoutRoute = LayoutRouteImport.update({
   id: '/_layout',
   getParentRoute: () => rootRouteImport,
@@ -57,6 +55,16 @@ const LayoutRoute = LayoutRouteImport.update({
 const LayoutIndexRoute = LayoutIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutTasksRoute = LayoutTasksRouteImport.update({
+  id: '/tasks',
+  path: '/tasks',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutTaskTypesRoute = LayoutTaskTypesRouteImport.update({
+  id: '/task-types',
+  path: '/task-types',
   getParentRoute: () => LayoutRoute,
 } as any)
 const LayoutTaskStatusesRoute = LayoutTaskStatusesRouteImport.update({
@@ -94,6 +102,16 @@ const LayoutGradesRoute = LayoutGradesRouteImport.update({
   path: '/grades',
   getParentRoute: () => LayoutRoute,
 } as any)
+const LayoutEmployeesRoute = LayoutEmployeesRouteImport.update({
+  id: '/employees',
+  path: '/employees',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutAgentPointsRoute = LayoutAgentPointsRouteImport.update({
+  id: '/agent-points',
+  path: '/agent-points',
+  getParentRoute: () => LayoutRoute,
+} as any)
 const LayoutAdminRoute = LayoutAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -102,12 +120,13 @@ const LayoutAdminRoute = LayoutAdminRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof LayoutIndexRoute
-  '/employees': typeof EmployeesRoute
   '/login': typeof LoginRoute
   '/recover-password': typeof RecoverPasswordRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/admin': typeof LayoutAdminRoute
+  '/agent-points': typeof LayoutAgentPointsRoute
+  '/employees': typeof LayoutEmployeesRoute
   '/grades': typeof LayoutGradesRoute
   '/items': typeof LayoutItemsRoute
   '/locations': typeof LayoutLocationsRoute
@@ -115,14 +134,17 @@ export interface FileRoutesByFullPath {
   '/roles': typeof LayoutRolesRoute
   '/settings': typeof LayoutSettingsRoute
   '/task-statuses': typeof LayoutTaskStatusesRoute
+  '/task-types': typeof LayoutTaskTypesRoute
+  '/tasks': typeof LayoutTasksRoute
 }
 export interface FileRoutesByTo {
-  '/employees': typeof EmployeesRoute
   '/login': typeof LoginRoute
   '/recover-password': typeof RecoverPasswordRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/admin': typeof LayoutAdminRoute
+  '/agent-points': typeof LayoutAgentPointsRoute
+  '/employees': typeof LayoutEmployeesRoute
   '/grades': typeof LayoutGradesRoute
   '/items': typeof LayoutItemsRoute
   '/locations': typeof LayoutLocationsRoute
@@ -130,17 +152,20 @@ export interface FileRoutesByTo {
   '/roles': typeof LayoutRolesRoute
   '/settings': typeof LayoutSettingsRoute
   '/task-statuses': typeof LayoutTaskStatusesRoute
+  '/task-types': typeof LayoutTaskTypesRoute
+  '/tasks': typeof LayoutTasksRoute
   '/': typeof LayoutIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_layout': typeof LayoutRouteWithChildren
-  '/employees': typeof EmployeesRoute
   '/login': typeof LoginRoute
   '/recover-password': typeof RecoverPasswordRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/_layout/admin': typeof LayoutAdminRoute
+  '/_layout/agent-points': typeof LayoutAgentPointsRoute
+  '/_layout/employees': typeof LayoutEmployeesRoute
   '/_layout/grades': typeof LayoutGradesRoute
   '/_layout/items': typeof LayoutItemsRoute
   '/_layout/locations': typeof LayoutLocationsRoute
@@ -148,18 +173,21 @@ export interface FileRoutesById {
   '/_layout/roles': typeof LayoutRolesRoute
   '/_layout/settings': typeof LayoutSettingsRoute
   '/_layout/task-statuses': typeof LayoutTaskStatusesRoute
+  '/_layout/task-types': typeof LayoutTaskTypesRoute
+  '/_layout/tasks': typeof LayoutTasksRoute
   '/_layout/': typeof LayoutIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/employees'
     | '/login'
     | '/recover-password'
     | '/reset-password'
     | '/signup'
     | '/admin'
+    | '/agent-points'
+    | '/employees'
     | '/grades'
     | '/items'
     | '/locations'
@@ -167,14 +195,17 @@ export interface FileRouteTypes {
     | '/roles'
     | '/settings'
     | '/task-statuses'
+    | '/task-types'
+    | '/tasks'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/employees'
     | '/login'
     | '/recover-password'
     | '/reset-password'
     | '/signup'
     | '/admin'
+    | '/agent-points'
+    | '/employees'
     | '/grades'
     | '/items'
     | '/locations'
@@ -182,16 +213,19 @@ export interface FileRouteTypes {
     | '/roles'
     | '/settings'
     | '/task-statuses'
+    | '/task-types'
+    | '/tasks'
     | '/'
   id:
     | '__root__'
     | '/_layout'
-    | '/employees'
     | '/login'
     | '/recover-password'
     | '/reset-password'
     | '/signup'
     | '/_layout/admin'
+    | '/_layout/agent-points'
+    | '/_layout/employees'
     | '/_layout/grades'
     | '/_layout/items'
     | '/_layout/locations'
@@ -199,12 +233,13 @@ export interface FileRouteTypes {
     | '/_layout/roles'
     | '/_layout/settings'
     | '/_layout/task-statuses'
+    | '/_layout/task-types'
+    | '/_layout/tasks'
     | '/_layout/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   LayoutRoute: typeof LayoutRouteWithChildren
-  EmployeesRoute: typeof EmployeesRoute
   LoginRoute: typeof LoginRoute
   RecoverPasswordRoute: typeof RecoverPasswordRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
@@ -241,13 +276,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/employees': {
-      id: '/employees'
-      path: '/employees'
-      fullPath: '/employees'
-      preLoaderRoute: typeof EmployeesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/_layout': {
       id: '/_layout'
       path: ''
@@ -260,6 +288,20 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof LayoutIndexRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/tasks': {
+      id: '/_layout/tasks'
+      path: '/tasks'
+      fullPath: '/tasks'
+      preLoaderRoute: typeof LayoutTasksRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/task-types': {
+      id: '/_layout/task-types'
+      path: '/task-types'
+      fullPath: '/task-types'
+      preLoaderRoute: typeof LayoutTaskTypesRouteImport
       parentRoute: typeof LayoutRoute
     }
     '/_layout/task-statuses': {
@@ -311,6 +353,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutGradesRouteImport
       parentRoute: typeof LayoutRoute
     }
+    '/_layout/employees': {
+      id: '/_layout/employees'
+      path: '/employees'
+      fullPath: '/employees'
+      preLoaderRoute: typeof LayoutEmployeesRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/agent-points': {
+      id: '/_layout/agent-points'
+      path: '/agent-points'
+      fullPath: '/agent-points'
+      preLoaderRoute: typeof LayoutAgentPointsRouteImport
+      parentRoute: typeof LayoutRoute
+    }
     '/_layout/admin': {
       id: '/_layout/admin'
       path: '/admin'
@@ -323,6 +379,8 @@ declare module '@tanstack/react-router' {
 
 interface LayoutRouteChildren {
   LayoutAdminRoute: typeof LayoutAdminRoute
+  LayoutAgentPointsRoute: typeof LayoutAgentPointsRoute
+  LayoutEmployeesRoute: typeof LayoutEmployeesRoute
   LayoutGradesRoute: typeof LayoutGradesRoute
   LayoutItemsRoute: typeof LayoutItemsRoute
   LayoutLocationsRoute: typeof LayoutLocationsRoute
@@ -330,11 +388,15 @@ interface LayoutRouteChildren {
   LayoutRolesRoute: typeof LayoutRolesRoute
   LayoutSettingsRoute: typeof LayoutSettingsRoute
   LayoutTaskStatusesRoute: typeof LayoutTaskStatusesRoute
+  LayoutTaskTypesRoute: typeof LayoutTaskTypesRoute
+  LayoutTasksRoute: typeof LayoutTasksRoute
   LayoutIndexRoute: typeof LayoutIndexRoute
 }
 
 const LayoutRouteChildren: LayoutRouteChildren = {
   LayoutAdminRoute: LayoutAdminRoute,
+  LayoutAgentPointsRoute: LayoutAgentPointsRoute,
+  LayoutEmployeesRoute: LayoutEmployeesRoute,
   LayoutGradesRoute: LayoutGradesRoute,
   LayoutItemsRoute: LayoutItemsRoute,
   LayoutLocationsRoute: LayoutLocationsRoute,
@@ -342,6 +404,8 @@ const LayoutRouteChildren: LayoutRouteChildren = {
   LayoutRolesRoute: LayoutRolesRoute,
   LayoutSettingsRoute: LayoutSettingsRoute,
   LayoutTaskStatusesRoute: LayoutTaskStatusesRoute,
+  LayoutTaskTypesRoute: LayoutTaskTypesRoute,
+  LayoutTasksRoute: LayoutTasksRoute,
   LayoutIndexRoute: LayoutIndexRoute,
 }
 
@@ -350,7 +414,6 @@ const LayoutRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   LayoutRoute: LayoutRouteWithChildren,
-  EmployeesRoute: EmployeesRoute,
   LoginRoute: LoginRoute,
   RecoverPasswordRoute: RecoverPasswordRoute,
   ResetPasswordRoute: ResetPasswordRoute,

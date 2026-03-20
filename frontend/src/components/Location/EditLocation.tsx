@@ -1,11 +1,11 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { Plus } from "lucide-react"
+import { Pencil } from "lucide-react"
 import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 
-import { type TaskTypeCreate, TaskTypesService } from "@/client"
+import { type LocationPublic, type LocationUpdate, LocationsService } from "@/client"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -15,8 +15,8 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog"
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu"
 import {
   Form,
   FormControl,
@@ -31,15 +31,19 @@ import useCustomToast from "@/hooks/useCustomToast"
 import { handleError } from "@/utils"
 
 const formSchema = z.object({
-  name: z.string().min(1),
-  execution_time: z.coerce.number().int().positive(),
-  min_grade_id: z.coerce.number().int().positive(),
-  priority_id: z.coerce.number().int().positive(),
+  address: z.string().min(1, { message: "Адрес обязателен" }),
+  lat: z.union([z.coerce.number(), z.literal("")]).optional(),
+  lon: z.union([z.coerce.number(), z.literal("")]).optional(),
 })
 
 type FormData = z.infer<typeof formSchema>
 
-const AddUser = () => {
+interface EditLocationProps {
+  location: LocationPublic
+  onSuccess: () => void
+}
+
+const EditLocation = ({ location, onSuccess }: EditLocationProps) => {
   const [isOpen, setIsOpen] = useState(false)
   const queryClient = useQueryClient()
   const { showSuccessToast, showErrorToast } = useCustomToast()
@@ -48,50 +52,58 @@ const AddUser = () => {
     resolver: zodResolver(formSchema),
     mode: "onBlur",
     criteriaMode: "all",
+    defaultValues: {
+      address: location.address,
+      lat: location.lat ?? "",
+      lon: location.lon ?? "",
+    },
   })
 
   const mutation = useMutation({
-    mutationFn: (data: TaskTypeCreate) =>
-      TaskTypesService.createTaskType({ requestBody: data }),
+    mutationFn: (data: LocationUpdate) =>
+      LocationsService.updateLocation({ id: location.id, requestBody: data }),
     onSuccess: () => {
-      showSuccessToast("Task type created successfully")
-      form.reset()
+      showSuccessToast("Location updated successfully")
       setIsOpen(false)
+      onSuccess()
     },
     onError: handleError.bind(showErrorToast),
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["task-types"] })
-    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ["locations"] }),
   })
 
   const onSubmit = (data: FormData) => {
-    mutation.mutate(data)
+    mutation.mutate({
+      address: data.address,
+      lat: data.lat === "" ? null : data.lat,
+      lon: data.lon === "" ? null : data.lon,
+    })
   }
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button className="my-4">
-          <Plus className="mr-2" />
-          Добавить тип задачи
-        </Button>
-      </DialogTrigger>
+      <DropdownMenuItem
+        onSelect={(e) => e.preventDefault()}
+        onClick={() => setIsOpen(true)}
+      >
+        <Pencil />
+        Редактировать
+      </DropdownMenuItem>
       <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Добавить тип задачи</DialogTitle>
-          <DialogDescription>Заполните данные нового типа задачи.</DialogDescription>
-        </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
+            <DialogHeader>
+              <DialogTitle>Редактировать локацию</DialogTitle>
+              <DialogDescription>Обновите данные локации.</DialogDescription>
+            </DialogHeader>
             <div className="grid gap-4 py-4">
               <FormField
                 control={form.control}
-                name="name"
+                name="address"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Название</FormLabel>
+                    <FormLabel>Адрес</FormLabel>
                     <FormControl>
-                      <Input placeholder="Название" type="text" {...field} />
+                      <Input {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -99,12 +111,12 @@ const AddUser = () => {
               />
               <FormField
                 control={form.control}
-                name="execution_time"
+                name="lat"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Время выполнения</FormLabel>
+                    <FormLabel>Широта</FormLabel>
                     <FormControl>
-                      <Input placeholder="60" type="number" {...field} />
+                      <Input type="number" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -112,32 +124,18 @@ const AddUser = () => {
               />
               <FormField
                 control={form.control}
-                name="min_grade_id"
+                name="lon"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>ID минимального грейда</FormLabel>
+                    <FormLabel>Долгота</FormLabel>
                     <FormControl>
-                      <Input placeholder="1" type="number" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="priority_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>ID приоритета</FormLabel>
-                    <FormControl>
-                      <Input placeholder="1" type="number" {...field} />
+                      <Input type="number" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
-
             <DialogFooter>
               <DialogClose asChild>
                 <Button variant="outline" disabled={mutation.isPending}>
@@ -155,4 +153,5 @@ const AddUser = () => {
   )
 }
 
-export default AddUser
+export default EditLocation
+

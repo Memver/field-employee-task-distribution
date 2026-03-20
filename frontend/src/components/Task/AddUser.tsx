@@ -5,7 +5,7 @@ import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 
-import { type UserCreate, UsersService } from "@/client"
+import { type TaskCreate, TasksService } from "@/client"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -30,27 +30,19 @@ import { LoadingButton } from "@/components/ui/loading-button"
 import useCustomToast from "@/hooks/useCustomToast"
 import { handleError } from "@/utils"
 
-const formSchema = z
-  .object({
-    login: z.string(),
-    name: z.string(),
-    surname: z.string(),
-    middle_name: z.string(),
-    password: z
-      .string()
-      .min(1, { message: "Password is required" })
-      .min(8, { message: "Password must be at least 8 characters" }),
-    confirm_password: z
-      .string()
-      .min(1, { message: "Please confirm your password" }),
-    role_id: z.string(),
-  })
-  .refine((data) => data.password === data.confirm_password, {
-    message: "The passwords don't match",
-    path: ["confirm_password"],
-  })
+const formSchema = z.object({
+  start_time: z.string().min(1),
+  finish_time: z.string().min(1),
+  comment: z.string().min(1),
+  employee_id: z.coerce.number().int().positive(),
+  task_type_id: z.coerce.number().int().positive(),
+  agent_point_id: z.coerce.number().int().positive(),
+  task_status_id: z.coerce.number().int().positive(),
+})
 
 type FormData = z.infer<typeof formSchema>
+
+const toIsoDateTime = (value: string) => new Date(value).toISOString()
 
 const AddUser = () => {
   const [isOpen, setIsOpen] = useState(false)
@@ -64,21 +56,25 @@ const AddUser = () => {
   })
 
   const mutation = useMutation({
-    mutationFn: (data: UserCreate) =>
-      UsersService.createUser({ requestBody: data }),
+    mutationFn: (data: TaskCreate) =>
+      TasksService.createTask({ requestBody: data }),
     onSuccess: () => {
-      showSuccessToast("User created successfully")
+      showSuccessToast("Task created successfully")
       form.reset()
       setIsOpen(false)
     },
     onError: handleError.bind(showErrorToast),
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["users"] })
+      queryClient.invalidateQueries({ queryKey: ["tasks-admin"] })
     },
   })
 
   const onSubmit = (data: FormData) => {
-    mutation.mutate(data)
+    mutation.mutate({
+      ...data,
+      start_time: toIsoDateTime(data.start_time),
+      finish_time: toIsoDateTime(data.finish_time),
+    })
   }
 
   return (
@@ -86,40 +82,25 @@ const AddUser = () => {
       <DialogTrigger asChild>
         <Button className="my-4">
           <Plus className="mr-2" />
-          Добавить пользователя
+          Добавить задачу
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Добавить пользователя</DialogTitle>
-          <DialogDescription>
-            Заполните форму, чтобы добавить пользователя в систему.
-          </DialogDescription>
+          <DialogTitle>Добавить задачу</DialogTitle>
+          <DialogDescription>Заполните данные новой задачи.</DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
             <div className="grid gap-4 py-4">
               <FormField
                 control={form.control}
-                name="name"
+                name="start_time"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Имя</FormLabel>
+                    <FormLabel>Время начала</FormLabel>
                     <FormControl>
-                      <Input placeholder="Имя" type="text" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />{" "}
-              <FormField
-                control={form.control}
-                name="surname"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Фамилия</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Фамилия" type="text" {...field} />
+                      <Input type="datetime-local" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -127,12 +108,12 @@ const AddUser = () => {
               />
               <FormField
                 control={form.control}
-                name="middle_name"
+                name="finish_time"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Отчество</FormLabel>
+                    <FormLabel>Время окончания</FormLabel>
                     <FormControl>
-                      <Input placeholder="Отчество" type="text" {...field} />
+                      <Input type="datetime-local" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -140,12 +121,12 @@ const AddUser = () => {
               />
               <FormField
                 control={form.control}
-                name="role_id"
+                name="comment"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Роль</FormLabel>
+                    <FormLabel>Комментарий</FormLabel>
                     <FormControl>
-                      <Input placeholder="Роль" type="text" {...field} />
+                      <Input placeholder="Описание задачи" type="text" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -153,12 +134,12 @@ const AddUser = () => {
               />
               <FormField
                 control={form.control}
-                name="login"
+                name="employee_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Логин</FormLabel>
+                    <FormLabel>ID сотрудника</FormLabel>
                     <FormControl>
-                      <Input placeholder="Логин" type="text" {...field} />
+                      <Input placeholder="1" type="number" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -166,19 +147,12 @@ const AddUser = () => {
               />
               <FormField
                 control={form.control}
-                name="password"
+                name="task_type_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>
-                      Введите пароль <span className="text-destructive">*</span>
-                    </FormLabel>
+                    <FormLabel>ID типа задачи</FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder="Пароль"
-                        type="password"
-                        {...field}
-                        required
-                      />
+                      <Input placeholder="1" type="number" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -186,20 +160,25 @@ const AddUser = () => {
               />
               <FormField
                 control={form.control}
-                name="confirm_password"
+                name="agent_point_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>
-                      Подтвердите пароль{" "}
-                      <span className="text-destructive">*</span>
-                    </FormLabel>
+                    <FormLabel>ID агентской точки</FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder="Пароль"
-                        type="password"
-                        {...field}
-                        required
-                      />
+                      <Input placeholder="1" type="number" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="task_status_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>ID статуса задачи</FormLabel>
+                    <FormControl>
+                      <Input placeholder="1" type="number" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

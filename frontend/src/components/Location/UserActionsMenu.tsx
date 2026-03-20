@@ -1,21 +1,21 @@
 import { EllipsisVertical } from "lucide-react"
 import { useState } from "react"
 
-import type { TaskPublic } from "@/client"
+import type { LocationPublic } from "@/client"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import DeleteUser from "./DeleteUser"
-import EditUser from "./EditUser"
+import DeleteLocation from "./DeleteLocation"
+import EditLocation from "./EditLocation"
 
 interface UserActionsMenuProps {
-  task: TaskPublic
+  location: LocationPublic
 }
 
-export const UserActionsMenu = ({ task }: UserActionsMenuProps) => {
+export const UserActionsMenu = ({ location }: UserActionsMenuProps) => {
   const [open, setOpen] = useState(false)
 
   return (
@@ -26,9 +26,10 @@ export const UserActionsMenu = ({ task }: UserActionsMenuProps) => {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <EditUser task={task} onSuccess={() => setOpen(false)} />
-        <DeleteUser id={task.id} onSuccess={() => setOpen(false)} />
+        <EditLocation location={location} onSuccess={() => setOpen(false)} />
+        <DeleteLocation id={location.id} onSuccess={() => setOpen(false)} />
       </DropdownMenuContent>
     </DropdownMenu>
   )
 }
+

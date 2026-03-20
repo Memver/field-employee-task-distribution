@@ -1,98 +1,20 @@
 import type { ColumnDef } from "@tanstack/react-table"
 
-import type { UserPublic } from "@/client"
-import { Badge } from "@/components/ui/badge"
-import { cn } from "@/lib/utils"
+import type { EmployeePublic } from "@/client"
 import { UserActionsMenu } from "./UserActionsMenu"
 
-export type UserTableData = UserPublic & {
-  isCurrentUser: boolean
-}
+export type EmployeeTableData = EmployeePublic
 
-export const columns: ColumnDef<UserTableData>[] = [
-  {
-    accessorKey: "name",
-    header: "Имя",
-    cell: ({ row }) => {
-      const fullName = row.original.name
-      return (
-        <div className="flex items-center gap-2">
-          <span
-            className={cn("font-medium", !fullName && "text-muted-foreground")}
-          >
-            {fullName || "N/A"}
-          </span>
-          {row.original.isCurrentUser && (
-            <Badge variant="outline" className="text-xs">
-              Вы
-            </Badge>
-          )}
-        </div>
-      )
-    },
-  },
-  {
-    accessorKey: "surname",
-    header: "Фамилия",
-    cell: ({ row }) => {
-      const fullName = row.original.surname
-      return (
-        <div className="flex items-center gap-2">
-          <span
-            className={cn("font-medium", !fullName && "text-muted-foreground")}
-          >
-            {fullName || "N/A"}
-          </span>
-          {row.original.isCurrentUser && (
-            <Badge variant="outline" className="text-xs">
-              Вы
-            </Badge>
-          )}
-        </div>
-      )
-    },
-  },
-  {
-    accessorKey: "middle_name",
-    header: "Отчество",
-    cell: ({ row }) => {
-      const fullName = row.original.middle_name
-      return (
-        <div className="flex items-center gap-2">
-          <span
-            className={cn("font-medium", !fullName && "text-muted-foreground")}
-          >
-            {fullName || "N/A"}
-          </span>
-          {row.original.isCurrentUser && (
-            <Badge variant="outline" className="text-xs">
-              Вы
-            </Badge>
-          )}
-        </div>
-      )
-    },
-  },
-  {
-    accessorKey: "login",
-    header: "Логин",
-    cell: ({ row }) => (
-      <span className="text-muted-foreground">{row.original.login}</span>
-    ),
-  },
-  {
-    accessorKey: "role",
-    header: "Роль",
-    cell: ({ row }) => (
-      <span className="text-muted-foreground">{row.original.role}</span>
-    ),
-  },
+export const columns: ColumnDef<EmployeeTableData>[] = [
+  { accessorKey: "user_id", header: "ID пользователя" },
+  { accessorKey: "grade_id", header: "ID грейда" },
+  { accessorKey: "start_location_id", header: "ID стартовой локации" },
   {
     id: "actions",
     header: () => <span className="sr-only">Действия</span>,
     cell: ({ row }) => (
       <div className="flex justify-end">
-        <UserActionsMenu user={row.original} />
+        <UserActionsMenu employee={row.original} />
       </div>
     ),
   },

@@ -2,7 +2,7 @@ import type { ColumnDef } from "@tanstack/react-table"
 
 import type { LocationPublic } from "@/client"
 import { cn } from "@/lib/utils"
-import { UserActionsMenu } from "./../Admin/UserActionsMenu"
+import { UserActionsMenu } from "./UserActionsMenu"
 
 export type LocationTableData = LocationPublic & {}
 
@@ -29,13 +29,9 @@ export const columns: ColumnDef<LocationTableData>[] = [
     cell: ({ row }) => {
       const fullName = row.original.lat
       return (
-        <div className="flex items-center gap-2">
-          <span
-            className={cn("font-medium", !fullName && "text-muted-foreground")}
-          >
-            {fullName || "N/A"}
-          </span>
-        </div>
+        <span className={cn("font-medium", fullName == null && "text-muted-foreground")}>
+          {fullName == null ? "N/A" : fullName}
+        </span>
       )
     },
   },
@@ -45,13 +41,9 @@ export const columns: ColumnDef<LocationTableData>[] = [
     cell: ({ row }) => {
       const fullName = row.original.lon
       return (
-        <div className="flex items-center gap-2">
-          <span
-            className={cn("font-medium", !fullName && "text-muted-foreground")}
-          >
-            {fullName || "N/A"}
-          </span>
-        </div>
+        <span className={cn("font-medium", fullName == null && "text-muted-foreground")}>
+          {fullName == null ? "N/A" : fullName}
+        </span>
       )
     },
   },
@@ -60,7 +52,7 @@ export const columns: ColumnDef<LocationTableData>[] = [
     header: () => <span className="sr-only">Действия</span>,
     cell: ({ row }) => (
       <div className="flex justify-end">
-        <UserActionsMenu user={row.original} />
+        <UserActionsMenu location={row.original} />
       </div>
     ),
   },

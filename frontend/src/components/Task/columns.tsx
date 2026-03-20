@@ -1,99 +1,25 @@
-import type { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@tanstack/react-table"
 
-import type { UserPublic } from "@/client";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
-import { UserActionsMenu } from "./UserActionsMenu";
+import type { TaskPublic } from "@/client"
+import { UserActionsMenu } from "./UserActionsMenu"
 
-export type UserTableData = UserPublic & {
-  isCurrentUser: boolean;
-};
+export type TaskTableData = TaskPublic
 
-export const columns: ColumnDef<UserTableData>[] = [
-  {
-    accessorKey: "name",
-    header: "Имя",
-    cell: ({ row }) => {
-      const fullName = row.original.name;
-      return (
-        <div className="flex items-center gap-2">
-          <span
-            className={cn("font-medium", !fullName && "text-muted-foreground")}
-          >
-            {fullName || "N/A"}
-          </span>
-          {row.original.isCurrentUser && (
-            <Badge variant="outline" className="text-xs">
-              Вы
-            </Badge>
-          )}
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: "surname",
-    header: "Фамилия",
-    cell: ({ row }) => {
-      const fullName = row.original.surname;
-      return (
-        <div className="flex items-center gap-2">
-          <span
-            className={cn("font-medium", !fullName && "text-muted-foreground")}
-          >
-            {fullName || "N/A"}
-          </span>
-          {row.original.isCurrentUser && (
-            <Badge variant="outline" className="text-xs">
-              Вы
-            </Badge>
-          )}
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: "middle_name",
-    header: "Отчество",
-    cell: ({ row }) => {
-      const fullName = row.original.middle_name;
-      return (
-        <div className="flex items-center gap-2">
-          <span
-            className={cn("font-medium", !fullName && "text-muted-foreground")}
-          >
-            {fullName || "N/A"}
-          </span>
-          {row.original.isCurrentUser && (
-            <Badge variant="outline" className="text-xs">
-              Вы
-            </Badge>
-          )}
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: "login",
-    header: "Логин",
-    cell: ({ row }) => (
-      <span className="text-muted-foreground">{row.original.login}</span>
-    ),
-  },
-  {
-    accessorKey: "role",
-    header: "Роль",
-    cell: ({ row }) => (
-      <span className="text-muted-foreground">{row.original.role.name}</span>
-    ),
-  },
+export const columns: ColumnDef<TaskTableData>[] = [
+  { accessorKey: "start_time", header: "Начало" },
+  { accessorKey: "finish_time", header: "Окончание" },
+  { accessorKey: "comment", header: "Комментарий" },
+  { accessorKey: "employee_id", header: "ID сотрудника" },
+  { accessorKey: "task_type_id", header: "ID типа задачи" },
+  { accessorKey: "agent_point_id", header: "ID точки" },
+  { accessorKey: "task_status_id", header: "ID статуса" },
   {
     id: "actions",
     header: () => <span className="sr-only">Действия</span>,
     cell: ({ row }) => (
       <div className="flex justify-end">
-        <UserActionsMenu user={row.original} />
+        <UserActionsMenu task={row.original} />
       </div>
     ),
   },
-];
+]

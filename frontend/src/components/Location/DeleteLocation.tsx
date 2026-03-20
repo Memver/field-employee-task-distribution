@@ -3,7 +3,7 @@ import { Trash2 } from "lucide-react"
 import { useState } from "react"
 import { useForm } from "react-hook-form"
 
-import { AgentPointsService } from "@/client"
+import { LocationsService } from "@/client"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -19,32 +19,27 @@ import { LoadingButton } from "@/components/ui/loading-button"
 import useCustomToast from "@/hooks/useCustomToast"
 import { handleError } from "@/utils"
 
-interface DeleteUserProps {
+interface DeleteLocationProps {
   id: number
   onSuccess: () => void
 }
 
-const DeleteUser = ({ id, onSuccess }: DeleteUserProps) => {
+const DeleteLocation = ({ id, onSuccess }: DeleteLocationProps) => {
   const [isOpen, setIsOpen] = useState(false)
   const queryClient = useQueryClient()
   const { showSuccessToast, showErrorToast } = useCustomToast()
   const { handleSubmit } = useForm()
 
-  const deleteUser = async (agentPointId: number) => {
-    await AgentPointsService.deleteAgentPoint({ agentPointId })
-  }
-
   const mutation = useMutation({
-    mutationFn: deleteUser,
+    mutationFn: (locationId: number) =>
+      LocationsService.deleteLocation({ locationId }),
     onSuccess: () => {
-      showSuccessToast("Agent point deleted successfully")
+      showSuccessToast("Location deleted successfully")
       setIsOpen(false)
       onSuccess()
     },
     onError: handleError.bind(showErrorToast),
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["agent-points"] })
-    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ["locations"] }),
   })
 
   const onSubmit = async () => {
@@ -64,12 +59,9 @@ const DeleteUser = ({ id, onSuccess }: DeleteUserProps) => {
       <DialogContent className="sm:max-w-md">
         <form onSubmit={handleSubmit(onSubmit)}>
           <DialogHeader>
-            <DialogTitle>Удалить точку</DialogTitle>
-            <DialogDescription>
-              Действие нельзя отменить.
-            </DialogDescription>
+            <DialogTitle>Удалить локацию</DialogTitle>
+            <DialogDescription>Действие нельзя отменить.</DialogDescription>
           </DialogHeader>
-
           <DialogFooter className="mt-4">
             <DialogClose asChild>
               <Button variant="outline" disabled={mutation.isPending}>
@@ -90,4 +82,5 @@ const DeleteUser = ({ id, onSuccess }: DeleteUserProps) => {
   )
 }
 
-export default DeleteUser
+export default DeleteLocation
+
