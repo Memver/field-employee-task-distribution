@@ -1,28 +1,22 @@
 import { EllipsisVertical } from "lucide-react"
 import { useState } from "react"
 
-import type { UserPublic } from "@/client"
+import type { RolePublic } from "@/client"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import useAuth from "@/hooks/useAuth"
 import DeleteUser from "./DeleteRole"
 import EditUser from "./EditUser"
 
 interface UserActionsMenuProps {
-  user: UserPublic
+  role: RolePublic
 }
 
-export const UserActionsMenu = ({ user }: UserActionsMenuProps) => {
+export const UserActionsMenu = ({ role }: UserActionsMenuProps) => {
   const [open, setOpen] = useState(false)
-  const { user: currentUser } = useAuth()
-
-  if (user.id === currentUser?.id) {
-    return null
-  }
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
@@ -32,8 +26,8 @@ export const UserActionsMenu = ({ user }: UserActionsMenuProps) => {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <EditUser user={user} onSuccess={() => setOpen(false)} />
-        <DeleteUser id={user.id} onSuccess={() => setOpen(false)} />
+        <EditUser role={role} onSuccess={() => setOpen(false)} />
+        <DeleteUser id={role.id} onSuccess={() => setOpen(false)} />
       </DropdownMenuContent>
     </DropdownMenu>
   )

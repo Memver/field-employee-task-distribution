@@ -16,9 +16,13 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as EmployeesRouteImport } from './routes/employees'
 import { Route as LayoutRouteImport } from './routes/_layout'
 import { Route as LayoutIndexRouteImport } from './routes/_layout/index'
+import { Route as LayoutTaskStatusesRouteImport } from './routes/_layout/task-statuses'
 import { Route as LayoutSettingsRouteImport } from './routes/_layout/settings'
+import { Route as LayoutRolesRouteImport } from './routes/_layout/roles'
+import { Route as LayoutPrioritiesRouteImport } from './routes/_layout/priorities'
 import { Route as LayoutLocationsRouteImport } from './routes/_layout/locations'
 import { Route as LayoutItemsRouteImport } from './routes/_layout/items'
+import { Route as LayoutGradesRouteImport } from './routes/_layout/grades'
 import { Route as LayoutAdminRouteImport } from './routes/_layout/admin'
 
 const SignupRoute = SignupRouteImport.update({
@@ -55,9 +59,24 @@ const LayoutIndexRoute = LayoutIndexRouteImport.update({
   path: '/',
   getParentRoute: () => LayoutRoute,
 } as any)
+const LayoutTaskStatusesRoute = LayoutTaskStatusesRouteImport.update({
+  id: '/task-statuses',
+  path: '/task-statuses',
+  getParentRoute: () => LayoutRoute,
+} as any)
 const LayoutSettingsRoute = LayoutSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutRolesRoute = LayoutRolesRouteImport.update({
+  id: '/roles',
+  path: '/roles',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutPrioritiesRoute = LayoutPrioritiesRouteImport.update({
+  id: '/priorities',
+  path: '/priorities',
   getParentRoute: () => LayoutRoute,
 } as any)
 const LayoutLocationsRoute = LayoutLocationsRouteImport.update({
@@ -68,6 +87,11 @@ const LayoutLocationsRoute = LayoutLocationsRouteImport.update({
 const LayoutItemsRoute = LayoutItemsRouteImport.update({
   id: '/items',
   path: '/items',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutGradesRoute = LayoutGradesRouteImport.update({
+  id: '/grades',
+  path: '/grades',
   getParentRoute: () => LayoutRoute,
 } as any)
 const LayoutAdminRoute = LayoutAdminRouteImport.update({
@@ -84,9 +108,13 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/admin': typeof LayoutAdminRoute
+  '/grades': typeof LayoutGradesRoute
   '/items': typeof LayoutItemsRoute
   '/locations': typeof LayoutLocationsRoute
+  '/priorities': typeof LayoutPrioritiesRoute
+  '/roles': typeof LayoutRolesRoute
   '/settings': typeof LayoutSettingsRoute
+  '/task-statuses': typeof LayoutTaskStatusesRoute
 }
 export interface FileRoutesByTo {
   '/employees': typeof EmployeesRoute
@@ -95,9 +123,13 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/admin': typeof LayoutAdminRoute
+  '/grades': typeof LayoutGradesRoute
   '/items': typeof LayoutItemsRoute
   '/locations': typeof LayoutLocationsRoute
+  '/priorities': typeof LayoutPrioritiesRoute
+  '/roles': typeof LayoutRolesRoute
   '/settings': typeof LayoutSettingsRoute
+  '/task-statuses': typeof LayoutTaskStatusesRoute
   '/': typeof LayoutIndexRoute
 }
 export interface FileRoutesById {
@@ -109,9 +141,13 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/_layout/admin': typeof LayoutAdminRoute
+  '/_layout/grades': typeof LayoutGradesRoute
   '/_layout/items': typeof LayoutItemsRoute
   '/_layout/locations': typeof LayoutLocationsRoute
+  '/_layout/priorities': typeof LayoutPrioritiesRoute
+  '/_layout/roles': typeof LayoutRolesRoute
   '/_layout/settings': typeof LayoutSettingsRoute
+  '/_layout/task-statuses': typeof LayoutTaskStatusesRoute
   '/_layout/': typeof LayoutIndexRoute
 }
 export interface FileRouteTypes {
@@ -124,9 +160,13 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signup'
     | '/admin'
+    | '/grades'
     | '/items'
     | '/locations'
+    | '/priorities'
+    | '/roles'
     | '/settings'
+    | '/task-statuses'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/employees'
@@ -135,9 +175,13 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signup'
     | '/admin'
+    | '/grades'
     | '/items'
     | '/locations'
+    | '/priorities'
+    | '/roles'
     | '/settings'
+    | '/task-statuses'
     | '/'
   id:
     | '__root__'
@@ -148,9 +192,13 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signup'
     | '/_layout/admin'
+    | '/_layout/grades'
     | '/_layout/items'
     | '/_layout/locations'
+    | '/_layout/priorities'
+    | '/_layout/roles'
     | '/_layout/settings'
+    | '/_layout/task-statuses'
     | '/_layout/'
   fileRoutesById: FileRoutesById
 }
@@ -214,11 +262,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutIndexRouteImport
       parentRoute: typeof LayoutRoute
     }
+    '/_layout/task-statuses': {
+      id: '/_layout/task-statuses'
+      path: '/task-statuses'
+      fullPath: '/task-statuses'
+      preLoaderRoute: typeof LayoutTaskStatusesRouteImport
+      parentRoute: typeof LayoutRoute
+    }
     '/_layout/settings': {
       id: '/_layout/settings'
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof LayoutSettingsRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/roles': {
+      id: '/_layout/roles'
+      path: '/roles'
+      fullPath: '/roles'
+      preLoaderRoute: typeof LayoutRolesRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/priorities': {
+      id: '/_layout/priorities'
+      path: '/priorities'
+      fullPath: '/priorities'
+      preLoaderRoute: typeof LayoutPrioritiesRouteImport
       parentRoute: typeof LayoutRoute
     }
     '/_layout/locations': {
@@ -235,6 +304,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutItemsRouteImport
       parentRoute: typeof LayoutRoute
     }
+    '/_layout/grades': {
+      id: '/_layout/grades'
+      path: '/grades'
+      fullPath: '/grades'
+      preLoaderRoute: typeof LayoutGradesRouteImport
+      parentRoute: typeof LayoutRoute
+    }
     '/_layout/admin': {
       id: '/_layout/admin'
       path: '/admin'
@@ -247,17 +323,25 @@ declare module '@tanstack/react-router' {
 
 interface LayoutRouteChildren {
   LayoutAdminRoute: typeof LayoutAdminRoute
+  LayoutGradesRoute: typeof LayoutGradesRoute
   LayoutItemsRoute: typeof LayoutItemsRoute
   LayoutLocationsRoute: typeof LayoutLocationsRoute
+  LayoutPrioritiesRoute: typeof LayoutPrioritiesRoute
+  LayoutRolesRoute: typeof LayoutRolesRoute
   LayoutSettingsRoute: typeof LayoutSettingsRoute
+  LayoutTaskStatusesRoute: typeof LayoutTaskStatusesRoute
   LayoutIndexRoute: typeof LayoutIndexRoute
 }
 
 const LayoutRouteChildren: LayoutRouteChildren = {
   LayoutAdminRoute: LayoutAdminRoute,
+  LayoutGradesRoute: LayoutGradesRoute,
   LayoutItemsRoute: LayoutItemsRoute,
   LayoutLocationsRoute: LayoutLocationsRoute,
+  LayoutPrioritiesRoute: LayoutPrioritiesRoute,
+  LayoutRolesRoute: LayoutRolesRoute,
   LayoutSettingsRoute: LayoutSettingsRoute,
+  LayoutTaskStatusesRoute: LayoutTaskStatusesRoute,
   LayoutIndexRoute: LayoutIndexRoute,
 }
 

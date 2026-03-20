@@ -1,0 +1,53 @@
+import { useSuspenseQuery } from "@tanstack/react-query"
+import { createFileRoute } from "@tanstack/react-router"
+
+import { GradesService } from "@/client"
+import AddGrade from "@/components/Grade/AddUser"
+import { columns, type GradeTableData } from "@/components/Grade/columns"
+import { DataTable } from "@/components/Common/DataTable"
+
+function getGradesQueryOptions() {
+  return {
+    queryFn: () => GradesService.readGrades({ skip: 0, limit: 100 }),
+    queryKey: ["grades"],
+  }
+}
+
+export const Route = createFileRoute("/_layout/grades")({
+  component: Grades,
+  head: () => ({
+    meta: [
+      {
+        title: "Grades - FastAPI Cloud",
+      },
+    ],
+  }),
+})
+
+function GradesTableContent() {
+  const { data: grades } = useSuspenseQuery(getGradesQueryOptions())
+
+  const tableData: GradeTableData[] = grades.data
+
+  return <DataTable columns={columns} data={tableData} />
+}
+
+function GradesTable() {
+  return <GradesTableContent />
+}
+
+function Grades() {
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Грейды</h1>
+          <p className="text-muted-foreground">Управление грейдами</p>
+        </div>
+        <AddGrade />
+      </div>
+      <GradesTable />
+    </div>
+  )
+}
+

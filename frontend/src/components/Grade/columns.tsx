@@ -1,90 +1,29 @@
-import type { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@tanstack/react-table"
 
-import type { UserPublic } from "@/client";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
-import { UserActionsMenu } from "./UserActionsMenu";
+import type { GradePublic } from "@/client"
+import { cn } from "@/lib/utils"
+import { UserActionsMenu } from "./UserActionsMenu"
 
-export type UserTableData = UserPublic & {
-  isCurrentUser: boolean;
-};
+export type GradeTableData = GradePublic
 
-export const columns: ColumnDef<UserTableData>[] = [
+export const columns: ColumnDef<GradeTableData>[] = [
   {
     accessorKey: "name",
-    header: "Имя",
+    header: "Название",
     cell: ({ row }) => {
-      const fullName = row.original.name;
+      const value = row.original.name
       return (
-        <div className="flex items-center gap-2">
-          <span
-            className={cn("font-medium", !fullName && "text-muted-foreground")}
-          >
-            {fullName || "N/A"}
-          </span>
-          {row.original.isCurrentUser && (
-            <Badge variant="outline" className="text-xs">
-              Вы
-            </Badge>
-          )}
-        </div>
-      );
+        <span className={cn(!value && "text-muted-foreground")}>
+          {value || "N/A"}
+        </span>
+      )
     },
   },
   {
-    accessorKey: "surname",
-    header: "Фамилия",
-    cell: ({ row }) => {
-      const fullName = row.original.surname;
-      return (
-        <div className="flex items-center gap-2">
-          <span
-            className={cn("font-medium", !fullName && "text-muted-foreground")}
-          >
-            {fullName || "N/A"}
-          </span>
-          {row.original.isCurrentUser && (
-            <Badge variant="outline" className="text-xs">
-              Вы
-            </Badge>
-          )}
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: "middle_name",
-    header: "Отчество",
-    cell: ({ row }) => {
-      const fullName = row.original.middle_name;
-      return (
-        <div className="flex items-center gap-2">
-          <span
-            className={cn("font-medium", !fullName && "text-muted-foreground")}
-          >
-            {fullName || "N/A"}
-          </span>
-          {row.original.isCurrentUser && (
-            <Badge variant="outline" className="text-xs">
-              Вы
-            </Badge>
-          )}
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: "login",
-    header: "Логин",
+    accessorKey: "level",
+    header: "Уровень",
     cell: ({ row }) => (
-      <span className="text-muted-foreground">{row.original.login}</span>
-    ),
-  },
-  {
-    accessorKey: "role",
-    header: "Роль",
-    cell: ({ row }) => (
-      <span className="text-muted-foreground">{row.original.role.name}</span>
+      <span className="text-muted-foreground">{row.original.level}</span>
     ),
   },
   {
@@ -92,8 +31,8 @@ export const columns: ColumnDef<UserTableData>[] = [
     header: () => <span className="sr-only">Действия</span>,
     cell: ({ row }) => (
       <div className="flex justify-end">
-        <UserActionsMenu user={row.original} />
+        <UserActionsMenu grade={row.original} />
       </div>
     ),
   },
-];
+]

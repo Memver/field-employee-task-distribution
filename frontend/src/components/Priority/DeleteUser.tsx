@@ -3,7 +3,7 @@ import { Trash2 } from "lucide-react"
 import { useState } from "react"
 import { useForm } from "react-hook-form"
 
-import { UsersService } from "@/client"
+import { PrioritiesService } from "@/client"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -20,7 +20,7 @@ import useCustomToast from "@/hooks/useCustomToast"
 import { handleError } from "@/utils"
 
 interface DeleteUserProps {
-  id: string
+  id: number
   onSuccess: () => void
 }
 
@@ -30,20 +30,20 @@ const DeleteUser = ({ id, onSuccess }: DeleteUserProps) => {
   const { showSuccessToast, showErrorToast } = useCustomToast()
   const { handleSubmit } = useForm()
 
-  const deleteUser = async (id: string) => {
-    await UsersService.deleteUser({ userId: id })
+  const deletePriority = async (priorityId: number) => {
+    await PrioritiesService.deletePriority({ priorityId })
   }
 
   const mutation = useMutation({
-    mutationFn: deleteUser,
+    mutationFn: deletePriority,
     onSuccess: () => {
-      showSuccessToast("The user was deleted successfully")
+      showSuccessToast("Priority deleted successfully")
       setIsOpen(false)
       onSuccess()
     },
     onError: handleError.bind(showErrorToast),
     onSettled: () => {
-      queryClient.invalidateQueries()
+      queryClient.invalidateQueries({ queryKey: ["priorities"] })
     },
   })
 
@@ -59,23 +59,22 @@ const DeleteUser = ({ id, onSuccess }: DeleteUserProps) => {
         onClick={() => setIsOpen(true)}
       >
         <Trash2 />
-        Delete User
+        Удалить приоритет
       </DropdownMenuItem>
       <DialogContent className="sm:max-w-md">
         <form onSubmit={handleSubmit(onSubmit)}>
           <DialogHeader>
-            <DialogTitle>Delete User</DialogTitle>
+            <DialogTitle>Удалить приоритет</DialogTitle>
             <DialogDescription>
-              All items associated with this user will also be{" "}
-              <strong>permanently deleted.</strong> Are you sure? You will not
-              be able to undo this action.
+              Приоритет будет удален из системы. Убедитесь, что вы
+              действительно хотите выполнить это действие.
             </DialogDescription>
           </DialogHeader>
 
           <DialogFooter className="mt-4">
             <DialogClose asChild>
               <Button variant="outline" disabled={mutation.isPending}>
-                Cancel
+                Отмена
               </Button>
             </DialogClose>
             <LoadingButton
@@ -83,7 +82,7 @@ const DeleteUser = ({ id, onSuccess }: DeleteUserProps) => {
               type="submit"
               loading={mutation.isPending}
             >
-              Delete
+              Удалить
             </LoadingButton>
           </DialogFooter>
         </form>
