@@ -50,11 +50,7 @@ function EmployeeManagerDashboard() {
       </RouterLink>
       <RouterLink to="/agent-points" className="flex items-center gap-2">
         <ChevronRight />
-        Точки
-      </RouterLink>
-      <RouterLink to="/task-types" className="flex items-center gap-2">
-        <ChevronRight />
-        Справочники
+        Агентские точки
       </RouterLink>
       <RouterLink to="/tasks" className="flex items-center gap-2">
         <ChevronRight />

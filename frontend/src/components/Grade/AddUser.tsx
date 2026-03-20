@@ -1,12 +1,12 @@
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Pencil } from "lucide-react";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { Plus } from "lucide-react"
+import { useState } from "react"
+import { useForm } from "react-hook-form"
+import { z } from "zod"
 
-import { UsersService, type UserPublic } from "@/client";
-import { Button } from "@/components/ui/button";
+import { type UserCreate, UsersService } from "@/client"
+import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogClose,
@@ -15,8 +15,8 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
+  DialogTrigger,
+} from "@/components/ui/dialog"
 import {
   Form,
   FormControl,
@@ -24,100 +24,80 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { LoadingButton } from "@/components/ui/loading-button";
-import useCustomToast from "@/hooks/useCustomToast";
-import { handleError } from "@/utils";
+} from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+import { LoadingButton } from "@/components/ui/loading-button"
+import useCustomToast from "@/hooks/useCustomToast"
+import { handleError } from "@/utils"
 
 const formSchema = z
   .object({
-    login: z.string().optional(),
-    name: z.string().optional(),
-    surname: z.string().optional(),
-    middle_name: z.string().optional(),
+    login: z.string(),
+    name: z.string(),
+    surname: z.string(),
+    middle_name: z.string(),
     password: z
       .string()
       .min(1, { message: "Password is required" })
-      .min(8, { message: "Password must be at least 8 characters" })
-      .optional(),
+      .min(8, { message: "Password must be at least 8 characters" }),
     confirm_password: z
       .string()
-      .min(1, { message: "Please confirm your password" })
-      .optional(),
-    role_id: z.string().optional(),
+      .min(1, { message: "Please confirm your password" }),
+    role_id: z.string(),
   })
-  .refine((data) => !data.password || data.password === data.confirm_password, {
+  .refine((data) => data.password === data.confirm_password, {
     message: "The passwords don't match",
     path: ["confirm_password"],
-  });
+  })
 
-type FormData = z.infer<typeof formSchema>;
+type FormData = z.infer<typeof formSchema>
 
-interface EditUserProps {
-  user: UserPublic;
-  onSuccess: () => void;
-}
-
-const EditUser = ({ user, onSuccess }: EditUserProps) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const queryClient = useQueryClient();
-  const { showSuccessToast, showErrorToast } = useCustomToast();
+const AddUser = () => {
+  const [isOpen, setIsOpen] = useState(false)
+  const queryClient = useQueryClient()
+  const { showSuccessToast, showErrorToast } = useCustomToast()
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     mode: "onBlur",
     criteriaMode: "all",
-    defaultValues: {
-      login: user.login,
-      name: user.name,
-      surname: user.surname,
-      middle_name: user.middle_name,
-      role_id: user.role.id.toString(),
-    },
-  });
+  })
 
   const mutation = useMutation({
-    mutationFn: (data: FormData) =>
-      UsersService.updateUser({ id: user.id, requestBody: data }),
+    mutationFn: (data: UserCreate) =>
+      UsersService.createUser({ requestBody: data }),
     onSuccess: () => {
-      showSuccessToast("User updated successfully");
-      setIsOpen(false);
-      onSuccess();
+      showSuccessToast("User created successfully")
+      form.reset()
+      setIsOpen(false)
     },
     onError: handleError.bind(showErrorToast),
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: ["users"] })
     },
-  });
+  })
 
   const onSubmit = (data: FormData) => {
-    // exclude confirm_password from submission data and remove password if empty
-    const { confirm_password: _, ...submitData } = data;
-    if (!submitData.password) {
-      delete submitData.password;
-    }
-    mutation.mutate(submitData);
-  };
+    mutation.mutate(data)
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DropdownMenuItem
-        onSelect={(e) => e.preventDefault()}
-        onClick={() => setIsOpen(true)}
-      >
-        <Pencil />
-        Редактировать пользователя
-      </DropdownMenuItem>
+      <DialogTrigger asChild>
+        <Button className="my-4">
+          <Plus className="mr-2" />
+          Добавить пользователя
+        </Button>
+      </DialogTrigger>
       <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Добавить пользователя</DialogTitle>
+          <DialogDescription>
+            Заполните форму, чтобы добавить пользователя в систему.
+          </DialogDescription>
+        </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
-            <DialogHeader>
-              <DialogTitle>Редактировать пользователя</DialogTitle>
-              <DialogDescription>
-                Обновите детали пользователя ниже
-              </DialogDescription>
-            </DialogHeader>
             <div className="grid gap-4 py-4">
               <FormField
                 control={form.control}
@@ -131,7 +111,7 @@ const EditUser = ({ user, onSuccess }: EditUserProps) => {
                     <FormMessage />
                   </FormItem>
                 )}
-              />
+              />{" "}
               <FormField
                 control={form.control}
                 name="surname"
@@ -189,23 +169,37 @@ const EditUser = ({ user, onSuccess }: EditUserProps) => {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Установите пароль</FormLabel>
+                    <FormLabel>
+                      Введите пароль <span className="text-destructive">*</span>
+                    </FormLabel>
                     <FormControl>
-                      <Input placeholder="Пароль" type="password" {...field} />
+                      <Input
+                        placeholder="Пароль"
+                        type="password"
+                        {...field}
+                        required
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-
               <FormField
                 control={form.control}
                 name="confirm_password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Подтвердите пароль</FormLabel>
+                    <FormLabel>
+                      Подтвердите пароль{" "}
+                      <span className="text-destructive">*</span>
+                    </FormLabel>
                     <FormControl>
-                      <Input placeholder="Пароль" type="password" {...field} />
+                      <Input
+                        placeholder="Пароль"
+                        type="password"
+                        {...field}
+                        required
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -227,7 +221,7 @@ const EditUser = ({ user, onSuccess }: EditUserProps) => {
         </Form>
       </DialogContent>
     </Dialog>
-  );
-};
+  )
+}
 
-export default EditUser;
+export default AddUser
