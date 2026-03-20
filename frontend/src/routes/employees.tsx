@@ -1,18 +1,17 @@
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute, redirect } from "@tanstack/react-router";
-import { Suspense } from "react";
+import { useSuspenseQuery } from "@tanstack/react-query"
+import { createFileRoute } from "@tanstack/react-router"
 
-import { type EmployeePublic, EmployeesService } from "@/client";
+import { EmployeesService } from "@/client"
 //import { columns, type EmployeeTableData } from "@/components/Employee/columns";
-import { DataTable } from "@/components/Common/DataTable";
+import { DataTable } from "@/components/Common/DataTable"
 //import PendingEmployees from "@/components/Pending/PendingEmployees";
-import useAuth from "@/hooks/useAuth";
+import useAuth from "@/hooks/useAuth"
 
 function getEmployeesQueryOptions() {
   return {
     queryFn: () => EmployeesService.readEmployees({ skip: 0, limit: 100 }),
     queryKey: ["Employees"],
-  };
+  }
 }
 
 export const Route = createFileRoute("/employees")({
@@ -24,19 +23,19 @@ export const Route = createFileRoute("/employees")({
       },
     ],
   }),
-});
+})
 
 function EmployeesTableContent() {
-  const { user: currentUser } = useAuth();
-  const { data: Employees } = useSuspenseQuery(getEmployeesQueryOptions());
+  const { user: currentUser } = useAuth()
+  const { data: Employees } = useSuspenseQuery(getEmployeesQueryOptions())
 
-  const tableData: EmployeeTableData[] = Employees.data;
+  const tableData: EmployeeTableData[] = Employees.data
 
-  return <DataTable columns={columns} data={tableData} />;
+  return <DataTable columns={columns} data={tableData} />
 }
 
 function EmployeesTable() {
-  return <EmployeesTableContent />;
+  return <EmployeesTableContent />
 }
 
 function Employee() {
@@ -53,5 +52,5 @@ function Employee() {
       </div>
       <EmployeesTable />
     </div>
-  );
+  )
 }

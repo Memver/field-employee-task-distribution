@@ -45,12 +45,12 @@ def read_agent_points(session: SessionDep, skip: int = 0, limit: int = 100) -> A
     return AgentPointsPublic(data=agent_points, count=count)
 
 
-@router.get("/{agent_point_id}", response_model=AgentPointPublic)
-def read_agent_point_by_id(agent_point_id: int, session: SessionDep) -> Any:
+@router.get("/{id}", response_model=AgentPointPublic)
+def read_agent_point_by_id(id: int, session: SessionDep) -> Any:
     """
     Get a specific agent_point by id.
     """
-    agent_point = session.get(AgentPoint, agent_point_id)
+    agent_point = session.get(AgentPoint, id)
     return agent_point
 
 

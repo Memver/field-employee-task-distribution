@@ -4,6 +4,7 @@ import shapely
 import shapely.wkb
 from app.api.deps import CurrentUser, SessionDep
 from app.models import (
+    AgentPoint,
     Location,
     LocationEdge,
     LocationPublic,
@@ -89,7 +90,7 @@ def read_tasks_me(
     statement = (
         select(Task)
         .where(Task.employee_id == current_employee.id)
-        .options(joinedload(Task.task).selectinload(Task.location))
+        .options(joinedload(Task.agent_point).selectinload(AgentPoint.location))
         .order_by(Task.start_time)
         .offset(skip)
         .limit(limit)
@@ -100,7 +101,7 @@ def read_tasks_me(
     #     .offset(skip)
     #     .limit(limit)
     #     .options(
-    #         selectinload(Task.task).selectinload(Task.location),
+    #         selectinload(Task.agent_point).selectinload(AgentPoint.location),
     #     )
     #     .order_by(Task.start_time)
     # )
@@ -120,8 +121,8 @@ def read_tasks_me(
     for task in tasks:
         tasks_me_public.append(TaskMePublic.model_validate(task))
         # Add task location
-        if task.task and task.task.location:
-            location_ids.append(task.task.location.id)
+        if task.agent_point and task.agent_point.location:
+            location_ids.append(task.agent_point.location.id)
 
     # Add start location again to complete the route (return to start)
     location_ids.append(current_employee.start_location_id)

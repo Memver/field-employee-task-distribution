@@ -1,18 +1,17 @@
-import type { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@tanstack/react-table"
 
-import type { LocationPublic } from "@/client";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
-import { UserActionsMenu } from "./../Admin/UserActionsMenu";
+import type { LocationPublic } from "@/client"
+import { cn } from "@/lib/utils"
+import { UserActionsMenu } from "./../Admin/UserActionsMenu"
 
-export type LocationTableData = LocationPublic & {};
+export type LocationTableData = LocationPublic & {}
 
 export const columns: ColumnDef<LocationTableData>[] = [
   {
     accessorKey: "address",
     header: "Адрес",
     cell: ({ row }) => {
-      const fullName = row.original.address;
+      const fullName = row.original.address
       return (
         <div className="flex items-center gap-2">
           <span
@@ -21,14 +20,14 @@ export const columns: ColumnDef<LocationTableData>[] = [
             {fullName || "N/A"}
           </span>
         </div>
-      );
+      )
     },
   },
   {
     accessorKey: "lat",
     header: "Широта",
     cell: ({ row }) => {
-      const fullName = row.original.lat;
+      const fullName = row.original.lat
       return (
         <div className="flex items-center gap-2">
           <span
@@ -37,14 +36,14 @@ export const columns: ColumnDef<LocationTableData>[] = [
             {fullName || "N/A"}
           </span>
         </div>
-      );
+      )
     },
   },
   {
     accessorKey: "lon",
     header: "Долгота",
     cell: ({ row }) => {
-      const fullName = row.original.lon;
+      const fullName = row.original.lon
       return (
         <div className="flex items-center gap-2">
           <span
@@ -53,7 +52,7 @@ export const columns: ColumnDef<LocationTableData>[] = [
             {fullName || "N/A"}
           </span>
         </div>
-      );
+      )
     },
   },
   {
@@ -65,4 +64,4 @@ export const columns: ColumnDef<LocationTableData>[] = [
       </div>
     ),
   },
-];
+]
