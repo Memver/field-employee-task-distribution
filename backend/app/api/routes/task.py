@@ -22,6 +22,7 @@ from shapely.ops import linemerge
 from sqlalchemy import and_, or_
 from sqlalchemy.orm import joinedload, load_only
 from sqlmodel import func, select
+from app.geocoding import get_lat_lon
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
 
@@ -42,8 +43,27 @@ def create_task(*, session: SessionDep, task_in: TaskCreate) -> Any:
 def distribute_tasks(*, session: SessionDep) -> Message:
     last_location = location_service.read_last(session)
 
-    if last_location.lat is None:
-        geocoding()
+    # Проверяем наличие координат
+    if last_location.lat is None or last_location.lon is None:
+        # Получаем адреса для геокодирования
+        # Предполагаем, что адреса хранятся в tasks или другом месте
+        addresses = get_addresses_for_geocoding(session)
+        
+        if addresses:
+            # Выполняем геокодирование
+            coordinates = get_lat_lon(addresses)
+            
+            # Обновляем локации в базе данных
+            update_locations_with_coordinates(session, addresses, coordinates)
+            
+            # Обновляем последнюю локацию
+            last_location = location_service.read_last(session)
+            
+            # Проверяем, что геокодирование сработало
+            if last_location.lat is None:
+                return Message(
+                    message="Failed to geocode addresses. Please check addresses and try again."
+                )
 
     distance_matrix = api.get_distance_matrix()
 
