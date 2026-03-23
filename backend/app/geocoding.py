@@ -64,3 +64,26 @@ def get_lat_lon(addresses: List[str]) -> List[Tuple[float, float]]:
             results.append((None, None))
     
     return results
+
+
+# Пример использования
+if __name__ == "__main__":
+    # Список адресов для геокодирования
+    addresses = [
+        "Red Square, Moscow, Russia",
+        "Eiffel Tower, Paris, France",
+        "Statue of Liberty, New York, USA",
+        "Несуществующий адрес, Город, Страна"  # Тестовый несуществующий адрес
+    ]
+    
+    print("=== Геокодирование адресов ===\n")
+    
+    coordinates = get_lat_lon(addresses)
+    
+    print("\n=== Результаты ===")
+    for addr, coord in zip(addresses, coordinates):
+        lat, lon = coord
+        if lat is not None and lon is not None:
+            print(f"{addr}: ({lat:.6f}, {lon:.6f})")
+        else:
+            print(f"{addr}: Не найден")
