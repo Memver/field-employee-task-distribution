@@ -1,60 +1,55 @@
-from typing import List, Tuple, Union
+from typing import List, Tuple
+
 import numpy as np
 from routingpy import OSRM
-from routingpy.routers import options
 
-def get_distance_matrix_routingpy(
+
+def get_distance_matrix(
     locations: List[Tuple[float, float]],
     profile: str = "driving",
     host: str = "http://router.project-osrm.org",
-    cost_type: str = "duration"
-) -> np.ndarray:
+) -> Tuple[np.ndarray, np.ndarray]:
     """
-    Вычисляет матрицу расстояний/времени через OSRM используя routingpy.
+    Вычисляет матрицы времени и расстояний через OSRM.
 
     Args:
         locations: Список координат (долгота, широта).
         profile: Профиль маршрута ('driving', 'walking', 'cycling').
         host: URL сервера OSRM (публичный или локальный).
-        cost_type: Тип стоимости ('duration' - секунды, 'distance' - метры).
 
     Returns:
-        numpy.ndarray: Матрица размера NxN.
+        Tuple[np.ndarray, np.ndarray]:
+            - Первая матрица: время в секундах (N x N)
+            - Вторая матрица: расстояние в метрах (N x N)
     """
-    # Инициализируем клиент OSRM
     client = OSRM(base_url=host)
-    
-    # Выполняем запрос к матричному сервису
-    # locations - это список [lon, lat]
-    matrix = client.matrix(
-        locations=locations,
-        profile=profile
-    )
-    
-    # Получаем нужную матрицу
-    if cost_type == "duration":
-        result = np.array(matrix.durations)
-    elif cost_type == "distance":
-        result = np.array(matrix.distances)
-    else:
-        raise ValueError("cost_type должен быть 'duration' или 'distance'")
-    
-    return result
+
+    matrix = client.matrix(locations=locations, profile=profile)
+
+    durations = np.array(matrix.durations)
+    distances = np.array(matrix.distances)
+
+    return durations, distances
+
 
 # Пример использования
 if __name__ == "__main__":
-    # Точки в формате (Долгота, Широта)
     points = [
-        (13.388860, 52.517037),  # Berlin Brandenburg Gate
-        (13.397634, 52.529407),  # Berlin Central Station
-        (13.428555, 52.507220)   # Berlin East Side Gallery
+        (13.388860, 52.517037),  # Берлин, Бранденбургские ворота
+        (13.397634, 52.529407),  # Берлин, Центральный вокзал
+        (13.428555, 52.507220),  # Берлин, Ист-Сайд-Галерея
     ]
-    
-    # Используем публичный сервер OSRM
-    matrix = get_distance_matrix_routingpy(points, cost_type="duration")
+
+    durations, distances = get_distance_matrix(points)
+
     print("Матрица времени (секунды):")
-    print(matrix)
-    
-    # Округлим до минут для удобства
+    print(durations)
+
     print("\nМатрица времени (минуты):")
-    print(np.round(matrix / 60, 1))
+    print(np.round(durations / 60, 1))
+
+    print("\nМатрица расстояний (метры):")
+    print(distances)
+
+    print("\nМатрица расстояний (километры):")
+    print(np.round(distances / 1000, 1))
