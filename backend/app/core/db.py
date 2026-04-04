@@ -1,6 +1,7 @@
 from app.core.config import settings
 from app.models import Role, User, UserCreate
 from app.services import user as user_service
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlmodel import Session, create_engine, select, text
 
 engine = create_engine(str(settings.SQLALCHEMY_DATABASE_URI))
@@ -11,10 +12,21 @@ from sqlalchemy import create_engine
 
 def csv_to_db_pandas(csv_file, engine, table_name):
     # Чтение CSV
-    df = pd.read_csv(csv_file)
+    df = pd.read_csv(
+        csv_file,
+        sep=";",
+        encoding="utf-8",
+        header=0,
+    )
 
-    # Запись в БД
-    df.to_sql(table_name, engine, if_exists="replace", index=False)
+    # Конвертируем строку JSON в Python объект
+    import json
+
+    df["route"] = df["route"].apply(json.loads)
+
+    # Запись в БД с указанием типа JSONB
+    dtype = {"route": JSONB}
+    df.to_sql(table_name, engine, if_exists="replace", index=False, dtype=dtype)
     print(f"Загружено {len(df)} строк в таблицу {table_name}")
 
 
@@ -35,19 +47,6 @@ def init_db(session: Session) -> None:
             "/app/backend/app/db/location_edge.csv", engine, "location_edge"
         )
 
-        script = """-- Создаем новую колонку
-    ALTER TABLE location_edge 
-    ADD COLUMN IF NOT EXISTS route_geom geography(LINESTRING, 4326);
-    
-    -- Правильное преобразование: сначала декодируем hex в bytea, потом в геометрию
-    UPDATE location_edge 
-    SET route_geom = ST_GeomFromEWKB(decode(route, 'hex'))
-    WHERE route IS NOT NULL 
-      AND route != '' 
-      AND route_geom IS NULL;
-      ALTER TABLE location_edge DROP COLUMN IF EXISTS route;
-            ALTER TABLE location_edge RENAME COLUMN route_geom TO route;"""
-        session.exec(text(script))
         session.commit()
     # role = session.exec(select(Role).where(Role.name == "ADMIN")).first()
     # if not role:

@@ -5,7 +5,9 @@ from typing import Optional
 from geoalchemy2 import Geography
 from pydantic import EmailStr
 from sqlalchemy import DateTime
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlmodel import (
+    JSON,
     CheckConstraint,
     Column,
     Field,
@@ -57,9 +59,7 @@ class Location(LocationBase, table=True):
 class LocationEdgeBase(SQLModel):
     distance: float = Field(ge=0, nullable=False)
     time: int = Field(ge=0, nullable=False)
-    route: Optional[object] = Field(
-        sa_column=Column(Geography(geometry_type="LINESTRING", srid=4326))
-    )
+    route: list[list[float]] = Field(sa_column=Column(JSONB))
 
 
 class LocationEdge(LocationEdgeBase, table=True):
