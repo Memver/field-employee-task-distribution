@@ -7,7 +7,6 @@ from pydantic import EmailStr
 from sqlalchemy import DateTime
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlmodel import (
-    JSON,
     CheckConstraint,
     Column,
     Field,
