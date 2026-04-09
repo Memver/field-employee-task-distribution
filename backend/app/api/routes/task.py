@@ -27,6 +27,33 @@ from app.geocoding import get_lat_lon
 router = APIRouter(prefix="/tasks", tags=["tasks"])
 
 
+def get_locations_without_coordinates(session: SessionDep) -> list[Location]:
+    statement = select(Location).where(or_(Location.lat.is_(None), Location.lon.is_(None)))
+    return session.exec(statement).all()
+
+
+def update_locations_with_coordinates(
+    session: SessionDep,
+    locations: list[Location],
+    coordinates: list[tuple[float | None, float | None]],
+) -> int:
+    updated_count = 0
+
+    for location, (lat, lon) in zip(locations, coordinates):
+        if lat is None or lon is None:
+            continue
+
+        location.lat = lat
+        location.lon = lon
+        session.add(location)
+        updated_count += 1
+
+    if updated_count:
+        session.commit()
+
+    return updated_count
+
+
 @router.post("/", response_model=TaskPublic)
 def create_task(*, session: SessionDep, task_in: TaskCreate) -> Any:
     """
@@ -41,35 +68,40 @@ def create_task(*, session: SessionDep, task_in: TaskCreate) -> Any:
 
 @router.post("/distribute")
 def distribute_tasks(*, session: SessionDep) -> Message:
-    last_location = location_service.read_last(session)
+    locations_without_coordinates = get_locations_without_coordinates(session)
 
-    # Проверяем наличие координат
-    if last_location.lat is None or last_location.lon is None:
-        # Получаем адреса для геокодирования
-        # Предполагаем, что адреса хранятся в tasks или другом месте
-        addresses = get_addresses_for_geocoding(session)
-        
-        if addresses:
-            # Выполняем геокодирование
-            coordinates = get_lat_lon(addresses)
-            
-            # Обновляем локации в базе данных
-            update_locations_with_coordinates(session, addresses, coordinates)
-            
-            # Обновляем последнюю локацию
-            last_location = location_service.read_last(session)
-            
-            # Проверяем, что геокодирование сработало
-            if last_location.lat is None:
-                return Message(
-                    message="Failed to geocode addresses. Please check addresses and try again."
+    if locations_without_coordinates:
+        addresses = [location.address for location in locations_without_coordinates]
+        coordinates = get_lat_lon(addresses)
+        updated_count = update_locations_with_coordinates(
+            session, locations_without_coordinates, coordinates
+        )
+
+        remaining_without_coordinates = get_locations_without_coordinates(session)
+        if remaining_without_coordinates:
+            unresolved_addresses = ", ".join(
+                location.address for location in remaining_without_coordinates[:3]
+            )
+            if len(remaining_without_coordinates) > 3:
+                unresolved_addresses += ", ..."
+
+            return Message(
+                message=(
+                    f"Geocoding partially completed: updated {updated_count} locations. "
+                    f"Still missing coordinates for {len(remaining_without_coordinates)} "
+                    f"locations: {unresolved_addresses}"
                 )
+            )
 
-    distance_matrix = api.get_distance_matrix()
+        return Message(
+            message=f"Coordinates updated for {updated_count} locations. "
+            "Task distribution is not implemented yet."
+        )
+    # distance_matrix = api.get_distance_matrix()
 
-    solve(distance_matrix, num_vehicles, starts, ends, max_visits_per_vehicle)
+    # solve(distance_matrix, num_vehicles, starts, ends, max_visits_per_vehicle)
 
-    return Message(message="Task distributed successfully")
+    return Message(message="All locations already have coordinates.")
 
 
 @router.get(
