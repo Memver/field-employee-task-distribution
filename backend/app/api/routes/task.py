@@ -129,6 +129,7 @@ def create_task(*, session: SessionDep, task_in: TaskCreate) -> Any:
 
 @router.post("/distribute")
 def distribute_tasks(*, session: SessionDep) -> Message:
+    # TODO: Удалить здесь геокодирование. Добавить геокодирование на этапе create, update location. Сразу будем и проверять адресс и сразу в бд записывать долготу широту.
     locations_without_coordinates = get_locations_without_coordinates(session)
 
     if locations_without_coordinates:
