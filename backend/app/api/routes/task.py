@@ -154,8 +154,13 @@ def distribute_tasks(*, session: SessionDep) -> Message:
                 )
             )
 
-        # TODO: создать ребра от новой локации до всех остальных локаций.
-        # TODO: изменить функцию fill_location_edges_from_osm пусть он берет вот эти новые ребра, а не из базы данных.
+        # TODO: для def distribute_ tasks (A.K.A solve()) нужны матрица расстояний, времени. для get_tasks_me нужен путь.
+        # 1. развернуть локально osrm api Чтобы через docker поднимался для получения матрицы расстояний и времени и для получения пути на множество точек
+        # Для def distribute
+        # 2. Убрать получение путей из def distribute_tasks 
+        # 3. получить матрицы расстояний и времени через api. В функцию получении матрицы расстояний добавить получение времени.
+        # Для def get tasks_me
+        # 2. получить путь через api
 
         eu, sk, fo = fill_location_edges_from_osm(session)
         return Message(
