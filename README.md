@@ -5,6 +5,37 @@
 скачать node js
 tileserver-gl --file a.pmtiles для запуска сервера с тайтлами
 
+## Поднятие локального osrm
+
+1. Скачайте нужный регион, например, Москву и область:
+
+bash
+wget https://download.geofabrik.de/russia/central-fed-district-latest.osm.pbf -O data/map.pbf
+
+2. Извлечение данных (Extract): Конвертируем PBF во внутренний формат OSRM.
+
+bash
+docker run -t -v "${PWD}:/data" osrm/osrm-backend osrm-extract -p /opt/car.lua /data/map.pbf
+
+3. Нарезка (Partition): Оптимизируем граф для быстрого поиска.
+
+bash
+docker run -t -v "${PWD}:/data" osrm/osrm-backend osrm-partition /data/map.osrm
+
+4. Настройка (Customize): Рассчитываем метрики (веса дорог).
+
+bash
+docker run -t -v "${PWD}:/data" osrm/osrm-backend osrm-customize /data/map.osrm
+
+5. Запуск сервера (Routed): Поднимаем API сервер. Флаг -d оставит его работать в фоне.
+
+bash
+docker run -d -p 5000:5000 --rm --name osrm -v "${PWD}:/data" osrm/osrm-backend osrm-routed --algorithm mld /data/map.osrm
+
+Проверка работоспособности 
+
+http://localhost:5000/route/v1/driving/38.975313,45.035470;39.033889,45.118611?steps=true
+
 ## Technology Stack and Features
 
 - ⚡ [**FastAPI**](https://fastapi.tiangolo.com) for the Python backend API.
@@ -232,3 +263,5 @@ Check the file [release-notes.md](./release-notes.md).
 ## License
 
 The Full Stack FastAPI Template is licensed under the terms of the MIT license.
+
+
