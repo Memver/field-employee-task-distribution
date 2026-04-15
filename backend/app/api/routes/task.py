@@ -24,6 +24,7 @@ from sqlalchemy.orm import joinedload, load_only
 from sqlmodel import func, select
 from app.geocoding import get_lat_lon
 from app.path import edge_fields_from_osm_response, get_route_osm
+from ...distanse_matrix import get_distance_and_time_matrix
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
 
@@ -115,6 +116,18 @@ def fill_location_edges_from_osm(session: SessionDep) -> tuple[int, int, int]:
     return updated, skipped_no_coords, failed_osrm
 
 
+def get_all_locations_with_coordinates(session: SessionDep) -> list[Location]:
+    statement = select(Location).where(
+        and_(Location.lat.is_not(None), Location.lon.is_not(None))
+    )
+    return session.exec(statement).all()
+
+
+def solve(*, distance_matrix: list[list[float]], time_matrix: list[list[float]]) -> None:
+    # TODO: Реализовать алгоритм распределения задач.
+    return None
+
+
 @router.post("/", response_model=TaskPublic)
 def create_task(*, session: SessionDep, task_in: TaskCreate) -> Any:
     """
@@ -164,23 +177,29 @@ def distribute_tasks(*, session: SessionDep) -> Message:
         # 2. получить путь через api
 
         eu, sk, fo = fill_location_edges_from_osm(session)
+        locations = get_all_locations_with_coordinates(session)
+        distance_matrix, time_matrix = get_distance_and_time_matrix(locations)
+        solve(distance_matrix=distance_matrix, time_matrix=time_matrix)
         return Message(
             message=(
                 f"Coordinates updated for {updated_count} locations. "
                 f"Edges filled from OSRM: {eu} updated, {sk} skipped (missing coords), "
-                f"{fo} failed."
+                f"{fo} failed. "
+                f"Matrices prepared for solve: {len(locations)}x{len(locations)}."
             )
         )
 
     eu, sk, fo = fill_location_edges_from_osm(session)
-
-    # solve(distance_matrix, num_vehicles, starts, ends, max_visits_per_vehicle)
+    locations = get_all_locations_with_coordinates(session)
+    distance_matrix, time_matrix = get_distance_and_time_matrix(locations)
+    solve(distance_matrix=distance_matrix, time_matrix=time_matrix)
 
     return Message(
         message=(
             f"All locations already have coordinates. "
             f"Edges filled from OSRM: {eu} updated, {sk} skipped (missing coords), "
-            f"{fo} failed."
+            f"{fo} failed. "
+            f"Matrices prepared for solve: {len(locations)}x{len(locations)}."
         )
     )
 
