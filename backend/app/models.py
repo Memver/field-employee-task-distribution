@@ -55,24 +55,6 @@ class Location(LocationBase, table=True):
     id: int = Field(default=None, primary_key=True)
 
 
-class LocationEdgeBase(SQLModel):
-    distance: float = Field(ge=0, nullable=False)
-    time: int = Field(ge=0, nullable=False)
-    route: list[list[float]] = Field(sa_column=Column(JSONB))
-
-
-class LocationEdge(LocationEdgeBase, table=True):
-    __tablename__ = "location_edge"
-
-    id: int = Field(default=None, primary_key=True)
-    from_location_id: int = Field(
-        nullable=False,
-    )
-    to_location_id: int = Field(
-        nullable=False,
-    )
-
-
 class PriorityBase(SQLModel):
     name: str = Field(max_length=32, unique=True, nullable=False)
     level: int = Field(gt=0, unique=True, nullable=False)

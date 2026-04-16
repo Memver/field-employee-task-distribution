@@ -5,6 +5,7 @@ import shapely.wkb
 from app.api.deps import CurrentUser, SessionDep
 from app.models import (
     AgentPoint,
+    Employee,
     Location,
     LocationEdge,
     LocationPublic,
@@ -13,6 +14,7 @@ from app.models import (
     TaskCreate,
     TaskMePublic,
     TaskPublic,
+    TaskType,
     TasksMePublic,
     TasksPublic,
     TaskUpdate,
@@ -116,10 +118,8 @@ def fill_location_edges_from_osm(session: SessionDep) -> tuple[int, int, int]:
     return updated, skipped_no_coords, failed_osrm
 
 
-def get_all_locations_with_coordinates(session: SessionDep) -> list[Location]:
-    statement = select(Location).where(
-        and_(Location.lat.is_not(None), Location.lon.is_not(None))
-    )
+def get_all_locations(session: SessionDep) -> list[Location]:
+    statement = select(Location)
     return session.exec(statement).all()
 
 
@@ -143,63 +143,45 @@ def create_task(*, session: SessionDep, task_in: TaskCreate) -> Any:
 @router.post("/distribute")
 def distribute_tasks(*, session: SessionDep) -> Message:
     # TODO: Удалить здесь геокодирование. Добавить геокодирование на этапе create, update location. Сразу будем и проверять адресс и сразу в бд записывать долготу широту.
-    locations_without_coordinates = get_locations_without_coordinates(session)
+    
+    # TODO: для def distribute_ tasks (A.K.A solve()) нужны матрица расстояний, времени. для get_tasks_me нужен путь.
+    # 1. развернуть локально osrm api Чтобы через docker поднимался для получения матрицы расстояний и времени и для получения пути на множество точек
+    # Для def distribute
+    # 2. Убрать получение путей из def distribute_tasks 
+    # 3. получить матрицы расстояний и времени через api. В функцию получении матрицы расстояний добавить получение времени.
+    # Для def get tasks_me
+    # 2. получить путь через api
 
-    if locations_without_coordinates:
-        addresses = [location.address for location in locations_without_coordinates]
-        coordinates = get_lat_lon(addresses)
-        updated_count = update_locations_with_coordinates(
-            session, locations_without_coordinates, coordinates
+    employees = session.exec(
+        select(Employee).options(
+            joinedload(Employee.user),
+            joinedload(Employee.grade),
+            joinedload(Employee.start_location),
         )
+    ).all()
 
-        remaining_without_coordinates = get_locations_without_coordinates(session)
-        if remaining_without_coordinates:
-            unresolved_addresses = ", ".join(
-                location.address for location in remaining_without_coordinates[:3]
-            )
-            if len(remaining_without_coordinates) > 3:
-                unresolved_addresses += ", ..."
+    agent_points = session.exec(
+        select(AgentPoint).options(joinedload(AgentPoint.location))
+    ).all()
 
-            return Message(
-                message=(
-                    f"Geocoding partially completed: updated {updated_count} locations. "
-                    f"Still missing coordinates for {len(remaining_without_coordinates)} "
-                    f"locations: {unresolved_addresses}"
-                )
-            )
-
-        # TODO: для def distribute_ tasks (A.K.A solve()) нужны матрица расстояний, времени. для get_tasks_me нужен путь.
-        # 1. развернуть локально osrm api Чтобы через docker поднимался для получения матрицы расстояний и времени и для получения пути на множество точек
-        # Для def distribute
-        # 2. Убрать получение путей из def distribute_tasks 
-        # 3. получить матрицы расстояний и времени через api. В функцию получении матрицы расстояний добавить получение времени.
-        # Для def get tasks_me
-        # 2. получить путь через api
-
-        eu, sk, fo = fill_location_edges_from_osm(session)
-        locations = get_all_locations_with_coordinates(session)
-        distance_matrix, time_matrix = get_distance_and_time_matrix(locations)
-        solve(distance_matrix=distance_matrix, time_matrix=time_matrix)
-        return Message(
-            message=(
-                f"Coordinates updated for {updated_count} locations. "
-                f"Edges filled from OSRM: {eu} updated, {sk} skipped (missing coords), "
-                f"{fo} failed. "
-                f"Matrices prepared for solve: {len(locations)}x{len(locations)}."
-            )
+    task_types = session.exec(
+        select(TaskType).options(
+            joinedload(TaskType.min_grade),
+            joinedload(TaskType.priority),
         )
+    ).all()
 
-    eu, sk, fo = fill_location_edges_from_osm(session)
-    locations = get_all_locations_with_coordinates(session)
+    locations = get_all_locations(session)
     distance_matrix, time_matrix = get_distance_and_time_matrix(locations)
     solve(distance_matrix=distance_matrix, time_matrix=time_matrix)
 
     return Message(
         message=(
             f"All locations already have coordinates. "
-            f"Edges filled from OSRM: {eu} updated, {sk} skipped (missing coords), "
-            f"{fo} failed. "
-            f"Matrices prepared for solve: {len(locations)}x{len(locations)}."
+            f"Matrices prepared for solve: {len(locations)}x{len(locations)}. "
+            f"Loaded employees={len(employees)}, "
+            f"agent_points={len(agent_points)}, "
+            f"task_types={len(task_types)}."
         )
     )
 
