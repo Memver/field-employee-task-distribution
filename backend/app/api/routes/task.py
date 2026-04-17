@@ -201,7 +201,7 @@ def distribute_tasks(*, session: SessionDep) -> Message:
         prev = carryover_days_by_agent_point.get(old_task.agent_point_id, 0)
         carryover_days_by_agent_point[old_task.agent_point_id] = max(prev, age_days + 1)
 
-    planned_tasks, unassigned_tasks = distribute_solve(
+    planned_tasks = distribute_solve(
         employees=employees,
         agent_points=agent_points,
         task_types=task_types,
@@ -231,15 +231,6 @@ def distribute_tasks(*, session: SessionDep) -> Message:
 
     session.commit()
 
-    reason_counts: dict[str, int] = {}
-    for item in unassigned_tasks:
-        reason_counts[item.reason] = reason_counts.get(item.reason, 0) + 1
-    reasons_text = ", ".join(
-        f"{reason}={count}" for reason, count in sorted(reason_counts.items())
-    )
-    if not reasons_text:
-        reasons_text = "none"
-
     return Message(
         message=(
             f"Distribution completed. "
@@ -248,8 +239,7 @@ def distribute_tasks(*, session: SessionDep) -> Message:
             f"agent_points={len(agent_points)}, "
             f"task_types={len(task_types)}. "
             f"Removed old assigned={len(old_assigned_tasks)}, "
-            f"created assigned={created_count}. "
-            f"Unassigned={len(unassigned_tasks)} ({reasons_text})."
+            f"created assigned={created_count}."
         )
     )
 

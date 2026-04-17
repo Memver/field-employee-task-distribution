@@ -16,28 +16,18 @@ class PlannedTask:
 
 
 @dataclass
-class UnassignedTask:
-    agent_point_id: int
-    task_type_id: int | None
-    reason: str
-
-
-@dataclass
 class TaskCandidate:
     task_type: TaskType
     agent_point: AgentPoint
     priority_level: int
-    urgency_score: int
 
 
-def _score_agent_point(agent_point: AgentPoint) -> int:
-    score = 0
-    score += min(agent_point.days_since_last_card_gived, 60) * 2
-    score += min(agent_point.approved_applications, 100)
-    score += min(agent_point.cards_gived, 100) // 2
-    if not agent_point.is_cards_delivered:
-        score += 200
-    return score
+DROP_PENALTY_HOURS_BY_PRIORITY = {
+    "high": 10,
+    "middle": 5,
+    "low": 2,
+}
+FIXED_SOLVER_TIME_LIMIT_SECONDS = 60
 
 
 def _select_task_type_for_agent_point(
@@ -91,19 +81,23 @@ def _to_candidate(agent_point: AgentPoint, task_type: TaskType) -> TaskCandidate
         task_type=task_type,
         agent_point=agent_point,
         priority_level=task_type.priority.level if task_type.priority else 0,
-        urgency_score=_score_agent_point(agent_point),
     )
 
 
 def _priority_penalty(candidate: TaskCandidate, carryover_days: int) -> int:
+    """
+    Policy:
+    - penalty задается как эквивалент часов дороги;
+    - penalty зависит только от бизнес-приоритета задачи.
+    """
     if candidate.priority_level >= 110:
-        base = 4_000_000
+        penalty_hours = DROP_PENALTY_HOURS_BY_PRIORITY["high"]
     elif candidate.priority_level >= 60:
-        base = 1_500_000
+        penalty_hours = DROP_PENALTY_HOURS_BY_PRIORITY["middle"]
     else:
-        base = 350_000
-    carryover_multiplier = min(1.0 + (0.5 * max(carryover_days, 0)), 4.0)
-    return int((base + candidate.urgency_score * 1_000) * carryover_multiplier)
+        penalty_hours = DROP_PENALTY_HOURS_BY_PRIORITY["low"]
+
+    return penalty_hours * 60 * 60
 
 
 def _build_travel_callback(
@@ -147,61 +141,6 @@ def _work_seconds_to_datetime(
     return planning_start + timedelta(days=day_offset, seconds=seconds_in_day)
 
 
-def _search_time_limit_seconds(num_tasks: int) -> int:
-    if num_tasks >= 100:
-        return 120
-    if num_tasks >= 50:
-        return 60
-    return 20
-
-
-def _classify_dropped_reason(
-    *,
-    candidate: TaskCandidate,
-    carryover_days: int,
-    eligible_vehicle_indices: list[int],
-    vehicle_depot_location_idx: list[int],
-    location_index_by_id: dict[int, int],
-    time_matrix: list[list[float]],
-    workday_seconds: int,
-) -> str:
-    """Грубая диагностика причины drop для отчета."""
-    if not eligible_vehicle_indices:
-        return "dropped_no_eligible_vehicle"
-
-    if candidate.agent_point.location is None:
-        return "dropped_missing_location"
-
-    task_loc_idx = location_index_by_id.get(candidate.agent_point.location.id)
-    if task_loc_idx is None:
-        return "dropped_location_not_in_matrix"
-
-    execution_seconds = int(float(candidate.task_type.execution_time) * 60 * 60)
-    min_round_trip_seconds = None
-    for vehicle_idx in eligible_vehicle_indices:
-        depot_loc_idx = vehicle_depot_location_idx[vehicle_idx]
-        round_trip = int(float(time_matrix[depot_loc_idx][task_loc_idx])) + int(
-            float(time_matrix[task_loc_idx][depot_loc_idx])
-        )
-        if min_round_trip_seconds is None or round_trip < min_round_trip_seconds:
-            min_round_trip_seconds = round_trip
-
-    if min_round_trip_seconds is None:
-        return "dropped_no_route"
-
-    if min_round_trip_seconds + execution_seconds > workday_seconds:
-        return "dropped_no_single_shift_feasible"
-
-    if carryover_days > 0:
-        return "dropped_capacity_with_carryover"
-
-    if candidate.priority_level >= 110:
-        return "dropped_capacity_high_priority"
-    if candidate.priority_level >= 60:
-        return "dropped_capacity_middle_priority"
-    return "dropped_capacity_low_priority"
-
-
 def solve(
     *,
     employees: list[Employee],
@@ -212,9 +151,16 @@ def solve(
     planning_start: datetime | None = None,
     horizon_days: int = 3,
     carryover_days_by_agent_point: dict[int, int] | None = None,
-) -> tuple[list[PlannedTask], list[UnassignedTask]]:
+) -> list[PlannedTask]:
+    """
+    Policy распределения:
+    1) тип задачи определяется по правилам ТЗ;
+    2) hard constraints: грейд, 8 часов на смену, ежедневный возврат на базу;
+    3) objective: минимизация суммарного времени дороги;
+    4) при дефиците ресурса задачи могут быть перенесены (drop) по penalty-приоритетам.
+    """
     if not employees or not agent_points or not task_types or not locations:
-        return [], []
+        return []
 
     location_index_by_id = {location.id: idx for idx, location in enumerate(locations)}
 
@@ -227,47 +173,25 @@ def solve(
 
     workday_seconds = 8 * 60 * 60
     horizon_days = max(horizon_days, 1)
-    unassigned_tasks: list[UnassignedTask] = []
 
     candidates: list[TaskCandidate] = []
     for agent_point in agent_points:
         task_type = _select_task_type_for_agent_point(agent_point, task_types)
         if task_type is None:
-            unassigned_tasks.append(
-                UnassignedTask(
-                    agent_point_id=agent_point.id,
-                    task_type_id=None,
-                    reason="no_task_type_by_rules",
-                )
-            )
             continue
         candidates.append(_to_candidate(agent_point, task_type))
 
     if not candidates:
-        return [], unassigned_tasks
+        return []
 
     valid_candidates: list[TaskCandidate] = []
     for candidate in candidates:
         task_type = candidate.task_type
         agent_point = candidate.agent_point
         if agent_point.location is None:
-            unassigned_tasks.append(
-                UnassignedTask(
-                    agent_point_id=agent_point.id,
-                    task_type_id=task_type.id,
-                    reason="missing_agent_location",
-                )
-            )
             continue
 
         if location_index_by_id.get(agent_point.location.id) is None:
-            unassigned_tasks.append(
-                UnassignedTask(
-                    agent_point_id=agent_point.id,
-                    task_type_id=task_type.id,
-                    reason="location_not_in_matrix",
-                )
-            )
             continue
 
         min_required_level = task_type.min_grade.level if task_type.min_grade else 0
@@ -277,18 +201,11 @@ def solve(
             if employee.grade is not None and employee.grade.level >= min_required_level
         ]
         if not eligible_employees:
-            unassigned_tasks.append(
-                UnassignedTask(
-                    agent_point_id=agent_point.id,
-                    task_type_id=task_type.id,
-                    reason="no_employee_with_required_grade",
-                )
-            )
             continue
         valid_candidates.append(candidate)
 
     if not valid_candidates:
-        return [], unassigned_tasks
+        return []
 
     num_tasks = len(valid_candidates)
     vehicle_day_infos: list[tuple[Employee, int]] = []
@@ -306,19 +223,10 @@ def solve(
         node_location_idx.append(loc_idx)
         node_service_seconds.append(int(float(candidate.task_type.execution_time) * 60 * 60))
 
-    vehicle_depot_location_idx: list[int] = []
     for employee, _day_idx in vehicle_day_infos:
         loc_idx = location_index_by_id.get(employee.start_location_id)
         if loc_idx is None:
-            unassigned_tasks.append(
-                UnassignedTask(
-                    agent_point_id=-1,
-                    task_type_id=None,
-                    reason=f"employee_{employee.id}_start_location_not_in_matrix",
-                )
-            )
             loc_idx = 0
-        vehicle_depot_location_idx.append(loc_idx)
         node_location_idx.append(loc_idx)
         node_service_seconds.append(0)
 
@@ -356,15 +264,6 @@ def solve(
     )
     time_dimension = routing.GetDimensionOrDie("Time")
 
-    total_service_seconds = sum(node_service_seconds[:num_tasks])
-    target_vehicle_load = min(
-        workday_seconds, max(60 * 60, total_service_seconds // max(num_vehicles, 1))
-    )
-    for vehicle_idx in range(num_vehicles):
-        end_index = routing.End(vehicle_idx)
-        time_dimension.SetCumulVarSoftUpperBound(end_index, target_vehicle_load, 15)
-
-    eligible_vehicle_indices_by_task_node: dict[int, list[int]] = {}
     for task_node in range(num_tasks):
         candidate = valid_candidates[task_node]
         min_required_level = (
@@ -375,7 +274,6 @@ def solve(
             for vehicle_idx, (employee, _day_idx) in enumerate(vehicle_day_infos)
             if employee.grade is not None and employee.grade.level >= min_required_level
         ]
-        eligible_vehicle_indices_by_task_node[task_node] = allowed_vehicles
         task_index = manager.NodeToIndex(task_node)
         routing.SetAllowedVehiclesForIndex(allowed_vehicles, task_index)
 
@@ -385,10 +283,6 @@ def solve(
             _priority_penalty(candidate, carryover_days=carryover_days),
         )
 
-    time_dimension.SetGlobalSpanCostCoefficient(10)
-    for vehicle_idx in range(num_vehicles):
-        routing.AddVariableMinimizedByFinalizer(time_dimension.CumulVar(routing.End(vehicle_idx)))
-
     search_parameters = pywrapcp.DefaultRoutingSearchParameters()
     search_parameters.first_solution_strategy = (
         routing_enums_pb2.FirstSolutionStrategy.PARALLEL_CHEAPEST_INSERTION
@@ -396,19 +290,11 @@ def solve(
     search_parameters.local_search_metaheuristic = (
         routing_enums_pb2.LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH
     )
-    search_parameters.time_limit.seconds = _search_time_limit_seconds(num_tasks)
+    search_parameters.time_limit.seconds = FIXED_SOLVER_TIME_LIMIT_SECONDS
 
     solution = routing.SolveWithParameters(search_parameters)
     if not solution:
-        for candidate in valid_candidates:
-            unassigned_tasks.append(
-                UnassignedTask(
-                    agent_point_id=candidate.agent_point.id,
-                    task_type_id=candidate.task_type.id,
-                    reason="optimizer_no_solution",
-                )
-            )
-        return [], unassigned_tasks
+        return []
 
     planned_tasks: list[PlannedTask] = []
     dropped_task_nodes: set[int] = set()
@@ -447,25 +333,5 @@ def solve(
                 )
             index = solution.Value(routing.NextVar(index))
 
-    for task_node in sorted(dropped_task_nodes):
-        candidate = valid_candidates[task_node]
-        carryover_days = carryover_days_by_agent_point.get(candidate.agent_point.id, 0)
-        reason = _classify_dropped_reason(
-            candidate=candidate,
-            carryover_days=carryover_days,
-            eligible_vehicle_indices=eligible_vehicle_indices_by_task_node.get(task_node, []),
-            vehicle_depot_location_idx=vehicle_depot_location_idx,
-            location_index_by_id=location_index_by_id,
-            time_matrix=time_matrix,
-            workday_seconds=workday_seconds,
-        )
-        unassigned_tasks.append(
-            UnassignedTask(
-                agent_point_id=candidate.agent_point.id,
-                task_type_id=candidate.task_type.id,
-                reason=reason,
-            )
-        )
-
     planned_tasks.sort(key=lambda item: (item.employee_id, item.start_time))
-    return planned_tasks, unassigned_tasks
+    return planned_tasks
