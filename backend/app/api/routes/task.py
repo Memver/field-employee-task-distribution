@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from typing import Any
 
 import shapely
@@ -14,11 +15,13 @@ from app.models import (
     TaskCreate,
     TaskMePublic,
     TaskPublic,
+    TaskStatus,
     TaskType,
     TasksMePublic,
     TasksPublic,
     TaskUpdate,
 )
+from app.distribute import solve as distribute_solve
 from fastapi import APIRouter, HTTPException
 from shapely.ops import linemerge
 from sqlalchemy import and_, or_
@@ -123,11 +126,6 @@ def get_all_locations(session: SessionDep) -> list[Location]:
     return session.exec(statement).all()
 
 
-def solve(*, distance_matrix: list[list[float]], time_matrix: list[list[float]]) -> None:
-    # TODO: Реализовать алгоритм распределения задач.
-    return None
-
-
 @router.post("/", response_model=TaskPublic)
 def create_task(*, session: SessionDep, task_in: TaskCreate) -> Any:
     """
@@ -173,15 +171,85 @@ def distribute_tasks(*, session: SessionDep) -> Message:
 
     locations = get_all_locations(session)
     distance_matrix, time_matrix = get_distance_and_time_matrix(locations)
-    solve(distance_matrix=distance_matrix, time_matrix=time_matrix)
+
+    assigned_status = session.exec(
+        select(TaskStatus).where(TaskStatus.name == "ASSIGNED")
+    ).first()
+    if assigned_status is None:
+        return Message(
+            message=(
+                "Task status 'ASSIGNED' not found. "
+                "Distribution cancelled."
+            )
+        )
+
+    old_assigned_tasks = session.exec(
+        select(Task).where(Task.task_status_id == assigned_status.id)
+    ).all()
+
+    # Динамический приоритет для переносимых задач:
+    # если точка уже была в ASSIGNED, но не закрыта, увеличиваем ее penalty на drop.
+    today_utc = datetime.now(timezone.utc).date()
+    carryover_days_by_agent_point: dict[int, int] = {}
+    for old_task in old_assigned_tasks:
+        if old_task.start_time is None:
+            continue
+        task_date = old_task.start_time
+        if task_date.tzinfo is None:
+            task_date = task_date.replace(tzinfo=timezone.utc)
+        age_days = max((today_utc - task_date.date()).days, 0)
+        prev = carryover_days_by_agent_point.get(old_task.agent_point_id, 0)
+        carryover_days_by_agent_point[old_task.agent_point_id] = max(prev, age_days + 1)
+
+    planned_tasks, unassigned_tasks = distribute_solve(
+        employees=employees,
+        agent_points=agent_points,
+        task_types=task_types,
+        locations=locations,
+        time_matrix=time_matrix,
+        horizon_days=3,
+        carryover_days_by_agent_point=carryover_days_by_agent_point,
+    )
+
+    # Перераспределение всегда пересоздает активные задачи статуса ASSIGNED.
+    for old_task in old_assigned_tasks:
+        session.delete(old_task)
+
+    created_count = 0
+    for planned_task in planned_tasks:
+        task = Task(
+            employee_id=planned_task.employee_id,
+            agent_point_id=planned_task.agent_point_id,
+            task_type_id=planned_task.task_type_id,
+            task_status_id=assigned_status.id,
+            start_time=planned_task.start_time,
+            finish_time=planned_task.finish_time,
+            comment=planned_task.comment,
+        )
+        session.add(task)
+        created_count += 1
+
+    session.commit()
+
+    reason_counts: dict[str, int] = {}
+    for item in unassigned_tasks:
+        reason_counts[item.reason] = reason_counts.get(item.reason, 0) + 1
+    reasons_text = ", ".join(
+        f"{reason}={count}" for reason, count in sorted(reason_counts.items())
+    )
+    if not reasons_text:
+        reasons_text = "none"
 
     return Message(
         message=(
-            f"All locations already have coordinates. "
+            f"Distribution completed. "
             f"Matrices prepared for solve: {len(locations)}x{len(locations)}. "
             f"Loaded employees={len(employees)}, "
             f"agent_points={len(agent_points)}, "
-            f"task_types={len(task_types)}."
+            f"task_types={len(task_types)}. "
+            f"Removed old assigned={len(old_assigned_tasks)}, "
+            f"created assigned={created_count}. "
+            f"Unassigned={len(unassigned_tasks)} ({reasons_text})."
         )
     )
 
