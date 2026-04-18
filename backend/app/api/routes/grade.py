@@ -1,6 +1,6 @@
 from typing import Any
 
-from app.api.deps import CurrentUser, SessionDep
+from app.api.deps import EmployeeManagerUser, ManagerOrFieldEmployeeUser, SessionDep
 from app.models import (
     Grade,
     GradeCreate,
@@ -16,7 +16,9 @@ router = APIRouter(prefix="/grades", tags=["grades"])
 
 
 @router.post("/", response_model=GradePublic)
-def create_grade(*, session: SessionDep, grade_in: GradeCreate) -> Any:
+def create_grade(
+    *, session: SessionDep, _em: EmployeeManagerUser, grade_in: GradeCreate
+) -> Any:
     """
     Create new grade.
     """
@@ -31,7 +33,9 @@ def create_grade(*, session: SessionDep, grade_in: GradeCreate) -> Any:
     "/",
     response_model=GradesPublic,
 )
-def read_grades(session: SessionDep, skip: int = 0, limit: int = 100) -> Any:
+def read_grades(
+    session: SessionDep, _reader: ManagerOrFieldEmployeeUser, skip: int = 0, limit: int = 100
+) -> Any:
     """
     Retrieve grades.
     """
@@ -46,7 +50,9 @@ def read_grades(session: SessionDep, skip: int = 0, limit: int = 100) -> Any:
 
 
 @router.get("/{grade_id}", response_model=GradePublic)
-def read_grade_by_id(grade_id: int, session: SessionDep) -> Any:
+def read_grade_by_id(
+    grade_id: int, session: SessionDep, _reader: ManagerOrFieldEmployeeUser
+) -> Any:
     """
     Get a specific grade by id.
     """
@@ -58,7 +64,7 @@ def read_grade_by_id(grade_id: int, session: SessionDep) -> Any:
 def update_grade(
     *,
     session: SessionDep,
-    current_user: CurrentUser,
+    _em: EmployeeManagerUser,
     id: int,
     grade_in: GradeUpdate,
 ) -> Any:
@@ -77,7 +83,7 @@ def update_grade(
 
 
 @router.delete("/{grade_id}")
-def delete_grade(session: SessionDep, grade_id: int) -> Message:
+def delete_grade(session: SessionDep, _em: EmployeeManagerUser, grade_id: int) -> Message:
     """
     Delete a grade.
     """

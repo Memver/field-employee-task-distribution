@@ -1,6 +1,6 @@
 from typing import Any
 
-from app.api.deps import CurrentUser, SessionDep
+from app.api.deps import EmployeeManagerUser, ManagerOrFieldEmployeeUser, SessionDep
 from app.models import (
     Location,
     LocationCreate,
@@ -16,7 +16,9 @@ router = APIRouter(prefix="/locations", tags=["locations"])
 
 
 @router.post("/", response_model=LocationPublic)
-def create_location(*, session: SessionDep, location_in: LocationCreate) -> Any:
+def create_location(
+    *, session: SessionDep, _em: EmployeeManagerUser, location_in: LocationCreate
+) -> Any:
     """
     Create new location.
     """
@@ -31,7 +33,9 @@ def create_location(*, session: SessionDep, location_in: LocationCreate) -> Any:
     "/",
     response_model=LocationsPublic,
 )
-def read_locations(session: SessionDep, skip: int = 0, limit: int = 100) -> Any:
+def read_locations(
+    session: SessionDep, _reader: ManagerOrFieldEmployeeUser, skip: int = 0, limit: int = 100
+) -> Any:
     """
     Retrieve locations.
     """
@@ -46,7 +50,9 @@ def read_locations(session: SessionDep, skip: int = 0, limit: int = 100) -> Any:
 
 
 @router.get("/{location_id}", response_model=LocationPublic)
-def read_location_by_id(location_id: int, session: SessionDep) -> Any:
+def read_location_by_id(
+    location_id: int, session: SessionDep, _reader: ManagerOrFieldEmployeeUser
+) -> Any:
     """
     Get a specific location by id.
     """
@@ -58,7 +64,7 @@ def read_location_by_id(location_id: int, session: SessionDep) -> Any:
 def update_location(
     *,
     session: SessionDep,
-    current_user: CurrentUser,
+    _em: EmployeeManagerUser,
     id: int,
     location_in: LocationUpdate,
 ) -> Any:
@@ -77,7 +83,9 @@ def update_location(
 
 
 @router.delete("/{location_id}")
-def delete_location(session: SessionDep, location_id: int) -> Message:
+def delete_location(
+    session: SessionDep, _em: EmployeeManagerUser, location_id: int
+) -> Message:
     """
     Delete a location.
     """

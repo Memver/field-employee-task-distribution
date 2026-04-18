@@ -3,7 +3,8 @@ from typing import Any
 
 import shapely
 import shapely.wkb
-from app.api.deps import CurrentUser, SessionDep
+from app.api.deps import CurrentUser, EmployeeManagerUser, FieldEmployeeUser, SessionDep
+from app.core.roles import is_employee_manager_user, is_field_employee_user
 from app.models import (
     AgentPoint,
     Employee,
@@ -15,6 +16,7 @@ from app.models import (
     TaskCreate,
     TaskMePublic,
     TaskPublic,
+    TaskSelfUpdate,
     TaskStatus,
     TaskType,
     TasksMePublic,
@@ -127,7 +129,9 @@ def get_all_locations(session: SessionDep) -> list[Location]:
 
 
 @router.post("/", response_model=TaskPublic)
-def create_task(*, session: SessionDep, task_in: TaskCreate) -> Any:
+def create_task(
+    *, session: SessionDep, _em: EmployeeManagerUser, task_in: TaskCreate
+) -> Any:
     """
     Create new task.
     """
@@ -139,7 +143,7 @@ def create_task(*, session: SessionDep, task_in: TaskCreate) -> Any:
 
 
 @router.post("/distribute")
-def distribute_tasks(*, session: SessionDep) -> Message:
+def distribute_tasks(*, session: SessionDep, _em: EmployeeManagerUser) -> Message:
     # TODO: Удалить здесь геокодирование. Добавить геокодирование на этапе create, update location. Сразу будем и проверять адресс и сразу в бд записывать долготу широту.
     
     # TODO: для def distribute_ tasks (A.K.A solve()) нужны матрица расстояний, времени. для get_tasks_me нужен путь.
@@ -248,7 +252,9 @@ def distribute_tasks(*, session: SessionDep) -> Message:
     "/",
     response_model=TasksPublic,
 )
-def read_tasks(session: SessionDep, skip: int = 0, limit: int = 100) -> Any:
+def read_tasks(
+    session: SessionDep, _em: EmployeeManagerUser, skip: int = 0, limit: int = 100
+) -> Any:
     """
     Retrieve tasks.
     """
@@ -265,15 +271,14 @@ def read_tasks(session: SessionDep, skip: int = 0, limit: int = 100) -> Any:
 @router.get("/me", response_model=TasksMePublic)
 def read_tasks_me(
     session: SessionDep,
-    current_user: CurrentUser,
+    field_user: FieldEmployeeUser,
     skip: int = 0,
     limit: int = 100,
 ) -> Any:
     """
     Retrieve my tasks with route path from start location through all tasks and back.
     """
-    # Get current employee
-    current_employee = current_user.employee
+    current_employee = field_user.employee
 
     # Get start location
     start_location = session.get(Location, current_employee.start_location_id)
@@ -299,16 +304,12 @@ def read_tasks_me(
     # )
     tasks = session.exec(statement).all()
 
-    print(tasks)
-
     # Prepare task list for response
     tasks_me_public = []
     location_ids = []
 
     # Add start location
     location_ids.append(current_employee.start_location_id)
-
-    print(location_ids)
 
     for task in tasks:
         tasks_me_public.append(TaskMePublic.model_validate(task))
@@ -381,10 +382,6 @@ def read_tasks_me(
                 # Convert to WKT string instead of WKB binary
                 route = shapely.wkt.dumps(merged)
 
-    print(tasks)
-    print(route)
-    print(start_location)
-
     return TasksMePublic(
         tasks=tasks_me_public,
         route=route,
@@ -392,20 +389,63 @@ def read_tasks_me(
     )
 
 
+@router.patch("/{task_id}/self", response_model=TaskPublic)
+def update_my_task_status(
+    *,
+    session: SessionDep,
+    field_user: FieldEmployeeUser,
+    task_id: int,
+    body: TaskSelfUpdate,
+) -> Any:
+    """
+    Выездной сотрудник: смена статуса и комментария только по своей задаче.
+    """
+    task = session.get(Task, task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    if task.employee_id != field_user.employee.id:
+        raise HTTPException(
+            status_code=403,
+            detail="Можно изменять только свои задачи",
+        )
+    task.task_status_id = body.task_status_id
+    if body.comment is not None:
+        task.comment = body.comment
+    session.add(task)
+    session.commit()
+    session.refresh(task)
+    return task
+
+
 @router.get("/{task_id}", response_model=TaskPublic)
-def read_task_by_id(task_id: int, session: SessionDep) -> Any:
+def read_task_by_id(
+    task_id: int, session: SessionDep, current_user: CurrentUser
+) -> Any:
     """
     Get a specific task by id.
     """
     task = session.get(Task, task_id)
-    return task
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    if is_employee_manager_user(current_user.role):
+        return task
+    if (
+        is_field_employee_user(current_user.role)
+        and current_user.employee is not None
+        and task.employee_id == current_user.employee.id
+    ):
+        return task
+    raise HTTPException(
+        status_code=403,
+        detail="Недостаточно прав для просмотра этой задачи",
+    )
 
 
 @router.put("/{id}", response_model=TaskPublic)
 def update_task(
     *,
     session: SessionDep,
-    current_user: CurrentUser,
+    _em: EmployeeManagerUser,
     id: int,
     task_in: TaskUpdate,
 ) -> Any:
@@ -424,7 +464,9 @@ def update_task(
 
 
 @router.delete("/{task_id}")
-def delete_task(session: SessionDep, task_id: int) -> Message:
+def delete_task(
+    session: SessionDep, _em: EmployeeManagerUser, task_id: int
+) -> Message:
     """
     Delete a task.
     """

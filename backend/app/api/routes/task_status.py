@@ -1,6 +1,6 @@
 from typing import Any
 
-from app.api.deps import CurrentUser, SessionDep
+from app.api.deps import EmployeeManagerUser, ManagerOrFieldEmployeeUser, SessionDep
 from app.models import (
     Message,
     TaskStatus,
@@ -16,7 +16,12 @@ router = APIRouter(prefix="/task-statuses", tags=["task-statuses"])
 
 
 @router.post("/", response_model=TaskStatusPublic)
-def create_task_status(*, session: SessionDep, task_status_in: TaskStatusCreate) -> Any:
+def create_task_status(
+    *,
+    session: SessionDep,
+    _em: EmployeeManagerUser,
+    task_status_in: TaskStatusCreate,
+) -> Any:
     """
     Create new task_status.
     """
@@ -31,7 +36,9 @@ def create_task_status(*, session: SessionDep, task_status_in: TaskStatusCreate)
     "/",
     response_model=TaskStatusesPublic,
 )
-def read_task_statuses(session: SessionDep, skip: int = 0, limit: int = 100) -> Any:
+def read_task_statuses(
+    session: SessionDep, _reader: ManagerOrFieldEmployeeUser, skip: int = 0, limit: int = 100
+) -> Any:
     """
     Retrieve task_statuses.
     """
@@ -46,7 +53,9 @@ def read_task_statuses(session: SessionDep, skip: int = 0, limit: int = 100) -> 
 
 
 @router.get("/{task_status_id}", response_model=TaskStatusPublic)
-def read_task_status_by_id(task_status_id: int, session: SessionDep) -> Any:
+def read_task_status_by_id(
+    task_status_id: int, session: SessionDep, _reader: ManagerOrFieldEmployeeUser
+) -> Any:
     """
     Get a specific task_status by id.
     """
@@ -58,7 +67,7 @@ def read_task_status_by_id(task_status_id: int, session: SessionDep) -> Any:
 def update_task_status(
     *,
     session: SessionDep,
-    current_user: CurrentUser,
+    _em: EmployeeManagerUser,
     id: int,
     task_status_in: TaskStatusUpdate,
 ) -> Any:
@@ -77,7 +86,9 @@ def update_task_status(
 
 
 @router.delete("/{task_status_id}")
-def delete_task_status(session: SessionDep, task_status_id: int) -> Message:
+def delete_task_status(
+    session: SessionDep, _em: EmployeeManagerUser, task_status_id: int
+) -> Message:
     """
     Delete a task_status.
     """

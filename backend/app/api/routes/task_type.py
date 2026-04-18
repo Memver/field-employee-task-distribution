@@ -1,6 +1,6 @@
 from typing import Any
 
-from app.api.deps import CurrentUser, SessionDep
+from app.api.deps import EmployeeManagerUser, ManagerOrFieldEmployeeUser, SessionDep
 from app.models import (
     Message,
     TaskType,
@@ -16,7 +16,9 @@ router = APIRouter(prefix="/task-types", tags=["task-types"])
 
 
 @router.post("/", response_model=TaskTypePublic)
-def create_task_type(*, session: SessionDep, task_type_in: TaskTypeCreate) -> Any:
+def create_task_type(
+    *, session: SessionDep, _em: EmployeeManagerUser, task_type_in: TaskTypeCreate
+) -> Any:
     """
     Create new task_type.
     """
@@ -31,7 +33,9 @@ def create_task_type(*, session: SessionDep, task_type_in: TaskTypeCreate) -> An
     "/",
     response_model=TaskTypesPublic,
 )
-def read_task_types(session: SessionDep, skip: int = 0, limit: int = 100) -> Any:
+def read_task_types(
+    session: SessionDep, _reader: ManagerOrFieldEmployeeUser, skip: int = 0, limit: int = 100
+) -> Any:
     """
     Retrieve task_types.
     """
@@ -46,7 +50,9 @@ def read_task_types(session: SessionDep, skip: int = 0, limit: int = 100) -> Any
 
 
 @router.get("/{task_type_id}", response_model=TaskTypePublic)
-def read_task_type_by_id(task_type_id: int, session: SessionDep) -> Any:
+def read_task_type_by_id(
+    task_type_id: int, session: SessionDep, _reader: ManagerOrFieldEmployeeUser
+) -> Any:
     """
     Get a specific task_type by id.
     """
@@ -58,7 +64,7 @@ def read_task_type_by_id(task_type_id: int, session: SessionDep) -> Any:
 def update_task_type(
     *,
     session: SessionDep,
-    current_user: CurrentUser,
+    _em: EmployeeManagerUser,
     id: int,
     task_type_in: TaskTypeUpdate,
 ) -> Any:
@@ -77,7 +83,9 @@ def update_task_type(
 
 
 @router.delete("/{task_type_id}")
-def delete_task_type(session: SessionDep, task_type_id: int) -> Message:
+def delete_task_type(
+    session: SessionDep, _em: EmployeeManagerUser, task_type_id: int
+) -> Message:
     """
     Delete a task_type.
     """

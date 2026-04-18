@@ -55,6 +55,17 @@ class Location(LocationBase, table=True):
     id: int = Field(default=None, primary_key=True)
 
 
+class LocationEdge(SQLModel, table=True):
+    __tablename__ = "location_edge"
+
+    id: int | None = Field(default=None, primary_key=True)
+    from_location_id: int = Field(foreign_key="location.id", nullable=False)
+    to_location_id: int = Field(foreign_key="location.id", nullable=False)
+    distance: float | None = Field(default=None)
+    time: int | None = Field(default=None)
+    route: list | None = Field(default=None, sa_column=Column(JSONB))
+
+
 class PriorityBase(SQLModel):
     name: str = Field(max_length=32, unique=True, nullable=False)
     level: int = Field(gt=0, unique=True, nullable=False)
@@ -417,6 +428,13 @@ class TaskUpdate(TaskBase):
     task_type_id: int = Field(nullable=False)
     agent_point_id: int = Field(nullable=False)
     task_status_id: int = Field(nullable=False)
+
+
+class TaskSelfUpdate(SQLModel):
+    """Обновление статуса и комментария выездным сотрудником к своей задаче."""
+
+    task_status_id: int = Field(nullable=False)
+    comment: str | None = Field(default=None, max_length=4096)
 
 
 class TaskPublic(TaskBase):

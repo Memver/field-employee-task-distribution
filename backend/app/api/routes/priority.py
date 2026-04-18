@@ -1,6 +1,6 @@
 from typing import Any
 
-from app.api.deps import CurrentUser, SessionDep
+from app.api.deps import EmployeeManagerUser, ManagerOrFieldEmployeeUser, SessionDep
 from app.models import (
     Message,
     PrioritiesPublic,
@@ -16,7 +16,9 @@ router = APIRouter(prefix="/priorities", tags=["priorities"])
 
 
 @router.post("/", response_model=PriorityPublic)
-def create_priority(*, session: SessionDep, priority_in: PriorityCreate) -> Any:
+def create_priority(
+    *, session: SessionDep, _em: EmployeeManagerUser, priority_in: PriorityCreate
+) -> Any:
     """
     Create new priority.
     """
@@ -31,7 +33,9 @@ def create_priority(*, session: SessionDep, priority_in: PriorityCreate) -> Any:
     "/",
     response_model=PrioritiesPublic,
 )
-def read_priorities(session: SessionDep, skip: int = 0, limit: int = 100) -> Any:
+def read_priorities(
+    session: SessionDep, _reader: ManagerOrFieldEmployeeUser, skip: int = 0, limit: int = 100
+) -> Any:
     """
     Retrieve priorities.
     """
@@ -46,7 +50,9 @@ def read_priorities(session: SessionDep, skip: int = 0, limit: int = 100) -> Any
 
 
 @router.get("/{priority_id}", response_model=PriorityPublic)
-def read_priority_by_id(priority_id: int, session: SessionDep) -> Any:
+def read_priority_by_id(
+    priority_id: int, session: SessionDep, _reader: ManagerOrFieldEmployeeUser
+) -> Any:
     """
     Get a specific priority by id.
     """
@@ -58,7 +64,7 @@ def read_priority_by_id(priority_id: int, session: SessionDep) -> Any:
 def update_priority(
     *,
     session: SessionDep,
-    current_user: CurrentUser,
+    _em: EmployeeManagerUser,
     id: int,
     priority_in: PriorityUpdate,
 ) -> Any:
@@ -77,7 +83,9 @@ def update_priority(
 
 
 @router.delete("/{priority_id}")
-def delete_priority(session: SessionDep, priority_id: int) -> Message:
+def delete_priority(
+    session: SessionDep, _em: EmployeeManagerUser, priority_id: int
+) -> Message:
     """
     Delete a priority.
     """
