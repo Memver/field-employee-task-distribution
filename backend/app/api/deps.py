@@ -94,6 +94,18 @@ def get_agent_point_table_editor_user(current_user: CurrentUser) -> User:
 AgentPointTableEditorUser = Annotated[User, Depends(get_agent_point_table_editor_user)]
 
 
+def get_agent_point_manager_user(current_user: CurrentUser) -> User:
+    if not is_agent_point_manager_user(current_user.role):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Требуется роль AGENT_POINT_MANAGER",
+        )
+    return current_user
+
+
+AgentPointManagerUser = Annotated[User, Depends(get_agent_point_manager_user)]
+
+
 def get_manager_or_field_employee_user(current_user: CurrentUser) -> User:
     """
     EMPLOYEE_MANAGER или FIELD_EMPLOYEE: доступ к данным вне users/roles.

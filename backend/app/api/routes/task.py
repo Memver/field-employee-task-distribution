@@ -3,7 +3,13 @@ from typing import Any
 
 import shapely
 import shapely.wkb
-from app.api.deps import CurrentUser, EmployeeManagerUser, FieldEmployeeUser, SessionDep
+from app.api.deps import (
+    AgentPointManagerUser,
+    CurrentUser,
+    EmployeeManagerUser,
+    FieldEmployeeUser,
+    SessionDep,
+)
 from app.core.roles import is_employee_manager_user, is_field_employee_user
 from app.models import (
     AgentPoint,
@@ -488,6 +494,39 @@ def skip_my_task(
 
     task.task_status_id = skipped_status.id
     task.comment = body.comment
+    session.add(task)
+    session.commit()
+    session.refresh(task)
+    return task
+
+
+@router.patch("/{task_id}/complete-by-agent-point-manager", response_model=TaskPublic)
+def complete_task_by_agent_point_manager(
+    *,
+    session: SessionDep,
+    _apm: AgentPointManagerUser,
+    task_id: int,
+    body: TaskCompleteUpdate,
+) -> Any:
+    """
+    Менеджер агентской точки: отметить задачу как выполненную.
+    """
+    task = session.get(Task, task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    completed_status = session.exec(
+        select(TaskStatus).where(TaskStatus.name == "COMPLETED")
+    ).first()
+    if completed_status is None:
+        raise HTTPException(
+            status_code=500,
+            detail="Task status 'COMPLETED' not found",
+        )
+
+    task.task_status_id = completed_status.id
+    if body.comment is not None:
+        task.comment = body.comment
     session.add(task)
     session.commit()
     session.refresh(task)

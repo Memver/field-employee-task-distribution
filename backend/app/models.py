@@ -233,11 +233,16 @@ class Task(TaskBase, table=True):
         foreign_key="task_status.id",
         nullable=False,
     )
+    fa_manager_confirmed: bool | None = Field(default=None)
+    fa_manager_comment: str | None = Field(default=None, max_length=4096)
+    fa_manager_confirmed_at: datetime | None = Field(default=None)
+    fa_manager_user_id: int | None = Field(default=None, foreign_key="user.id")
 
     employee: Optional["Employee"] = Relationship(back_populates="tasks")
     task_type: Optional["TaskType"] = Relationship()
     agent_point: Optional["AgentPoint"] = Relationship(back_populates="tasks")
     task_status: Optional["TaskStatus"] = Relationship()
+    fa_manager_user: Optional["User"] = Relationship()
 
 
 class RoleCreate(RoleBase):
