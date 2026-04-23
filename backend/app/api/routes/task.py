@@ -21,6 +21,7 @@ from app.models import (
     TaskCompleteUpdate,
     TaskSkipUpdate,
     Task,
+    TaskAgentPointManagerConfirmUpdate,
     TaskCreate,
     TaskMePublic,
     TaskPublic,
@@ -504,29 +505,20 @@ def skip_my_task(
 def complete_task_by_agent_point_manager(
     *,
     session: SessionDep,
-    _apm: AgentPointManagerUser,
+    apm: AgentPointManagerUser,
     task_id: int,
-    body: TaskCompleteUpdate,
+    body: TaskAgentPointManagerConfirmUpdate,
 ) -> Any:
     """
-    Менеджер агентской точки: отметить задачу как выполненную.
+    Менеджер агентской точки: подтвердить или отклонить статус задачи.
     """
     task = session.get(Task, task_id)
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
 
-    completed_status = session.exec(
-        select(TaskStatus).where(TaskStatus.name == "COMPLETED")
-    ).first()
-    if completed_status is None:
-        raise HTTPException(
-            status_code=500,
-            detail="Task status 'COMPLETED' not found",
-        )
-
-    task.task_status_id = completed_status.id
-    if body.comment is not None:
-        task.comment = body.comment
+    task.ap_manager_confirmed = body.confirmed
+    task.ap_manager_comment = body.comment
+    task.ap_manager_user_id = apm.id
     session.add(task)
     session.commit()
     session.refresh(task)
