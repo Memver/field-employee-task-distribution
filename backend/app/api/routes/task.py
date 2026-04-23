@@ -12,6 +12,8 @@ from app.models import (
     LocationEdge,
     LocationPublic,
     Message,
+    TaskCompleteUpdate,
+    TaskSkipUpdate,
     Task,
     TaskCreate,
     TaskMePublic,
@@ -411,6 +413,81 @@ def update_my_task_status(
     task.task_status_id = body.task_status_id
     if body.comment is not None:
         task.comment = body.comment
+    session.add(task)
+    session.commit()
+    session.refresh(task)
+    return task
+
+
+@router.patch("/{task_id}/complete", response_model=TaskPublic)
+def complete_my_task(
+    *,
+    session: SessionDep,
+    field_user: FieldEmployeeUser,
+    task_id: int,
+    body: TaskCompleteUpdate,
+) -> Any:
+    """
+    Выездной сотрудник: отметить свою задачу как выполненную.
+    """
+    task = session.get(Task, task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    if task.employee_id != field_user.employee.id:
+        raise HTTPException(
+            status_code=403,
+            detail="Можно изменять только свои задачи",
+        )
+
+    completed_status = session.exec(
+        select(TaskStatus).where(TaskStatus.name == "COMPLETED")
+    ).first()
+    if completed_status is None:
+        raise HTTPException(
+            status_code=500,
+            detail="Task status 'COMPLETED' not found",
+        )
+
+    task.task_status_id = completed_status.id
+    if body.comment is not None:
+        task.comment = body.comment
+    session.add(task)
+    session.commit()
+    session.refresh(task)
+    return task
+
+
+@router.patch("/{task_id}/skip", response_model=TaskPublic)
+def skip_my_task(
+    *,
+    session: SessionDep,
+    field_user: FieldEmployeeUser,
+    task_id: int,
+    body: TaskSkipUpdate,
+) -> Any:
+    """
+    Выездной сотрудник: пропустить свою задачу с указанием причины.
+    """
+    task = session.get(Task, task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    if task.employee_id != field_user.employee.id:
+        raise HTTPException(
+            status_code=403,
+            detail="Можно изменять только свои задачи",
+        )
+
+    skipped_status = session.exec(
+        select(TaskStatus).where(TaskStatus.name == "SKIPPED")
+    ).first()
+    if skipped_status is None:
+        raise HTTPException(
+            status_code=500,
+            detail="Task status 'SKIPPED' not found",
+        )
+
+    task.task_status_id = skipped_status.id
+    task.comment = body.comment
     session.add(task)
     session.commit()
     session.refresh(task)

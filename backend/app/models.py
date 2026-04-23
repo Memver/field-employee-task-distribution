@@ -437,6 +437,18 @@ class TaskSelfUpdate(SQLModel):
     comment: str | None = Field(default=None, max_length=4096)
 
 
+class TaskCompleteUpdate(SQLModel):
+    """Отметка задачи как выполненной с опциональным комментарием."""
+
+    comment: str | None = Field(default=None, max_length=4096)
+
+
+class TaskSkipUpdate(SQLModel):
+    """Пропуск задачи с обязательным комментарием причины."""
+
+    comment: str = Field(min_length=1, max_length=4096)
+
+
 class TaskPublic(TaskBase):
     id: int
     employee_id: int = Field(nullable=False)
