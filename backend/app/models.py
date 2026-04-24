@@ -4,7 +4,6 @@ from typing import Optional
 
 from geoalchemy2 import Geography
 from pydantic import EmailStr
-from sqlalchemy import DateTime
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlmodel import (
     CheckConstraint,
@@ -177,20 +176,7 @@ class TaskType(TaskTypeBase, table=True):
 
 
 class AgentPointBase(SQLModel):
-    created_time: datetime
-    is_cards_delivered: bool
-    days_since_last_card_gived: int = Field(
-        ge=0,
-        nullable=False,
-    )
-    approved_applications: int = Field(
-        ge=0,
-        nullable=False,
-    )
-    cards_gived: int = Field(
-        ge=0,
-        nullable=False,
-    )
+    created_time: datetime | None = Field(default=None)
 
 
 class AgentPoint(AgentPointBase, table=True):
@@ -205,6 +191,36 @@ class AgentPoint(AgentPointBase, table=True):
     location: Optional["Location"] = Relationship()
 
     tasks: list[Optional["Task"]] = Relationship(back_populates="agent_point")
+    events: list[Optional["AgentPointEvent"]] = Relationship(back_populates="agent_point")
+
+
+class AgentPointEventBase(SQLModel):
+    event_time: datetime
+    event_type: str = Field(min_length=1, max_length=64, nullable=False)
+    metric_name: str | None = Field(default=None, max_length=64)
+    metric_delta: int | None = Field(default=None)
+    metric_value_num: int | None = Field(default=None)
+    metric_value_bool: bool | None = Field(default=None)
+
+
+class AgentPointEvent(AgentPointEventBase, table=True):
+    __tablename__ = "agent_point_event"
+    __table_args__ = (
+        CheckConstraint(
+            "metric_delta IS NOT NULL OR metric_value_num IS NOT NULL OR metric_value_bool IS NOT NULL",
+            name="ck_agent_point_event_has_metric_value",
+        ),
+        CheckConstraint("event_type <> ''", name="ck_agent_point_event_event_type_not_empty"),
+    )
+
+    id: int = Field(default=None, primary_key=True)
+    agent_point_id: int = Field(
+        foreign_key="agent_point.id",
+        nullable=False,
+        ondelete="CASCADE",
+    )
+
+    agent_point: Optional["AgentPoint"] = Relationship(back_populates="events")
 
 
 class TaskBase(SQLModel):

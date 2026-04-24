@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 
 from app.models import AgentPoint, Employee, Location, TaskType
+from app.services.agent_point_events import AgentPointMetricsSnapshot
 from ortools.constraint_solver import pywrapcp, routing_enums_pb2
 
 
@@ -19,6 +20,7 @@ class PlannedTask:
 class TaskCandidate:
     task_type: TaskType
     agent_point: AgentPoint
+    metrics: AgentPointMetricsSnapshot
     priority_level: int
 
 
@@ -31,7 +33,9 @@ FIXED_SOLVER_TIME_LIMIT_SECONDS = 60
 
 
 def _select_task_type_for_agent_point(
-    agent_point: AgentPoint, task_types: list[TaskType]
+    agent_point: AgentPoint,
+    metrics: AgentPointMetricsSnapshot,
+    task_types: list[TaskType],
 ) -> TaskType | None:
     task_types_by_name = {task_type.name: task_type for task_type in task_types}
 
@@ -44,27 +48,29 @@ def _select_task_type_for_agent_point(
         connected_yesterday = (now_utc.date() - created_time.date()).days <= 1
 
     if (
-        (connected_yesterday or not agent_point.is_cards_delivered)
+        (connected_yesterday or not metrics.is_cards_delivered)
         and "CARDS_DELIVERY" in task_types_by_name
     ):
         return task_types_by_name["CARDS_DELIVERY"]
 
+    days_since_last_card_gived = metrics.days_since_last_card_gived
     if (
         (
             (
-                agent_point.days_since_last_card_gived > 7
-                and agent_point.approved_applications > 0
+                days_since_last_card_gived is not None
+                and days_since_last_card_gived > 7
+                and metrics.approved_applications > 0
             )
-            or agent_point.days_since_last_card_gived > 14
+            or (days_since_last_card_gived is not None and days_since_last_card_gived > 14)
         )
         and "SALES_STIMULATION" in task_types_by_name
     ):
         return task_types_by_name["SALES_STIMULATION"]
 
     if (
-        agent_point.cards_gived > 0
-        and agent_point.approved_applications > 0
-        and (agent_point.cards_gived / agent_point.approved_applications) < 0.5
+        metrics.cards_gived > 0
+        and metrics.approved_applications > 0
+        and (metrics.cards_gived / metrics.approved_applications) < 0.5
         and "AGENT_TRAINING" in task_types_by_name
     ):
         return task_types_by_name["AGENT_TRAINING"]
@@ -76,10 +82,13 @@ def _select_task_type_for_agent_point(
     )
 
 
-def _to_candidate(agent_point: AgentPoint, task_type: TaskType) -> TaskCandidate:
+def _to_candidate(
+    agent_point: AgentPoint, task_type: TaskType, metrics: AgentPointMetricsSnapshot
+) -> TaskCandidate:
     return TaskCandidate(
         task_type=task_type,
         agent_point=agent_point,
+        metrics=metrics,
         priority_level=task_type.priority.level if task_type.priority else 0,
     )
 
@@ -151,6 +160,7 @@ def solve(
     planning_start: datetime | None = None,
     horizon_days: int = 3,
     carryover_days_by_agent_point: dict[int, int] | None = None,
+    snapshots_by_agent_point: dict[int, AgentPointMetricsSnapshot] | None = None,
 ) -> list[PlannedTask]:
     """
     Policy распределения:
@@ -170,16 +180,19 @@ def solve(
         )
     if carryover_days_by_agent_point is None:
         carryover_days_by_agent_point = {}
+    if snapshots_by_agent_point is None:
+        snapshots_by_agent_point = {}
 
     workday_seconds = 8 * 60 * 60
     horizon_days = max(horizon_days, 1)
 
     candidates: list[TaskCandidate] = []
     for agent_point in agent_points:
-        task_type = _select_task_type_for_agent_point(agent_point, task_types)
+        metrics = snapshots_by_agent_point.get(agent_point.id, AgentPointMetricsSnapshot())
+        task_type = _select_task_type_for_agent_point(agent_point, metrics, task_types)
         if task_type is None:
             continue
-        candidates.append(_to_candidate(agent_point, task_type))
+        candidates.append(_to_candidate(agent_point, task_type, metrics))
 
     if not candidates:
         return []

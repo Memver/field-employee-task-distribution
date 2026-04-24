@@ -33,6 +33,7 @@ from app.models import (
     TaskUpdate,
 )
 from app.distribute import solve as distribute_solve
+from app.services.agent_point_events import build_agent_point_metrics_snapshots
 from fastapi import APIRouter, HTTPException
 from shapely.ops import linemerge
 from sqlalchemy import and_, or_
@@ -174,6 +175,11 @@ def distribute_tasks(*, session: SessionDep, _em: EmployeeManagerUser) -> Messag
     agent_points = session.exec(
         select(AgentPoint).options(joinedload(AgentPoint.location))
     ).all()
+    snapshots_by_agent_point = build_agent_point_metrics_snapshots(
+        session=session,
+        agent_point_ids=[agent_point.id for agent_point in agent_points],
+        report_time=datetime.now(timezone.utc),
+    )
 
     task_types = session.exec(
         select(TaskType).options(
@@ -222,6 +228,7 @@ def distribute_tasks(*, session: SessionDep, _em: EmployeeManagerUser) -> Messag
         time_matrix=time_matrix,
         horizon_days=3,
         carryover_days_by_agent_point=carryover_days_by_agent_point,
+        snapshots_by_agent_point=snapshots_by_agent_point,
     )
 
     # Перераспределение всегда пересоздает активные задачи статуса ASSIGNED.
