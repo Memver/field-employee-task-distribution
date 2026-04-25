@@ -1,8 +1,6 @@
 from datetime import datetime, timezone
 from typing import Any
 
-import shapely
-import shapely.wkb
 from app.api.deps import (
     AgentPointManagerUser,
     CurrentUser,
@@ -35,9 +33,8 @@ from app.models import (
 from app.distribute import solve as distribute_solve
 from app.services.agent_point_events import build_agent_point_metrics_snapshots
 from fastapi import APIRouter, HTTPException
-from shapely.ops import linemerge
-from sqlalchemy import and_, or_
-from sqlalchemy.orm import joinedload, load_only
+from sqlalchemy import or_
+from sqlalchemy.orm import joinedload
 from sqlmodel import func, select
 from app.path import edge_fields_from_osm_response, get_route_osm
 from ...distanse_matrix import get_distance_and_time_matrix
@@ -318,81 +315,31 @@ def read_tasks_me(
 
     # Prepare task list for response
     tasks_me_public = []
-    location_ids = []
-
-    # Add start location
-    location_ids.append(current_employee.start_location_id)
+    points: list[tuple[float, float]] = []
+    if start_location and start_location.lat is not None and start_location.lon is not None:
+        # path.py expects points as (lat, lon)
+        points.append((start_location.lat, start_location.lon))
 
     for task in tasks:
         tasks_me_public.append(TaskMePublic.model_validate(task))
-        # Add task location
-        if task.agent_point and task.agent_point.location:
-            location_ids.append(task.agent_point.location.id)
+        if (
+            task.agent_point
+            and task.agent_point.location
+            and task.agent_point.location.lat is not None
+            and task.agent_point.location.lon is not None
+        ):
+            points.append((task.agent_point.location.lat, task.agent_point.location.lon))
 
-    # Add start location again to complete the route (return to start)
-    location_ids.append(current_employee.start_location_id)
+    if start_location and start_location.lat is not None and start_location.lon is not None:
+        points.append((start_location.lat, start_location.lon))
 
-    # Build route by finding paths between consecutive locations
-    route = None
-
-    if len(location_ids) > 1:
-        # Create pairs of consecutive locations
-        pairs = []
-        for i in range(len(location_ids) - 1):
-            from_id = location_ids[i]
-            to_id = location_ids[i + 1]
-            pairs.append((from_id, to_id))
-
-        # Query edges for all pairs
-        if pairs:
-            # Build OR condition for all pairs
-            conditions = []
-            for from_id, to_id in pairs:
-                conditions.append(
-                    and_(
-                        LocationEdge.from_location_id == from_id,
-                        LocationEdge.to_location_id == to_id,
-                    )
-                )
-
-            edge_statement = (
-                select(LocationEdge)
-                .where(or_(*conditions))
-                .options(
-                    load_only(
-                        LocationEdge.route,
-                        LocationEdge.from_location_id,
-                        LocationEdge.to_location_id,
-                    )
-                )
-            )
-
-            edges = session.exec(edge_statement).all()
-
-            # Create a dictionary for quick lookup
-            edge_dict = {}
-            for edge in edges:
-                edge_dict[(edge.from_location_id, edge.to_location_id)] = edge.route
-
-            # Collect routes in order
-            route_parts = []
-            for from_id, to_id in pairs:
-                if (from_id, to_id) in edge_dict:
-                    route_parts.append(edge_dict[(from_id, to_id)])
-
-            # Combine all route parts into a single LineString if we have parts
-            if route_parts:
-                # Convert WKB elements to Shapely geometries
-                geometries = []
-                for wkb_element in route_parts:
-                    # Assuming WKBElement contains WKB data
-                    geom = shapely.wkb.loads(bytes(wkb_element.data))
-                    geometries.append(geom)
-
-                # Merge all LineStrings into one
-                merged = linemerge(geometries)
-                # Convert to WKT string instead of WKB binary
-                route = shapely.wkt.dumps(merged)
+    route: list[list[float]] | None = None
+    if len(points) >= 2:
+        route_data = get_route_osm(points)
+        parsed_route = edge_fields_from_osm_response(route_data) if route_data else None
+        if parsed_route is not None:
+            _distance_km, _time_seconds, route_points = parsed_route
+            route = route_points
 
     return TasksMePublic(
         tasks=tasks_me_public,

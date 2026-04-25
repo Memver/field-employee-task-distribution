@@ -2,7 +2,6 @@ import uuid
 from datetime import datetime, timezone
 from typing import Optional
 
-from geoalchemy2 import Geography
 from pydantic import EmailStr, model_validator
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlmodel import (
@@ -548,9 +547,7 @@ class TaskMePublic(TaskBase):
 
 class TasksMePublic(SQLModel):
     tasks: list[TaskMePublic]
-    route: Optional[object] = Field(
-        sa_column=Column(Geography(geometry_type="LINESTRING", srid=4326))
-    )
+    route: list[list[float]] | None = None
     start_location: LocationPublic
 
 
