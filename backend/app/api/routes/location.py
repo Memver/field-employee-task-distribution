@@ -1,6 +1,7 @@
 from typing import Any
 
 from app.api.deps import EmployeeManagerUser, ManagerOrFieldEmployeeUser, SessionDep
+from app.geocoding import get_lat_lon
 from app.models import (
     Location,
     LocationCreate,
@@ -15,6 +16,24 @@ from sqlmodel import func, select
 router = APIRouter(prefix="/locations", tags=["locations"])
 
 
+def _geocode_address(address: str) -> tuple[float, float]:
+    try:
+        coordinates = get_lat_lon([address])
+    except Exception as exc:
+        raise HTTPException(
+            status_code=503, detail="Geocoding service unavailable"
+        ) from exc
+
+    if not coordinates:
+        raise HTTPException(status_code=503, detail="Geocoding service unavailable")
+
+    lat, lon = coordinates[0]
+    if lat is None or lon is None:
+        raise HTTPException(status_code=400, detail="Address not found")
+
+    return lat, lon
+
+
 @router.post("/", response_model=LocationPublic)
 def create_location(
     *, session: SessionDep, _em: EmployeeManagerUser, location_in: LocationCreate
@@ -22,7 +41,12 @@ def create_location(
     """
     Create new location.
     """
-    location = Location.model_validate(location_in)
+    lat, lon = _geocode_address(location_in.address)
+    location_data = location_in.model_dump()
+    location_data["lat"] = lat
+    location_data["lon"] = lon
+
+    location = Location.model_validate(location_data)
     session.add(location)
     session.commit()
     session.refresh(location)
@@ -75,6 +99,10 @@ def update_location(
     if not location:
         raise HTTPException(status_code=404, detail="Location not found")
     update_dict = location_in.model_dump(exclude_unset=True)
+    if "address" in update_dict:
+        lat, lon = _geocode_address(update_dict["address"])
+        update_dict["lat"] = lat
+        update_dict["lon"] = lon
     location.sqlmodel_update(update_dict)
     session.add(location)
     session.commit()
