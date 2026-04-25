@@ -12,6 +12,7 @@ from sqlmodel import (
     SQLModel,
     UniqueConstraint,
 )
+from sqlalchemy import DateTime
 from app.services.agent_point_event_schema import validate_agent_point_event_payload
 
 
@@ -164,7 +165,10 @@ class TaskType(TaskTypeBase, table=True):
 
 
 class AgentPointBase(SQLModel):
-    created_time: datetime | None = Field(default=None)
+    created_time: datetime | None = Field(
+        default=None,
+        sa_column=Column(DateTime(timezone=True), nullable=True),
+    )
 
 
 class AgentPoint(AgentPointBase, table=True):
@@ -183,7 +187,9 @@ class AgentPoint(AgentPointBase, table=True):
 
 
 class AgentPointEventBase(SQLModel):
-    event_time: datetime
+    event_time: datetime = Field(
+        sa_column=Column(DateTime(timezone=True), nullable=False),
+    )
     event_type: str = Field(min_length=1, max_length=64, nullable=False)
     metric_name: str | None = Field(default=None, max_length=64)
     metric_delta: int | None = Field(default=None)
@@ -245,8 +251,14 @@ class AgentPointEvent(AgentPointEventBase, table=True):
 
 
 class TaskBase(SQLModel):
-    start_time: datetime = Field(ge=datetime(2021, 1, 1))
-    finish_time: datetime = Field(ge=datetime(2021, 1, 1))
+    start_time: datetime = Field(
+        ge=datetime(2021, 1, 1),
+        sa_column=Column(DateTime(timezone=True), nullable=False),
+    )
+    finish_time: datetime = Field(
+        ge=datetime(2021, 1, 1),
+        sa_column=Column(DateTime(timezone=True), nullable=False),
+    )
     comment: str = Field(
         max_length=4096,
     )
