@@ -25,7 +25,6 @@ from app.repositories import task_status as task_status_repository
 from app.services.agent_point_events import build_agent_point_metrics_snapshots
 from app.services.routing_gateway import build_route
 
-
 def distribute_tasks(*, session: Session) -> Message:
     employees = session.exec(
         select(Employee).options(

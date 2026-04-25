@@ -22,7 +22,8 @@ dependencies = [
     "geoalchemy2==0.18.4",
     "shapely==2.1.2",
     "pandas==2.3.3",
-    "ortools==9.15.6755"
+    "ortools==9.15.6755",
+    "routingpy>=1.3.0",
 ]
 
 [dependency-groups]
