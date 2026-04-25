@@ -10,6 +10,7 @@ from app.api.deps import (
 )
 from app.core.roles import is_employee_manager_user, is_field_employee_user
 from app.models import (
+    AgentPointEvent,
     AgentPoint,
     Employee,
     Location,
@@ -469,6 +470,20 @@ def complete_task_by_agent_point_manager(
     task.ap_manager_confirmed = body.confirmed
     task.ap_manager_comment = body.comment
     task.ap_manager_user_id = apm.id
+
+    if body.confirmed:
+        task_type = session.get(TaskType, task.task_type_id)
+        if task_type is not None and task_type.name == "CARDS_DELIVERY":
+            session.add(
+                AgentPointEvent(
+                    agent_point_id=task.agent_point_id,
+                    event_time=task.finish_time,
+                    event_type="cards_delivery_status_changed",
+                    metric_name="is_cards_delivered",
+                    metric_value_bool=True,
+                )
+            )
+
     session.add(task)
     session.commit()
     session.refresh(task)
