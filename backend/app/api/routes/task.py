@@ -14,7 +14,6 @@ from app.models import (
     AgentPoint,
     Employee,
     Location,
-    LocationEdge,
     LocationPublic,
     Message,
     TaskCompleteUpdate,
@@ -68,66 +67,6 @@ def update_locations_with_coordinates(
         session.commit()
 
     return updated_count
-
-
-def fill_location_edges_from_osm(session: SessionDep) -> tuple[int, int, int]:
-    """
-    Заполняет distance, time, route для рёбер с пустым или NULL route.
-    Возвращает (число обновлённых, пропущено без координат, ошибка OSRM).
-    """
-    statement = select(LocationEdge).where(
-        or_(
-            LocationEdge.route.is_(None),
-            func.coalesce(func.jsonb_array_length(LocationEdge.route), 0) == 0,
-        )
-    )
-    edges = session.exec(statement).all()
-    updated = 0
-    skipped_no_coords = 0
-    failed_osrm = 0
-
-    for edge in edges:
-        from_loc = session.get(Location, edge.from_location_id)
-        to_loc = session.get(Location, edge.to_location_id)
-        if (
-            from_loc is None
-            or to_loc is None
-            or from_loc.lat is None
-            or from_loc.lon is None
-            or to_loc.lat is None
-            or to_loc.lon is None
-        ):
-            skipped_no_coords += 1
-            continue
-
-        lon_a, lat_a = from_loc.lon, from_loc.lat
-        lon_b, lat_b = to_loc.lon, to_loc.lat
-
-        if from_loc.id == to_loc.id or (lat_a == lat_b and lon_a == lon_b):
-            edge.distance = 0.0
-            edge.time = 0
-            edge.route = [[lon_a, lat_a], [lon_b, lat_b]]
-            session.add(edge)
-            updated += 1
-            continue
-
-        route_data = get_route_osm([(lat_a, lon_a), (lat_b, lon_b)])
-        parsed = edge_fields_from_osm_response(route_data) if route_data else None
-        if parsed is None:
-            failed_osrm += 1
-            continue
-
-        distance_km, time_s, route_pts = parsed
-        edge.distance = distance_km
-        edge.time = time_s
-        edge.route = route_pts
-        session.add(edge)
-        updated += 1
-
-    if updated:
-        session.commit()
-
-    return updated, skipped_no_coords, failed_osrm
 
 
 def get_all_locations(session: SessionDep) -> list[Location]:

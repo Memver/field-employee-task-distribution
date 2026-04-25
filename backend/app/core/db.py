@@ -1,33 +1,8 @@
 from app.core.config import settings
-from app.models import Role, User, UserCreate
-from app.services import user as user_service
-from sqlalchemy.dialects.postgresql import JSONB
+from app.models import User
 from sqlmodel import Session, create_engine, select, text
 
 engine = create_engine(str(settings.SQLALCHEMY_DATABASE_URI))
-
-import pandas as pd
-from sqlalchemy import create_engine
-
-
-def csv_to_db_pandas(csv_file, engine, table_name):
-    # Чтение CSV
-    df = pd.read_csv(
-        csv_file,
-        sep=";",
-        encoding="utf-8",
-        header=0,
-    )
-
-    # Конвертируем строку JSON в Python объект
-    import json
-
-    df["route"] = df["route"].apply(json.loads)
-
-    # Запись в БД с указанием типа JSONB
-    dtype = {"route": JSONB}
-    df.to_sql(table_name, engine, if_exists="replace", index=False, dtype=dtype)
-    print(f"Загружено {len(df)} строк в таблицу {table_name}")
 
 
 def init_db(session: Session) -> None:
@@ -41,12 +16,6 @@ def init_db(session: Session) -> None:
             sql_script = file.read()
 
         session.exec(text(sql_script))
-        session.commit()
-
-        csv_to_db_pandas(
-            "/app/backend/app/db/location_edge.csv", engine, "location_edge"
-        )
-
         session.commit()
     # role = session.exec(select(Role).where(Role.name == "ADMIN")).first()
     # if not role:

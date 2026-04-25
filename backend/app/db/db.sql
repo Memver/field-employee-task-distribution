@@ -369,4 +369,3 @@ ALTER SEQUENCE public.task_type_id_seq RESTART WITH 100;
 ALTER SEQUENCE public.agent_point_id_seq RESTART WITH 100;
 ALTER SEQUENCE public.agent_point_event_id_seq RESTART WITH 1000;
 ALTER SEQUENCE public.task_id_seq RESTART WITH 100;
-ALTER SEQUENCE public.location_edge_id_seq RESTART WITH 2000;

@@ -3,7 +3,6 @@ from datetime import datetime, timezone
 from typing import Optional
 
 from pydantic import EmailStr, model_validator
-from sqlalchemy.dialects.postgresql import JSONB
 from sqlmodel import (
     CheckConstraint,
     Column,
@@ -52,17 +51,6 @@ class LocationBase(SQLModel):
 
 class Location(LocationBase, table=True):
     id: int = Field(default=None, primary_key=True)
-
-
-class LocationEdge(SQLModel, table=True):
-    __tablename__ = "location_edge"
-
-    id: int | None = Field(default=None, primary_key=True)
-    from_location_id: int = Field(foreign_key="location.id", nullable=False)
-    to_location_id: int = Field(foreign_key="location.id", nullable=False)
-    distance: float | None = Field(default=None)
-    time: int | None = Field(default=None)
-    route: list | None = Field(default=None, sa_column=Column(JSONB))
 
 
 class PriorityBase(SQLModel):
