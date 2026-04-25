@@ -11,8 +11,24 @@ from app.models import (
 )
 from fastapi import APIRouter, HTTPException
 from sqlmodel import func, select
+from app.services.agent_point_event_schema import validate_agent_point_event_payload
 
 router = APIRouter(prefix="/agent-point-events", tags=["agent-point-events"])
+
+
+def ensure_event_schema_or_422(
+    agent_point_event_in: AgentPointEventCreate | AgentPointEventUpdate,
+) -> None:
+    try:
+        validate_agent_point_event_payload(
+            event_type=agent_point_event_in.event_type,
+            metric_name=agent_point_event_in.metric_name,
+            metric_delta=agent_point_event_in.metric_delta,
+            metric_value_num=agent_point_event_in.metric_value_num,
+            metric_value_bool=agent_point_event_in.metric_value_bool,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
 
 
 @router.post("/", response_model=AgentPointEventPublic)
@@ -25,6 +41,7 @@ def create_agent_point_event(
     """
     Create new agent_point_event.
     """
+    ensure_event_schema_or_422(agent_point_event_in)
     agent_point_event = AgentPointEvent.model_validate(agent_point_event_in)
     session.add(agent_point_event)
     session.commit()
@@ -76,6 +93,7 @@ def update_agent_point_event(
     agent_point_event = session.get(AgentPointEvent, id)
     if not agent_point_event:
         raise HTTPException(status_code=404, detail="AgentPointEvent not found")
+    ensure_event_schema_or_422(agent_point_event_in)
     update_dict = agent_point_event_in.model_dump(exclude_unset=True)
     agent_point_event.sqlmodel_update(update_dict)
     session.add(agent_point_event)

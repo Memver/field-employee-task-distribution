@@ -357,7 +357,6 @@ INSERT INTO public.task
 	(27, 7, 17, '2026-03-01 11:00:00+00', '2026-03-01 12:00:00+00', 1, 1, ''),
 	(28, 7, 19, '2026-03-01 12:00:00+00', '2026-03-01 13:00:00+00', 1, 1, ''),
 	(29, 8, 9, '2026-03-01 08:00:00+00', '2026-03-01 09:00:00+00', 1, 1, '');
-	
 
 ALTER SEQUENCE public.role_id_seq RESTART WITH 100;
 ALTER SEQUENCE public.grade_id_seq RESTART WITH 100;

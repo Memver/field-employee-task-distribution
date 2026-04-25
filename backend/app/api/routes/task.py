@@ -39,7 +39,6 @@ from shapely.ops import linemerge
 from sqlalchemy import and_, or_
 from sqlalchemy.orm import joinedload, load_only
 from sqlmodel import func, select
-from app.geocoding import get_lat_lon
 from app.path import edge_fields_from_osm_response, get_route_osm
 from ...distanse_matrix import get_distance_and_time_matrix
 
@@ -154,13 +153,10 @@ def create_task(
 
 @router.post("/distribute")
 def distribute_tasks(*, session: SessionDep, _em: EmployeeManagerUser) -> Message:
-    # TODO: Удалить здесь геокодирование. Добавить геокодирование на этапе create, update location. Сразу будем и проверять адресс и сразу в бд записывать долготу широту.
-    
-    # TODO: для def distribute_ tasks (A.K.A solve()) нужны матрица расстояний, времени. для get_tasks_me нужен путь.
+    # для def distribute_ tasks (A.K.A solve()) нужны матрица расстояний, времени. для get_tasks_me нужен путь.
     # 1. развернуть локально osrm api Чтобы через docker поднимался для получения матрицы расстояний и времени и для получения пути на множество точек
     # Для def distribute
-    # 2. Убрать получение путей из def distribute_tasks 
-    # 3. получить матрицы расстояний и времени через api. В функцию получении матрицы расстояний добавить получение времени.
+    # 2. получить матрицы расстояний и времени через api. В функцию получении матрицы расстояний добавить получение времени.
     # Для def get tasks_me
     # 2. получить путь через api
 

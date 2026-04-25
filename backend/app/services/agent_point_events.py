@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 
 from app.models import AgentPointEvent
+from app.services.agent_point_event_schema import validate_agent_point_event_payload
 from sqlmodel import Session, select
 
 
@@ -33,6 +34,7 @@ def build_agent_point_metrics_snapshots(
     events = session.exec(
         select(AgentPointEvent)
         .where(AgentPointEvent.agent_point_id.in_(agent_point_ids))
+        .where(AgentPointEvent.event_time <= report_time)
         .order_by(AgentPointEvent.event_time, AgentPointEvent.id)
     ).all()
 
@@ -47,6 +49,21 @@ def build_agent_point_metrics_snapshots(
         event_time = event.event_time
         if event_time.tzinfo is None:
             event_time = event_time.replace(tzinfo=timezone.utc)
+        if event_time > report_time:
+            continue
+
+        try:
+            validate_agent_point_event_payload(
+                event_type=event.event_type,
+                metric_name=event.metric_name,
+                metric_delta=event.metric_delta,
+                metric_value_num=event.metric_value_num,
+                metric_value_bool=event.metric_value_bool,
+            )
+        except ValueError:
+            # Invalid events should be impossible after schema constraints,
+            # but we ignore them defensively to keep snapshots stable.
+            continue
 
         if event.metric_name == "approved_applications":
             if event.metric_delta is not None:

@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from typing import Optional
 
 from geoalchemy2 import Geography
-from pydantic import EmailStr
+from pydantic import EmailStr, model_validator
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlmodel import (
     CheckConstraint,
@@ -14,6 +14,7 @@ from sqlmodel import (
     SQLModel,
     UniqueConstraint,
 )
+from app.services.agent_point_event_schema import validate_agent_point_event_payload
 
 
 def get_datetime_utc() -> datetime:
@@ -202,6 +203,17 @@ class AgentPointEventBase(SQLModel):
     metric_value_num: int | None = Field(default=None)
     metric_value_bool: bool | None = Field(default=None)
 
+    @model_validator(mode="after")
+    def validate_event_schema(self) -> "AgentPointEventBase":
+        validate_agent_point_event_payload(
+            event_type=self.event_type,
+            metric_name=self.metric_name,
+            metric_delta=self.metric_delta,
+            metric_value_num=self.metric_value_num,
+            metric_value_bool=self.metric_value_bool,
+        )
+        return self
+
 
 class AgentPointEvent(AgentPointEventBase, table=True):
     __tablename__ = "agent_point_event"
@@ -210,7 +222,29 @@ class AgentPointEvent(AgentPointEventBase, table=True):
             "metric_delta IS NOT NULL OR metric_value_num IS NOT NULL OR metric_value_bool IS NOT NULL",
             name="ck_agent_point_event_has_metric_value",
         ),
+        CheckConstraint(
+            "(CASE WHEN metric_delta IS NOT NULL THEN 1 ELSE 0 END + "
+            "CASE WHEN metric_value_num IS NOT NULL THEN 1 ELSE 0 END + "
+            "CASE WHEN metric_value_bool IS NOT NULL THEN 1 ELSE 0 END) = 1",
+            name="ck_agent_point_event_exactly_one_metric_value",
+        ),
         CheckConstraint("event_type <> ''", name="ck_agent_point_event_event_type_not_empty"),
+        CheckConstraint(
+            "("
+            "(event_type = 'cards_delivery_status_changed' "
+            "AND metric_name = 'is_cards_delivered' "
+            "AND metric_value_bool IS NOT NULL)"
+            " OR "
+            "(event_type = 'approved_applications_changed' "
+            "AND metric_name = 'approved_applications' "
+            "AND metric_value_bool IS NULL)"
+            " OR "
+            "(event_type = 'cards_gived_changed' "
+            "AND metric_name = 'cards_gived' "
+            "AND metric_value_bool IS NULL)"
+            ")",
+            name="ck_agent_point_event_schema_pairs",
+        ),
     )
 
     id: int = Field(default=None, primary_key=True)
