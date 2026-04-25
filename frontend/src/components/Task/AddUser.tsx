@@ -127,7 +127,11 @@ const AddUser = () => {
                   <FormItem>
                     <FormLabel>Комментарий</FormLabel>
                     <FormControl>
-                      <Input placeholder="Описание задачи" type="text" {...field} />
+                      <Input
+                        placeholder="Описание задачи"
+                        type="text"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

@@ -2,8 +2,8 @@ import { useSuspenseQuery } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
 
 import { EmployeesService } from "@/client"
-import AddUser from "@/components/Employee/AddUser"
 import { DataTable } from "@/components/Common/DataTable"
+import AddUser from "@/components/Employee/AddUser"
 import { columns, type EmployeeTableData } from "@/components/Employee/columns"
 
 function getEmployeesQueryOptions() {
@@ -48,4 +48,3 @@ function Employee() {
     </div>
   )
 }
-

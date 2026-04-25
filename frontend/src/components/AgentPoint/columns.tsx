@@ -8,7 +8,10 @@ export type AgentPointTableData = AgentPointPublic
 export const columns: ColumnDef<AgentPointTableData>[] = [
   { accessorKey: "created_time", header: "Создано" },
   { accessorKey: "is_cards_delivered", header: "Карты доставлены" },
-  { accessorKey: "days_since_last_card_gived", header: "Дней с последней выдачи" },
+  {
+    accessorKey: "days_since_last_card_gived",
+    header: "Дней с последней выдачи",
+  },
   { accessorKey: "approved_applications", header: "Одобренные заявки" },
   { accessorKey: "cards_gived", header: "Выдано карт" },
   { accessorKey: "location.id", header: "ID локации" },

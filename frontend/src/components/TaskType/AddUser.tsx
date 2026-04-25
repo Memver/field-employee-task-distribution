@@ -80,7 +80,9 @@ const AddUser = () => {
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Добавить тип задачи</DialogTitle>
-          <DialogDescription>Заполните данные нового типа задачи.</DialogDescription>
+          <DialogDescription>
+            Заполните данные нового типа задачи.
+          </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>

@@ -46,15 +46,32 @@ const DeleteUser = ({ id, onSuccess }: Props) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DropdownMenuItem variant="destructive" onSelect={(e) => e.preventDefault()} onClick={() => setIsOpen(true)}>
+      <DropdownMenuItem
+        variant="destructive"
+        onSelect={(e) => e.preventDefault()}
+        onClick={() => setIsOpen(true)}
+      >
         <Trash2 /> Удалить
       </DropdownMenuItem>
       <DialogContent className="sm:max-w-md">
         <form onSubmit={handleSubmit(onSubmit)}>
-          <DialogHeader><DialogTitle>Удалить сотрудника</DialogTitle><DialogDescription>Действие нельзя отменить.</DialogDescription></DialogHeader>
+          <DialogHeader>
+            <DialogTitle>Удалить сотрудника</DialogTitle>
+            <DialogDescription>Действие нельзя отменить.</DialogDescription>
+          </DialogHeader>
           <DialogFooter className="mt-4">
-            <DialogClose asChild><Button variant="outline" disabled={mutation.isPending}>Отмена</Button></DialogClose>
-            <LoadingButton variant="destructive" type="submit" loading={mutation.isPending}>Удалить</LoadingButton>
+            <DialogClose asChild>
+              <Button variant="outline" disabled={mutation.isPending}>
+                Отмена
+              </Button>
+            </DialogClose>
+            <LoadingButton
+              variant="destructive"
+              type="submit"
+              loading={mutation.isPending}
+            >
+              Удалить
+            </LoadingButton>
           </DialogFooter>
         </form>
       </DialogContent>
@@ -63,4 +80,3 @@ const DeleteUser = ({ id, onSuccess }: Props) => {
 }
 
 export default DeleteUser
-

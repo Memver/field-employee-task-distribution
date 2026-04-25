@@ -5,7 +5,11 @@ import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 
-import { type LocationPublic, type LocationUpdate, LocationsService } from "@/client"
+import {
+  type LocationPublic,
+  LocationsService,
+  type LocationUpdate,
+} from "@/client"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -154,4 +158,3 @@ const EditLocation = ({ location, onSuccess }: EditLocationProps) => {
 }
 
 export default EditLocation
-

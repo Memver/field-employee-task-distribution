@@ -65,9 +65,7 @@ const DeleteUser = ({ id, onSuccess }: DeleteUserProps) => {
         <form onSubmit={handleSubmit(onSubmit)}>
           <DialogHeader>
             <DialogTitle>Удалить точку</DialogTitle>
-            <DialogDescription>
-              Действие нельзя отменить.
-            </DialogDescription>
+            <DialogDescription>Действие нельзя отменить.</DialogDescription>
           </DialogHeader>
 
           <DialogFooter className="mt-4">

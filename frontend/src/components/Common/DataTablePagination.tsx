@@ -33,7 +33,8 @@ export function DataTablePagination<TData>({
       <div className="flex flex-col sm:flex-row sm:items-center gap-4">
         <div className="text-sm text-muted-foreground">
           Showing{" "}
-          {table.getState().pagination.pageIndex * table.getState().pagination.pageSize +
+          {table.getState().pagination.pageIndex *
+            table.getState().pagination.pageSize +
             1}{" "}
           to{" "}
           {Math.min(
@@ -73,7 +74,9 @@ export function DataTablePagination<TData>({
             {table.getState().pagination.pageIndex + 1}
           </span>
           <span>of</span>
-          <span className="font-medium text-foreground">{table.getPageCount()}</span>
+          <span className="font-medium text-foreground">
+            {table.getPageCount()}
+          </span>
         </div>
 
         <div className="flex items-center gap-x-1">

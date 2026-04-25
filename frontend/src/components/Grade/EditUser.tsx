@@ -5,7 +5,7 @@ import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 
-import { GradesService, type GradePublic, type GradeUpdate } from "@/client"
+import { type GradePublic, GradesService, type GradeUpdate } from "@/client"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,

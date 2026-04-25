@@ -79,19 +79,55 @@ const AddUser = () => {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
             <div className="grid gap-4 py-4">
-              <FormField control={form.control} name="user_id" render={({ field }) => (
-                <FormItem><FormLabel>ID пользователя</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
-              )} />
-              <FormField control={form.control} name="grade_id" render={({ field }) => (
-                <FormItem><FormLabel>ID грейда</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
-              )} />
-              <FormField control={form.control} name="start_location_id" render={({ field }) => (
-                <FormItem><FormLabel>ID стартовой локации</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
-              )} />
+              <FormField
+                control={form.control}
+                name="user_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>ID пользователя</FormLabel>
+                    <FormControl>
+                      <Input type="number" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="grade_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>ID грейда</FormLabel>
+                    <FormControl>
+                      <Input type="number" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="start_location_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>ID стартовой локации</FormLabel>
+                    <FormControl>
+                      <Input type="number" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
             <DialogFooter>
-              <DialogClose asChild><Button variant="outline" disabled={mutation.isPending}>Отменить</Button></DialogClose>
-              <LoadingButton type="submit" loading={mutation.isPending}>Сохранить</LoadingButton>
+              <DialogClose asChild>
+                <Button variant="outline" disabled={mutation.isPending}>
+                  Отменить
+                </Button>
+              </DialogClose>
+              <LoadingButton type="submit" loading={mutation.isPending}>
+                Сохранить
+              </LoadingButton>
             </DialogFooter>
           </form>
         </Form>
@@ -101,4 +137,3 @@ const AddUser = () => {
 }
 
 export default AddUser
-

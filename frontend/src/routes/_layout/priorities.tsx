@@ -2,9 +2,9 @@ import { useSuspenseQuery } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
 
 import { PrioritiesService } from "@/client"
+import { DataTable } from "@/components/Common/DataTable"
 import AddPriority from "@/components/Priority/AddUser"
 import { columns, type PriorityTableData } from "@/components/Priority/columns"
-import { DataTable } from "@/components/Common/DataTable"
 
 function getPrioritiesQueryOptions() {
   return {
@@ -50,4 +50,3 @@ function Priorities() {
     </div>
   )
 }
-

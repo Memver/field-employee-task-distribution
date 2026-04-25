@@ -2,8 +2,8 @@ import { useSuspenseQuery } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
 
 import { LocationsService } from "@/client"
-import AddLocation from "@/components/Location/AddLocation"
 import { DataTable } from "@/components/Common/DataTable"
+import AddLocation from "@/components/Location/AddLocation"
 import { columns, type LocationTableData } from "@/components/Location/columns"
 
 function getLocationsQueryOptions() {

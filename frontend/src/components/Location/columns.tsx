@@ -29,7 +29,12 @@ export const columns: ColumnDef<LocationTableData>[] = [
     cell: ({ row }) => {
       const fullName = row.original.lat
       return (
-        <span className={cn("font-medium", fullName == null && "text-muted-foreground")}>
+        <span
+          className={cn(
+            "font-medium",
+            fullName == null && "text-muted-foreground",
+          )}
+        >
           {fullName == null ? "N/A" : fullName}
         </span>
       )
@@ -41,7 +46,12 @@ export const columns: ColumnDef<LocationTableData>[] = [
     cell: ({ row }) => {
       const fullName = row.original.lon
       return (
-        <span className={cn("font-medium", fullName == null && "text-muted-foreground")}>
+        <span
+          className={cn(
+            "font-medium",
+            fullName == null && "text-muted-foreground",
+          )}
+        >
           {fullName == null ? "N/A" : fullName}
         </span>
       )

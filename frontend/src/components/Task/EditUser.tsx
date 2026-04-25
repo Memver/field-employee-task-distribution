@@ -5,7 +5,7 @@ import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 
-import { TasksService, type TaskPublic, type TaskUpdate } from "@/client"
+import { type TaskPublic, TasksService, type TaskUpdate } from "@/client"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -17,7 +17,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
 import useCustomToast from "@/hooks/useCustomToast"
@@ -85,39 +92,121 @@ const EditUser = ({ task, onSuccess }: EditUserProps) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={() => setIsOpen(true)}>
+      <DropdownMenuItem
+        onSelect={(e) => e.preventDefault()}
+        onClick={() => setIsOpen(true)}
+      >
         <Pencil /> Редактировать
       </DropdownMenuItem>
       <DialogContent className="sm:max-w-md">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
-            <DialogHeader><DialogTitle>Редактировать задачу</DialogTitle><DialogDescription>Обновите данные задачи</DialogDescription></DialogHeader>
+            <DialogHeader>
+              <DialogTitle>Редактировать задачу</DialogTitle>
+              <DialogDescription>Обновите данные задачи</DialogDescription>
+            </DialogHeader>
             <div className="grid gap-4 py-4">
-              <FormField control={form.control} name="start_time" render={({ field }) => (
-                <FormItem><FormLabel>Начало</FormLabel><FormControl><Input type="datetime-local" {...field} /></FormControl><FormMessage /></FormItem>
-              )} />
-              <FormField control={form.control} name="finish_time" render={({ field }) => (
-                <FormItem><FormLabel>Окончание</FormLabel><FormControl><Input type="datetime-local" {...field} /></FormControl><FormMessage /></FormItem>
-              )} />
-              <FormField control={form.control} name="comment" render={({ field }) => (
-                <FormItem><FormLabel>Комментарий</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-              )} />
-              <FormField control={form.control} name="employee_id" render={({ field }) => (
-                <FormItem><FormLabel>ID сотрудника</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
-              )} />
-              <FormField control={form.control} name="task_type_id" render={({ field }) => (
-                <FormItem><FormLabel>ID типа задачи</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
-              )} />
-              <FormField control={form.control} name="agent_point_id" render={({ field }) => (
-                <FormItem><FormLabel>ID точки</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
-              )} />
-              <FormField control={form.control} name="task_status_id" render={({ field }) => (
-                <FormItem><FormLabel>ID статуса</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
-              )} />
+              <FormField
+                control={form.control}
+                name="start_time"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Начало</FormLabel>
+                    <FormControl>
+                      <Input type="datetime-local" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="finish_time"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Окончание</FormLabel>
+                    <FormControl>
+                      <Input type="datetime-local" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="comment"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Комментарий</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="employee_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>ID сотрудника</FormLabel>
+                    <FormControl>
+                      <Input type="number" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="task_type_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>ID типа задачи</FormLabel>
+                    <FormControl>
+                      <Input type="number" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="agent_point_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>ID точки</FormLabel>
+                    <FormControl>
+                      <Input type="number" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="task_status_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>ID статуса</FormLabel>
+                    <FormControl>
+                      <Input type="number" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
             <DialogFooter>
-              <DialogClose asChild><Button variant="outline" disabled={mutation.isPending}>Отменить</Button></DialogClose>
-              <LoadingButton type="submit" loading={mutation.isPending}>Сохранить</LoadingButton>
+              <DialogClose asChild>
+                <Button variant="outline" disabled={mutation.isPending}>
+                  Отменить
+                </Button>
+              </DialogClose>
+              <LoadingButton type="submit" loading={mutation.isPending}>
+                Сохранить
+              </LoadingButton>
             </DialogFooter>
           </form>
         </Form>

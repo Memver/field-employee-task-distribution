@@ -5,7 +5,11 @@ import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 
-import { TaskTypesService, type TaskTypePublic, type TaskTypeUpdate } from "@/client"
+import {
+  type TaskTypePublic,
+  TaskTypesService,
+  type TaskTypeUpdate,
+} from "@/client"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -17,7 +21,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
 import useCustomToast from "@/hooks/useCustomToast"
@@ -66,30 +77,82 @@ const EditUser = ({ taskType, onSuccess }: Props) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={() => setIsOpen(true)}>
+      <DropdownMenuItem
+        onSelect={(e) => e.preventDefault()}
+        onClick={() => setIsOpen(true)}
+      >
         <Pencil /> Редактировать
       </DropdownMenuItem>
       <DialogContent className="sm:max-w-md">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
-            <DialogHeader><DialogTitle>Редактировать тип задачи</DialogTitle><DialogDescription>Обновите поля.</DialogDescription></DialogHeader>
+            <DialogHeader>
+              <DialogTitle>Редактировать тип задачи</DialogTitle>
+              <DialogDescription>Обновите поля.</DialogDescription>
+            </DialogHeader>
             <div className="grid gap-4 py-4">
-              <FormField control={form.control} name="name" render={({ field }) => (
-                <FormItem><FormLabel>Название</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-              )} />
-              <FormField control={form.control} name="execution_time" render={({ field }) => (
-                <FormItem><FormLabel>Время выполнения</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
-              )} />
-              <FormField control={form.control} name="min_grade_id" render={({ field }) => (
-                <FormItem><FormLabel>ID мин. грейда</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
-              )} />
-              <FormField control={form.control} name="priority_id" render={({ field }) => (
-                <FormItem><FormLabel>ID приоритета</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
-              )} />
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Название</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="execution_time"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Время выполнения</FormLabel>
+                    <FormControl>
+                      <Input type="number" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="min_grade_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>ID мин. грейда</FormLabel>
+                    <FormControl>
+                      <Input type="number" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="priority_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>ID приоритета</FormLabel>
+                    <FormControl>
+                      <Input type="number" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
             <DialogFooter>
-              <DialogClose asChild><Button variant="outline" disabled={mutation.isPending}>Отменить</Button></DialogClose>
-              <LoadingButton type="submit" loading={mutation.isPending}>Сохранить</LoadingButton>
+              <DialogClose asChild>
+                <Button variant="outline" disabled={mutation.isPending}>
+                  Отменить
+                </Button>
+              </DialogClose>
+              <LoadingButton type="submit" loading={mutation.isPending}>
+                Сохранить
+              </LoadingButton>
             </DialogFooter>
           </form>
         </Form>

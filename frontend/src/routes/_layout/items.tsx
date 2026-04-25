@@ -3,12 +3,11 @@ import { createFileRoute } from "@tanstack/react-router"
 import { Suspense } from "react"
 
 import { DataTable } from "@/components/Common/DataTable"
+import { EmptyState } from "@/components/Common/EmptyState"
 import AddItem from "@/components/Items/AddItem"
 import { columns } from "@/components/Items/columns"
 import PendingItems from "@/components/Pending/PendingItems"
-import { EmptyState } from "@/components/Common/EmptyState"
 import { getItemsQueryOptions } from "@/features/items/queries"
-
 
 export const Route = createFileRoute("/_layout/items")({
   component: Items,

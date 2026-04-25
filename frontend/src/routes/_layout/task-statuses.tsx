@@ -2,9 +2,12 @@ import { useSuspenseQuery } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
 
 import { TaskStatusesService } from "@/client"
-import AddTaskStatus from "@/components/TaskStatus/AddTaskStatus"
-import { columns, type TaskStatusTableData } from "@/components/TaskStatus/columns"
 import { DataTable } from "@/components/Common/DataTable"
+import AddTaskStatus from "@/components/TaskStatus/AddTaskStatus"
+import {
+  columns,
+  type TaskStatusTableData,
+} from "@/components/TaskStatus/columns"
 import { queryKeys } from "@/lib/queryKeys"
 
 function getTaskStatusesQueryOptions() {
@@ -52,4 +55,3 @@ function TaskStatuses() {
     </div>
   )
 }
-

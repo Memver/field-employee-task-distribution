@@ -2,8 +2,8 @@ import { useSuspenseQuery } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
 
 import { TaskTypesService } from "@/client"
-import AddTaskType from "@/components/TaskType/AddTaskType"
 import { DataTable } from "@/components/Common/DataTable"
+import AddTaskType from "@/components/TaskType/AddTaskType"
 import { columns, type TaskTypeTableData } from "@/components/TaskType/columns"
 import { queryKeys } from "@/lib/queryKeys"
 
@@ -38,4 +38,3 @@ function TaskTypes() {
     </div>
   )
 }
-

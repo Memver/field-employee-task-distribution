@@ -2,9 +2,9 @@ import { useSuspenseQuery } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
 
 import { GradesService } from "@/client"
+import { DataTable } from "@/components/Common/DataTable"
 import AddGrade from "@/components/Grade/AddUser"
 import { columns, type GradeTableData } from "@/components/Grade/columns"
-import { DataTable } from "@/components/Common/DataTable"
 
 function getGradesQueryOptions() {
   return {
@@ -50,4 +50,3 @@ function Grades() {
     </div>
   )
 }
-

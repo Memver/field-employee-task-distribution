@@ -5,7 +5,11 @@ import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 
-import { PrioritiesService, type PriorityPublic, type PriorityUpdate } from "@/client"
+import {
+  PrioritiesService,
+  type PriorityPublic,
+  type PriorityUpdate,
+} from "@/client"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,

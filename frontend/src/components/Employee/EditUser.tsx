@@ -5,7 +5,11 @@ import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 
-import { type EmployeePublic, type EmployeeUpdate, EmployeesService } from "@/client"
+import {
+  type EmployeePublic,
+  EmployeesService,
+  type EmployeeUpdate,
+} from "@/client"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -71,27 +75,69 @@ const EditUser = ({ employee, onSuccess }: Props) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={() => setIsOpen(true)}>
+      <DropdownMenuItem
+        onSelect={(e) => e.preventDefault()}
+        onClick={() => setIsOpen(true)}
+      >
         <Pencil /> Редактировать
       </DropdownMenuItem>
       <DialogContent className="sm:max-w-md">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
-            <DialogHeader><DialogTitle>Редактировать сотрудника</DialogTitle><DialogDescription>Обновите связанные id.</DialogDescription></DialogHeader>
+            <DialogHeader>
+              <DialogTitle>Редактировать сотрудника</DialogTitle>
+              <DialogDescription>Обновите связанные id.</DialogDescription>
+            </DialogHeader>
             <div className="grid gap-4 py-4">
-              <FormField control={form.control} name="user_id" render={({ field }) => (
-                <FormItem><FormLabel>ID пользователя</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
-              )} />
-              <FormField control={form.control} name="grade_id" render={({ field }) => (
-                <FormItem><FormLabel>ID грейда</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
-              )} />
-              <FormField control={form.control} name="start_location_id" render={({ field }) => (
-                <FormItem><FormLabel>ID стартовой локации</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
-              )} />
+              <FormField
+                control={form.control}
+                name="user_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>ID пользователя</FormLabel>
+                    <FormControl>
+                      <Input type="number" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="grade_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>ID грейда</FormLabel>
+                    <FormControl>
+                      <Input type="number" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="start_location_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>ID стартовой локации</FormLabel>
+                    <FormControl>
+                      <Input type="number" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
             <DialogFooter>
-              <DialogClose asChild><Button variant="outline" disabled={mutation.isPending}>Отменить</Button></DialogClose>
-              <LoadingButton type="submit" loading={mutation.isPending}>Сохранить</LoadingButton>
+              <DialogClose asChild>
+                <Button variant="outline" disabled={mutation.isPending}>
+                  Отменить
+                </Button>
+              </DialogClose>
+              <LoadingButton type="submit" loading={mutation.isPending}>
+                Сохранить
+              </LoadingButton>
             </DialogFooter>
           </form>
         </Form>
@@ -101,4 +147,3 @@ const EditUser = ({ employee, onSuccess }: Props) => {
 }
 
 export default EditUser
-

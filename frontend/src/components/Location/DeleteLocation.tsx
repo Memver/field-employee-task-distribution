@@ -83,4 +83,3 @@ const DeleteLocation = ({ id, onSuccess }: DeleteLocationProps) => {
 }
 
 export default DeleteLocation
-

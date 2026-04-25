@@ -32,4 +32,3 @@ export const UserActionsMenu = ({ employee }: UserActionsMenuProps) => {
     </DropdownMenu>
   )
 }
-

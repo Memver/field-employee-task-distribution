@@ -5,7 +5,11 @@ import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 
-import { AgentPointsService, type AgentPointPublic, type AgentPointUpdate } from "@/client"
+import {
+  type AgentPointPublic,
+  AgentPointsService,
+  type AgentPointUpdate,
+} from "@/client"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
@@ -18,7 +22,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
 import useCustomToast from "@/hooks/useCustomToast"
@@ -60,50 +71,129 @@ const EditUser = ({ agentPoint, onSuccess }: EditUserProps) => {
 
   const mutation = useMutation({
     mutationFn: (data: AgentPointUpdate) =>
-      AgentPointsService.updateAgentPoint({ id: agentPoint.id, requestBody: data }),
+      AgentPointsService.updateAgentPoint({
+        id: agentPoint.id,
+        requestBody: data,
+      }),
     onSuccess: () => {
       showSuccessToast("Agent point updated successfully")
       setIsOpen(false)
       onSuccess()
     },
     onError: handleError.bind(showErrorToast),
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ["agent-points"] }),
+    onSettled: () =>
+      queryClient.invalidateQueries({ queryKey: ["agent-points"] }),
   })
 
   const onSubmit = (data: FormData) => mutation.mutate(data)
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={() => setIsOpen(true)}>
+      <DropdownMenuItem
+        onSelect={(e) => e.preventDefault()}
+        onClick={() => setIsOpen(true)}
+      >
         <Pencil /> Редактировать
       </DropdownMenuItem>
       <DialogContent className="sm:max-w-md">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
-            <DialogHeader><DialogTitle>Редактировать агентскую точку</DialogTitle><DialogDescription>Обновите данные точки</DialogDescription></DialogHeader>
+            <DialogHeader>
+              <DialogTitle>Редактировать агентскую точку</DialogTitle>
+              <DialogDescription>Обновите данные точки</DialogDescription>
+            </DialogHeader>
             <div className="grid gap-4 py-4">
-              <FormField control={form.control} name="created_time" render={({ field }) => (
-                <FormItem><FormLabel>Время создания (ISO)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-              )} />
-              <FormField control={form.control} name="is_cards_delivered" render={({ field }) => (
-                <FormItem><FormLabel>Карты доставлены</FormLabel><FormControl><Checkbox checked={field.value} onCheckedChange={(v) => field.onChange(Boolean(v))} /></FormControl><FormMessage /></FormItem>
-              )} />
-              <FormField control={form.control} name="days_since_last_card_gived" render={({ field }) => (
-                <FormItem><FormLabel>Дней с последней выдачи</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
-              )} />
-              <FormField control={form.control} name="approved_applications" render={({ field }) => (
-                <FormItem><FormLabel>Одобренные заявки</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
-              )} />
-              <FormField control={form.control} name="cards_gived" render={({ field }) => (
-                <FormItem><FormLabel>Выдано карт</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
-              )} />
-              <FormField control={form.control} name="location_id" render={({ field }) => (
-                <FormItem><FormLabel>ID локации</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
-              )} />
+              <FormField
+                control={form.control}
+                name="created_time"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Время создания (ISO)</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="is_cards_delivered"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Карты доставлены</FormLabel>
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={(v) => field.onChange(Boolean(v))}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="days_since_last_card_gived"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Дней с последней выдачи</FormLabel>
+                    <FormControl>
+                      <Input type="number" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="approved_applications"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Одобренные заявки</FormLabel>
+                    <FormControl>
+                      <Input type="number" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="cards_gived"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Выдано карт</FormLabel>
+                    <FormControl>
+                      <Input type="number" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="location_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>ID локации</FormLabel>
+                    <FormControl>
+                      <Input type="number" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
             <DialogFooter>
-              <DialogClose asChild><Button variant="outline" disabled={mutation.isPending}>Отменить</Button></DialogClose>
-              <LoadingButton type="submit" loading={mutation.isPending}>Сохранить</LoadingButton>
+              <DialogClose asChild>
+                <Button variant="outline" disabled={mutation.isPending}>
+                  Отменить
+                </Button>
+              </DialogClose>
+              <LoadingButton type="submit" loading={mutation.isPending}>
+                Сохранить
+              </LoadingButton>
             </DialogFooter>
           </form>
         </Form>

@@ -1,10 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
-import useAuth from "@/hooks/useAuth";
-import "leaflet/dist/leaflet.css";
-import { Link as RouterLink } from "@tanstack/react-router";
-import { ChevronRight } from "lucide-react";
-import { LoadingButton } from "@/components/ui/loading-button";
-import { FieldEmployee } from "./FieldEmployee";
+import { createFileRoute } from "@tanstack/react-router"
+import useAuth from "@/hooks/useAuth"
+import "leaflet/dist/leaflet.css"
+import { Link as RouterLink } from "@tanstack/react-router"
+import { ChevronRight } from "lucide-react"
+import { FieldEmployee } from "./FieldEmployee"
 
 export const Route = createFileRoute("/_layout/")({
   component: Dashboard,
@@ -15,7 +14,7 @@ export const Route = createFileRoute("/_layout/")({
       },
     ],
   }),
-});
+})
 
 function EmployeeManagerDashboard() {
   return (
@@ -57,7 +56,7 @@ function EmployeeManagerDashboard() {
         Задачи
       </RouterLink>
     </div>
-  );
+  )
 }
 
 function AdminDashboard() {
@@ -68,18 +67,18 @@ function AdminDashboard() {
         Пользователи
       </RouterLink>
     </div>
-  );
+  )
 }
 
 function Dashboard() {
-  const { user: currentUser } = useAuth();
+  const { user: currentUser } = useAuth()
 
   if (currentUser?.role.name === "EMPLOYEE_MANAGER") {
-    return <EmployeeManagerDashboard />;
+    return <EmployeeManagerDashboard />
   }
   if (currentUser?.role.name === "FIELD_EMPLOYEE") {
-    return <FieldEmployee />;
+    return <FieldEmployee />
   }
 
-  return <AdminDashboard />;
+  return <AdminDashboard />
 }

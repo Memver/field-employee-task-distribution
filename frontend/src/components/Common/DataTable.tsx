@@ -6,6 +6,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table"
 import { DataTablePagination } from "@/components/Common/DataTablePagination"
+import { EmptyState } from "@/components/Common/EmptyState"
 import {
   Table,
   TableBody,
@@ -14,7 +15,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { EmptyState } from "@/components/Common/EmptyState"
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]

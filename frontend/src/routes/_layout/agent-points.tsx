@@ -3,8 +3,11 @@ import { createFileRoute } from "@tanstack/react-router"
 
 import { AgentPointsService } from "@/client"
 import AddUser from "@/components/AgentPoint/AddUser"
+import {
+  type AgentPointTableData,
+  columns,
+} from "@/components/AgentPoint/columns"
 import { DataTable } from "@/components/Common/DataTable"
-import { columns, type AgentPointTableData } from "@/components/AgentPoint/columns"
 
 function getAgentPointsQueryOptions() {
   return {
@@ -33,4 +36,3 @@ function AgentPoints() {
     </div>
   )
 }
-

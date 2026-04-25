@@ -5,7 +5,7 @@ import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 
-import { RolesService, type RolePublic, type RoleUpdate } from "@/client"
+import { type RolePublic, RolesService, type RoleUpdate } from "@/client"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -100,7 +100,11 @@ const EditUser = ({ role, onSuccess }: EditRoleProps) => {
                   <FormItem>
                     <FormLabel>Название</FormLabel>
                     <FormControl>
-                      <Input placeholder="Название роли" type="text" {...field} />
+                      <Input
+                        placeholder="Название роли"
+                        type="text"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

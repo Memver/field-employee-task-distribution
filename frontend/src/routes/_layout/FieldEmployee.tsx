@@ -1,26 +1,20 @@
-import {
-  MapContainer,
-  Marker,
-  Polyline,
-  Popup,
-  TileLayer,
-} from "react-leaflet";
-import "leaflet/dist/leaflet.css";
-import { useSuspenseQuery } from "@tanstack/react-query";
-import L from "leaflet";
-import icon from "leaflet/dist/images/marker-icon.png";
-import iconShadow from "leaflet/dist/images/marker-shadow.png";
-import { renderToString } from "react-dom/server";
-import { EmptyState } from "@/components/Common/EmptyState";
-import { getFieldEmployeeTasksQueryOptions } from "@/features/tasks/queries";
+import { MapContainer, Marker, Polyline, Popup, TileLayer } from "react-leaflet"
+import "leaflet/dist/leaflet.css"
+import { useSuspenseQuery } from "@tanstack/react-query"
+import L from "leaflet"
+import icon from "leaflet/dist/images/marker-icon.png"
+import iconShadow from "leaflet/dist/images/marker-shadow.png"
+import { renderToString } from "react-dom/server"
+import { EmptyState } from "@/components/Common/EmptyState"
+import { getFieldEmployeeTasksQueryOptions } from "@/features/tasks/queries"
 
 const DefaultIcon = L.icon({
   iconUrl: icon,
   shadowUrl: iconShadow,
   iconSize: [25, 41],
   iconAnchor: [12, 41],
-});
-L.Marker.prototype.options.icon = DefaultIcon;
+})
+L.Marker.prototype.options.icon = DefaultIcon
 
 function createNumberedIcon(index: number) {
   // Создаем HTML для кастомного маркера
@@ -33,7 +27,7 @@ function createNumberedIcon(index: number) {
         {index}
       </div>
     </div>,
-  );
+  )
 
   // Создаем divIcon с кастомным HTML
   return L.divIcon({
@@ -42,29 +36,29 @@ function createNumberedIcon(index: number) {
     iconSize: [25, 41],
     iconAnchor: [12, 41],
     popupAnchor: [0, -41],
-  });
+  })
 }
 
 function parseLineString(wktString: string): [number, number][] {
-  if (!wktString) return [];
+  if (!wktString) return []
 
   // Удаляем "LINESTRING (" в начале и ")" в конце
   const coordinatesStr = wktString
     .replace("LINESTRING (", "")
     .replace(")", "")
-    .trim();
+    .trim()
 
   // Разбиваем на пары координат
-  const pairs = coordinatesStr.split(", ");
+  const pairs = coordinatesStr.split(", ")
 
   // Преобразуем каждую пару в [lat, lon] (Leaflet использует [lat, lon])
   return pairs.map((pair) => {
-    const [lon, lat] = pair.split(" ").map(Number);
-    return [lat, lon] as [number, number];
-  });
+    const [lon, lat] = pair.split(" ").map(Number)
+    return [lat, lon] as [number, number]
+  })
 }
 export function FieldEmployee() {
-  const { data } = useSuspenseQuery(getFieldEmployeeTasksQueryOptions());
+  const { data } = useSuspenseQuery(getFieldEmployeeTasksQueryOptions())
 
   if (!data || !data.tasks || data.route === "GEOMETRYCOLLECTION EMPTY") {
     return (
@@ -74,12 +68,12 @@ export function FieldEmployee() {
           description="Информация о начальной точке отсутствует"
         />
       </div>
-    );
+    )
   }
 
-  const position = [data.start_location.lat, data.start_location.lon];
+  const position = [data.start_location.lat, data.start_location.lon]
 
-  const routePoints = data?.route ? parseLineString(data.route) : [];
+  const routePoints = data?.route ? parseLineString(data.route) : []
 
   // Опции для линии маршрута
   const routeOptions = {
@@ -88,7 +82,7 @@ export function FieldEmployee() {
     opacity: 0.7,
     lineCap: "round" as const,
     lineJoin: "round" as const,
-  };
+  }
 
   return (
     <div>
@@ -144,5 +138,5 @@ export function FieldEmployee() {
         </div>
       </div>
     </div>
-  );
+  )
 }

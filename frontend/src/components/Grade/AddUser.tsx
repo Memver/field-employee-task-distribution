@@ -5,7 +5,7 @@ import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 
-import { GradesService, type GradeCreate } from "@/client"
+import { type GradeCreate, GradesService } from "@/client"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -91,7 +91,11 @@ const AddUser = () => {
                   <FormItem>
                     <FormLabel>Название</FormLabel>
                     <FormControl>
-                      <Input placeholder="Например: Junior" type="text" {...field} />
+                      <Input
+                        placeholder="Например: Junior"
+                        type="text"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

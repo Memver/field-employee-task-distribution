@@ -5,7 +5,7 @@ import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 
-import { RolesService, type RoleCreate } from "@/client"
+import { type RoleCreate, RolesService } from "@/client"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -90,7 +90,11 @@ const AddRole = () => {
                   <FormItem>
                     <FormLabel>Название</FormLabel>
                     <FormControl>
-                      <Input placeholder="Например: ADMIN" type="text" {...field} />
+                      <Input
+                        placeholder="Например: ADMIN"
+                        type="text"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

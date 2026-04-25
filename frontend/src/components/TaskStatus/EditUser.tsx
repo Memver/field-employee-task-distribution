@@ -5,7 +5,11 @@ import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 
-import { TaskStatusesService, type TaskStatusPublic, type TaskStatusUpdate } from "@/client"
+import {
+  TaskStatusesService,
+  type TaskStatusPublic,
+  type TaskStatusUpdate,
+} from "@/client"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,

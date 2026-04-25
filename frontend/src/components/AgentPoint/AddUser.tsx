@@ -5,9 +5,9 @@ import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 
-import { AgentPointsService, type AgentPointCreate } from "@/client"
-import { Checkbox } from "@/components/ui/checkbox"
+import { type AgentPointCreate, AgentPointsService } from "@/client"
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Dialog,
   DialogClose,
@@ -95,7 +95,11 @@ const AddUser = () => {
                   <FormItem>
                     <FormLabel>Время создания (ISO)</FormLabel>
                     <FormControl>
-                      <Input placeholder="2026-01-01T10:00:00Z" type="text" {...field} />
+                      <Input
+                        placeholder="2026-01-01T10:00:00Z"
+                        type="text"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -108,7 +112,10 @@ const AddUser = () => {
                   <FormItem>
                     <FormLabel>Карты доставлены</FormLabel>
                     <FormControl>
-                      <Checkbox checked={field.value} onCheckedChange={(v) => field.onChange(Boolean(v))} />
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={(v) => field.onChange(Boolean(v))}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

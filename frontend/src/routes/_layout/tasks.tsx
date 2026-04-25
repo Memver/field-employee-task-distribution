@@ -1,8 +1,7 @@
 import { useSuspenseQuery } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
-
-import AddTask from "@/components/Task/AddTask"
 import { DataTable } from "@/components/Common/DataTable"
+import AddTask from "@/components/Task/AddTask"
 import { columns, type TaskTableData } from "@/components/Task/columns"
 import { getAdminTasksQueryOptions } from "@/features/tasks/queries"
 
@@ -26,4 +25,3 @@ function Tasks() {
     </div>
   )
 }
-

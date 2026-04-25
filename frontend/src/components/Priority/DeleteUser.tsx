@@ -66,8 +66,8 @@ const DeleteUser = ({ id, onSuccess }: DeleteUserProps) => {
           <DialogHeader>
             <DialogTitle>Удалить приоритет</DialogTitle>
             <DialogDescription>
-              Приоритет будет удален из системы. Убедитесь, что вы
-              действительно хотите выполнить это действие.
+              Приоритет будет удален из системы. Убедитесь, что вы действительно
+              хотите выполнить это действие.
             </DialogDescription>
           </DialogHeader>
 
