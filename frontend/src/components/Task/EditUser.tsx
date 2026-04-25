@@ -21,6 +21,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
 import useCustomToast from "@/hooks/useCustomToast"
+import { queryKeys } from "@/lib/queryKeys"
 import { handleError } from "@/utils"
 
 const formSchema = z.object({
@@ -71,7 +72,8 @@ const EditUser = ({ task, onSuccess }: EditUserProps) => {
       onSuccess()
     },
     onError: handleError.bind(showErrorToast),
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ["tasks-admin"] }),
+    onSettled: () =>
+      queryClient.invalidateQueries({ queryKey: queryKeys.tasks.admin }),
   })
 
   const onSubmit = (data: FormData) =>

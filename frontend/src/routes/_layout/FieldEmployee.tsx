@@ -11,7 +11,8 @@ import L from "leaflet";
 import icon from "leaflet/dist/images/marker-icon.png";
 import iconShadow from "leaflet/dist/images/marker-shadow.png";
 import { renderToString } from "react-dom/server";
-import { TasksService } from "@/client";
+import { EmptyState } from "@/components/Common/EmptyState";
+import { getFieldEmployeeTasksQueryOptions } from "@/features/tasks/queries";
 
 const DefaultIcon = L.icon({
   iconUrl: icon,
@@ -20,13 +21,6 @@ const DefaultIcon = L.icon({
   iconAnchor: [12, 41],
 });
 L.Marker.prototype.options.icon = DefaultIcon;
-
-function getTasksQueryOptions() {
-  return {
-    queryFn: () => TasksService.readTasksMe({ skip: 0, limit: 100 }),
-    queryKey: ["tasks"],
-  };
-}
 
 function createNumberedIcon(index: number) {
   // Создаем HTML для кастомного маркера
@@ -70,17 +64,15 @@ function parseLineString(wktString: string): [number, number][] {
   });
 }
 export function FieldEmployee() {
-  const { data } = useSuspenseQuery(getTasksQueryOptions());
+  const { data } = useSuspenseQuery(getFieldEmployeeTasksQueryOptions());
 
   if (!data || !data.tasks || data.route === "GEOMETRYCOLLECTION EMPTY") {
     return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="text-center">
-          <p className="text-gray-500 text-lg">Нет данных о маршруте</p>
-          <p className="text-gray-400 text-sm mt-2">
-            Информация о начальной точке отсутствует
-          </p>
-        </div>
+      <div className="h-screen flex items-center justify-center">
+        <EmptyState
+          title="Нет данных о маршруте"
+          description="Информация о начальной точке отсутствует"
+        />
       </div>
     );
   }

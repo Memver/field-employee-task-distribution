@@ -28,6 +28,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
 import useCustomToast from "@/hooks/useCustomToast"
+import { queryKeys } from "@/lib/queryKeys"
 import { handleError } from "@/utils"
 
 const formSchema = z.object({
@@ -62,7 +63,7 @@ const AddItem = () => {
     },
     onError: handleError.bind(showErrorToast),
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["items"] })
+      queryClient.invalidateQueries({ queryKey: queryKeys.items.all })
     },
   })
 

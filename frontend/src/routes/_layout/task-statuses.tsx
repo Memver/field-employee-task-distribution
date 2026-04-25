@@ -2,15 +2,16 @@ import { useSuspenseQuery } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
 
 import { TaskStatusesService } from "@/client"
-import AddTaskStatus from "@/components/TaskStatus/AddUser"
+import AddTaskStatus from "@/components/TaskStatus/AddTaskStatus"
 import { columns, type TaskStatusTableData } from "@/components/TaskStatus/columns"
 import { DataTable } from "@/components/Common/DataTable"
+import { queryKeys } from "@/lib/queryKeys"
 
 function getTaskStatusesQueryOptions() {
   return {
     queryFn: () =>
       TaskStatusesService.readTaskStatuses({ skip: 0, limit: 100 }),
-    queryKey: ["task-statuses"],
+    queryKey: queryKeys.taskStatuses.all,
   }
 }
 

@@ -2,14 +2,15 @@ import { useSuspenseQuery } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
 
 import { TaskTypesService } from "@/client"
-import AddUser from "@/components/TaskType/AddUser"
+import AddTaskType from "@/components/TaskType/AddTaskType"
 import { DataTable } from "@/components/Common/DataTable"
 import { columns, type TaskTypeTableData } from "@/components/TaskType/columns"
+import { queryKeys } from "@/lib/queryKeys"
 
 function getTaskTypesQueryOptions() {
   return {
     queryFn: () => TaskTypesService.readTaskTypes({ skip: 0, limit: 100 }),
-    queryKey: ["task-types"],
+    queryKey: queryKeys.taskTypes.all,
   }
 }
 
@@ -31,7 +32,7 @@ function TaskTypes() {
           <h1 className="text-2xl font-bold tracking-tight">Типы задач</h1>
           <p className="text-muted-foreground">Управление типами задач</p>
         </div>
-        <AddUser />
+        <AddTaskType />
       </div>
       <TaskTypesTableContent />
     </div>

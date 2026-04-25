@@ -8,8 +8,8 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import DeleteUser from "./DeleteUser"
-import EditUser from "./EditUser"
+import DeleteTask from "./DeleteTask"
+import EditTask from "./EditTask"
 
 interface UserActionsMenuProps {
   task: TaskPublic
@@ -26,8 +26,8 @@ export const UserActionsMenu = ({ task }: UserActionsMenuProps) => {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <EditUser task={task} onSuccess={() => setOpen(false)} />
-        <DeleteUser id={task.id} onSuccess={() => setOpen(false)} />
+        <EditTask task={task} onSuccess={() => setOpen(false)} />
+        <DeleteTask id={task.id} onSuccess={() => setOpen(false)} />
       </DropdownMenuContent>
     </DropdownMenu>
   )

@@ -1,7 +1,7 @@
 import type { ColumnDef } from "@tanstack/react-table"
 
 import type { TaskPublic } from "@/client"
-import { UserActionsMenu } from "./UserActionsMenu"
+import { TaskActionsMenu } from "./TaskActionsMenu"
 
 export type TaskTableData = TaskPublic
 
@@ -18,7 +18,7 @@ export const columns: ColumnDef<TaskTableData>[] = [
     header: () => <span className="sr-only">Действия</span>,
     cell: ({ row }) => (
       <div className="flex justify-end">
-        <UserActionsMenu task={row.original} />
+        <TaskActionsMenu task={row.original} />
       </div>
     ),
   },
