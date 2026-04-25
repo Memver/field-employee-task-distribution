@@ -19,10 +19,6 @@ export const Route = createFileRoute("/_layout/")({
 function EmployeeManagerDashboard() {
   return (
     <div className="flex flex-col items-start gap-10 text-xl">
-      <RouterLink to="/roles" className="flex items-center gap-2">
-        <ChevronRight />
-        Роли
-      </RouterLink>
       <RouterLink to="/grades" className="flex items-center gap-2">
         <ChevronRight />
         Грейды

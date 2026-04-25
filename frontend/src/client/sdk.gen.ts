@@ -3,7 +3,118 @@
 import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
-import type { AgentPointsCreateAgentPointData, AgentPointsCreateAgentPointResponse, AgentPointsReadAgentPointsData, AgentPointsReadAgentPointsResponse, AgentPointsReadAgentPointByIdData, AgentPointsReadAgentPointByIdResponse, AgentPointsDeleteAgentPointData, AgentPointsDeleteAgentPointResponse, AgentPointsUpdateAgentPointData, AgentPointsUpdateAgentPointResponse, EmployeesCreateEmployeeData, EmployeesCreateEmployeeResponse, EmployeesReadEmployeesData, EmployeesReadEmployeesResponse, EmployeesReadEmployeeByIdData, EmployeesReadEmployeeByIdResponse, EmployeesDeleteEmployeeData, EmployeesDeleteEmployeeResponse, EmployeesUpdateEmployeeData, EmployeesUpdateEmployeeResponse, GradesCreateGradeData, GradesCreateGradeResponse, GradesReadGradesData, GradesReadGradesResponse, GradesReadGradeByIdData, GradesReadGradeByIdResponse, GradesDeleteGradeData, GradesDeleteGradeResponse, GradesUpdateGradeData, GradesUpdateGradeResponse, LocationsCreateLocationData, LocationsCreateLocationResponse, LocationsReadLocationsData, LocationsReadLocationsResponse, LocationsReadLocationByIdData, LocationsReadLocationByIdResponse, LocationsDeleteLocationData, LocationsDeleteLocationResponse, LocationsUpdateLocationData, LocationsUpdateLocationResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginTestTokenResponse, PrioritiesCreatePriorityData, PrioritiesCreatePriorityResponse, PrioritiesReadPrioritiesData, PrioritiesReadPrioritiesResponse, PrioritiesReadPriorityByIdData, PrioritiesReadPriorityByIdResponse, PrioritiesDeletePriorityData, PrioritiesDeletePriorityResponse, PrioritiesUpdatePriorityData, PrioritiesUpdatePriorityResponse, RolesCreateRoleData, RolesCreateRoleResponse, RolesReadRolesData, RolesReadRolesResponse, RolesReadRoleByIdData, RolesReadRoleByIdResponse, RolesDeleteRoleData, RolesDeleteRoleResponse, RolesUpdateRoleData, RolesUpdateRoleResponse, TasksCreateTaskData, TasksCreateTaskResponse, TasksReadTasksData, TasksReadTasksResponse, TasksDistributeTasksResponse, TasksReadTasksMeData, TasksReadTasksMeResponse, TasksReadTaskByIdData, TasksReadTaskByIdResponse, TasksDeleteTaskData, TasksDeleteTaskResponse, TasksUpdateTaskData, TasksUpdateTaskResponse, TaskStatusesCreateTaskStatusData, TaskStatusesCreateTaskStatusResponse, TaskStatusesReadTaskStatusesData, TaskStatusesReadTaskStatusesResponse, TaskStatusesReadTaskStatusByIdData, TaskStatusesReadTaskStatusByIdResponse, TaskStatusesDeleteTaskStatusData, TaskStatusesDeleteTaskStatusResponse, TaskStatusesUpdateTaskStatusData, TaskStatusesUpdateTaskStatusResponse, TaskTypesCreateTaskTypeData, TaskTypesCreateTaskTypeResponse, TaskTypesReadTaskTypesData, TaskTypesReadTaskTypesResponse, TaskTypesReadTaskTypeByIdData, TaskTypesReadTaskTypeByIdResponse, TaskTypesDeleteTaskTypeData, TaskTypesDeleteTaskTypeResponse, TaskTypesUpdateTaskTypeData, TaskTypesUpdateTaskTypeResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUsersData, UsersReadUsersResponse, UsersReadUserMeResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersDeleteUserData, UsersDeleteUserResponse, UsersUpdateUserData, UsersUpdateUserResponse, UtilsHealthCheckResponse } from './types.gen';
+import type { AgentPointEventsCreateAgentPointEventData, AgentPointEventsCreateAgentPointEventResponse, AgentPointEventsReadAgentPointEventsData, AgentPointEventsReadAgentPointEventsResponse, AgentPointEventsReadAgentPointEventByIdData, AgentPointEventsReadAgentPointEventByIdResponse, AgentPointEventsDeleteAgentPointEventData, AgentPointEventsDeleteAgentPointEventResponse, AgentPointEventsUpdateAgentPointEventData, AgentPointEventsUpdateAgentPointEventResponse, AgentPointsCreateAgentPointData, AgentPointsCreateAgentPointResponse, AgentPointsReadAgentPointsData, AgentPointsReadAgentPointsResponse, AgentPointsReadAgentPointByIdData, AgentPointsReadAgentPointByIdResponse, AgentPointsUpdateAgentPointData, AgentPointsUpdateAgentPointResponse, AgentPointsDeleteAgentPointData, AgentPointsDeleteAgentPointResponse, EmployeesCreateEmployeeData, EmployeesCreateEmployeeResponse, EmployeesReadEmployeesData, EmployeesReadEmployeesResponse, EmployeesReadEmployeeByIdData, EmployeesReadEmployeeByIdResponse, EmployeesDeleteEmployeeData, EmployeesDeleteEmployeeResponse, EmployeesUpdateEmployeeData, EmployeesUpdateEmployeeResponse, GradesCreateGradeData, GradesCreateGradeResponse, GradesReadGradesData, GradesReadGradesResponse, GradesReadGradeByIdData, GradesReadGradeByIdResponse, GradesDeleteGradeData, GradesDeleteGradeResponse, GradesUpdateGradeData, GradesUpdateGradeResponse, LocationsCreateLocationData, LocationsCreateLocationResponse, LocationsReadLocationsData, LocationsReadLocationsResponse, LocationsReadLocationByIdData, LocationsReadLocationByIdResponse, LocationsDeleteLocationData, LocationsDeleteLocationResponse, LocationsUpdateLocationData, LocationsUpdateLocationResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginTestTokenResponse, PrioritiesCreatePriorityData, PrioritiesCreatePriorityResponse, PrioritiesReadPrioritiesData, PrioritiesReadPrioritiesResponse, PrioritiesReadPriorityByIdData, PrioritiesReadPriorityByIdResponse, PrioritiesDeletePriorityData, PrioritiesDeletePriorityResponse, PrioritiesUpdatePriorityData, PrioritiesUpdatePriorityResponse, RolesCreateRoleData, RolesCreateRoleResponse, RolesReadRolesData, RolesReadRolesResponse, RolesReadRoleByIdData, RolesReadRoleByIdResponse, RolesDeleteRoleData, RolesDeleteRoleResponse, RolesUpdateRoleData, RolesUpdateRoleResponse, TasksCreateTaskData, TasksCreateTaskResponse, TasksReadTasksData, TasksReadTasksResponse, TasksDistributeTasksResponse, TasksReadTasksMeData, TasksReadTasksMeResponse, TasksUpdateMyTaskStatusData, TasksUpdateMyTaskStatusResponse, TasksCompleteMyTaskData, TasksCompleteMyTaskResponse, TasksSkipMyTaskData, TasksSkipMyTaskResponse, TasksCompleteTaskByAgentPointManagerData, TasksCompleteTaskByAgentPointManagerResponse, TasksReadTaskByIdData, TasksReadTaskByIdResponse, TasksDeleteTaskData, TasksDeleteTaskResponse, TasksUpdateTaskData, TasksUpdateTaskResponse, TaskStatusesCreateTaskStatusData, TaskStatusesCreateTaskStatusResponse, TaskStatusesReadTaskStatusesData, TaskStatusesReadTaskStatusesResponse, TaskStatusesReadTaskStatusByIdData, TaskStatusesReadTaskStatusByIdResponse, TaskStatusesDeleteTaskStatusData, TaskStatusesDeleteTaskStatusResponse, TaskStatusesUpdateTaskStatusData, TaskStatusesUpdateTaskStatusResponse, TaskTypesCreateTaskTypeData, TaskTypesCreateTaskTypeResponse, TaskTypesReadTaskTypesData, TaskTypesReadTaskTypesResponse, TaskTypesReadTaskTypeByIdData, TaskTypesReadTaskTypeByIdResponse, TaskTypesDeleteTaskTypeData, TaskTypesDeleteTaskTypeResponse, TaskTypesUpdateTaskTypeData, TaskTypesUpdateTaskTypeResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUsersData, UsersReadUsersResponse, UsersReadUserMeResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersDeleteUserData, UsersDeleteUserResponse, UsersUpdateUserData, UsersUpdateUserResponse, UtilsHealthCheckResponse } from './types.gen';
+
+export class AgentPointEventsService {
+    /**
+     * Create Agent Point Event
+     * Create new agent_point_event.
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns AgentPointEventPublic Successful Response
+     * @throws ApiError
+     */
+    public static createAgentPointEvent(data: AgentPointEventsCreateAgentPointEventData): CancelablePromise<AgentPointEventsCreateAgentPointEventResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/agent-point-events/',
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Read Agent Point Events
+     * Retrieve agent_point_events.
+     * @param data The data for the request.
+     * @param data.skip
+     * @param data.limit
+     * @returns AgentPointEventsPublic Successful Response
+     * @throws ApiError
+     */
+    public static readAgentPointEvents(data: AgentPointEventsReadAgentPointEventsData = {}): CancelablePromise<AgentPointEventsReadAgentPointEventsResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/agent-point-events/',
+            query: {
+                skip: data.skip,
+                limit: data.limit
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Read Agent Point Event By Id
+     * Get a specific agent_point_event by id.
+     * @param data The data for the request.
+     * @param data.agentPointEventId
+     * @returns AgentPointEventPublic Successful Response
+     * @throws ApiError
+     */
+    public static readAgentPointEventById(data: AgentPointEventsReadAgentPointEventByIdData): CancelablePromise<AgentPointEventsReadAgentPointEventByIdResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/agent-point-events/{agent_point_event_id}',
+            path: {
+                agent_point_event_id: data.agentPointEventId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Delete Agent Point Event
+     * Delete a agent_point_event.
+     * @param data The data for the request.
+     * @param data.agentPointEventId
+     * @returns Message Successful Response
+     * @throws ApiError
+     */
+    public static deleteAgentPointEvent(data: AgentPointEventsDeleteAgentPointEventData): CancelablePromise<AgentPointEventsDeleteAgentPointEventResponse> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/api/v1/agent-point-events/{agent_point_event_id}',
+            path: {
+                agent_point_event_id: data.agentPointEventId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Update Agent Point Event
+     * Update an agent_point_event.
+     * @param data The data for the request.
+     * @param data.id
+     * @param data.requestBody
+     * @returns AgentPointEventPublic Successful Response
+     * @throws ApiError
+     */
+    public static updateAgentPointEvent(data: AgentPointEventsUpdateAgentPointEventData): CancelablePromise<AgentPointEventsUpdateAgentPointEventResponse> {
+        return __request(OpenAPI, {
+            method: 'PUT',
+            url: '/api/v1/agent-point-events/{id}',
+            path: {
+                id: data.id
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+}
 
 export class AgentPointsService {
     /**
@@ -53,37 +164,16 @@ export class AgentPointsService {
      * Read Agent Point By Id
      * Get a specific agent_point by id.
      * @param data The data for the request.
-     * @param data.agentPointId
+     * @param data.id
      * @returns AgentPointPublic Successful Response
      * @throws ApiError
      */
     public static readAgentPointById(data: AgentPointsReadAgentPointByIdData): CancelablePromise<AgentPointsReadAgentPointByIdResponse> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/api/v1/agent-points/{agent_point_id}',
+            url: '/api/v1/agent-points/{id}',
             path: {
-                agent_point_id: data.agentPointId
-            },
-            errors: {
-                422: 'Validation Error'
-            }
-        });
-    }
-    
-    /**
-     * Delete Agent Point
-     * Delete a agent_point.
-     * @param data The data for the request.
-     * @param data.agentPointId
-     * @returns Message Successful Response
-     * @throws ApiError
-     */
-    public static deleteAgentPoint(data: AgentPointsDeleteAgentPointData): CancelablePromise<AgentPointsDeleteAgentPointResponse> {
-        return __request(OpenAPI, {
-            method: 'DELETE',
-            url: '/api/v1/agent-points/{agent_point_id}',
-            path: {
-                agent_point_id: data.agentPointId
+                id: data.id
             },
             errors: {
                 422: 'Validation Error'
@@ -109,6 +199,27 @@ export class AgentPointsService {
             },
             body: data.requestBody,
             mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Delete Agent Point
+     * Delete a agent_point.
+     * @param data The data for the request.
+     * @param data.agentPointId
+     * @returns Message Successful Response
+     * @throws ApiError
+     */
+    public static deleteAgentPoint(data: AgentPointsDeleteAgentPointData): CancelablePromise<AgentPointsDeleteAgentPointResponse> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/api/v1/agent-points/{agent_point_id}',
+            path: {
+                agent_point_id: data.agentPointId
+            },
             errors: {
                 422: 'Validation Error'
             }
@@ -642,6 +753,7 @@ export class RolesService {
     /**
      * Read Role By Id
      * Get a specific role by id.
+     * ADMIN — любая роль; остальные — только своя (role_id == current_user.role_id).
      * @param data The data for the request.
      * @param data.roleId
      * @returns RolePublic Successful Response
@@ -779,6 +891,102 @@ export class TasksService {
                 skip: data.skip,
                 limit: data.limit
             },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Update My Task Status
+     * Выездной сотрудник: смена статуса и комментария только по своей задаче.
+     * @param data The data for the request.
+     * @param data.taskId
+     * @param data.requestBody
+     * @returns TaskPublic Successful Response
+     * @throws ApiError
+     */
+    public static updateMyTaskStatus(data: TasksUpdateMyTaskStatusData): CancelablePromise<TasksUpdateMyTaskStatusResponse> {
+        return __request(OpenAPI, {
+            method: 'PATCH',
+            url: '/api/v1/tasks/{task_id}/self',
+            path: {
+                task_id: data.taskId
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Complete My Task
+     * Выездной сотрудник: отметить свою задачу как выполненную.
+     * @param data The data for the request.
+     * @param data.taskId
+     * @param data.requestBody
+     * @returns TaskPublic Successful Response
+     * @throws ApiError
+     */
+    public static completeMyTask(data: TasksCompleteMyTaskData): CancelablePromise<TasksCompleteMyTaskResponse> {
+        return __request(OpenAPI, {
+            method: 'PATCH',
+            url: '/api/v1/tasks/{task_id}/complete',
+            path: {
+                task_id: data.taskId
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Skip My Task
+     * Выездной сотрудник: пропустить свою задачу с указанием причины.
+     * @param data The data for the request.
+     * @param data.taskId
+     * @param data.requestBody
+     * @returns TaskPublic Successful Response
+     * @throws ApiError
+     */
+    public static skipMyTask(data: TasksSkipMyTaskData): CancelablePromise<TasksSkipMyTaskResponse> {
+        return __request(OpenAPI, {
+            method: 'PATCH',
+            url: '/api/v1/tasks/{task_id}/skip',
+            path: {
+                task_id: data.taskId
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Complete Task By Agent Point Manager
+     * Менеджер агентской точки: подтвердить или отклонить статус задачи.
+     * @param data The data for the request.
+     * @param data.taskId
+     * @param data.requestBody
+     * @returns TaskPublic Successful Response
+     * @throws ApiError
+     */
+    public static completeTaskByAgentPointManager(data: TasksCompleteTaskByAgentPointManagerData): CancelablePromise<TasksCompleteTaskByAgentPointManagerResponse> {
+        return __request(OpenAPI, {
+            method: 'PATCH',
+            url: '/api/v1/tasks/{task_id}/complete-by-agent-point-manager',
+            path: {
+                task_id: data.taskId
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
             errors: {
                 422: 'Validation Error'
             }

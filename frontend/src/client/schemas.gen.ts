@@ -3,28 +3,16 @@
 export const AgentPointCreateSchema = {
     properties: {
         created_time: {
-            type: 'string',
-            format: 'date-time',
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
             title: 'Created Time'
-        },
-        is_cards_delivered: {
-            type: 'boolean',
-            title: 'Is Cards Delivered'
-        },
-        days_since_last_card_gived: {
-            type: 'integer',
-            minimum: 0,
-            title: 'Days Since Last Card Gived'
-        },
-        approved_applications: {
-            type: 'integer',
-            minimum: 0,
-            title: 'Approved Applications'
-        },
-        cards_gived: {
-            type: 'integer',
-            minimum: 0,
-            title: 'Cards Gived'
         },
         location_id: {
             type: 'integer',
@@ -32,35 +20,250 @@ export const AgentPointCreateSchema = {
         }
     },
     type: 'object',
-    required: ['created_time', 'is_cards_delivered', 'days_since_last_card_gived', 'approved_applications', 'cards_gived', 'location_id'],
+    required: ['location_id'],
     title: 'AgentPointCreate'
+} as const;
+
+export const AgentPointEventCreateSchema = {
+    properties: {
+        event_time: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Event Time'
+        },
+        event_type: {
+            type: 'string',
+            maxLength: 64,
+            minLength: 1,
+            title: 'Event Type'
+        },
+        metric_name: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 64
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Metric Name'
+        },
+        metric_delta: {
+            anyOf: [
+                {
+                    type: 'integer'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Metric Delta'
+        },
+        metric_value_num: {
+            anyOf: [
+                {
+                    type: 'integer'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Metric Value Num'
+        },
+        metric_value_bool: {
+            anyOf: [
+                {
+                    type: 'boolean'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Metric Value Bool'
+        },
+        agent_point_id: {
+            type: 'integer',
+            title: 'Agent Point Id'
+        }
+    },
+    type: 'object',
+    required: ['event_time', 'event_type', 'agent_point_id'],
+    title: 'AgentPointEventCreate'
+} as const;
+
+export const AgentPointEventPublicSchema = {
+    properties: {
+        event_time: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Event Time'
+        },
+        event_type: {
+            type: 'string',
+            maxLength: 64,
+            minLength: 1,
+            title: 'Event Type'
+        },
+        metric_name: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 64
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Metric Name'
+        },
+        metric_delta: {
+            anyOf: [
+                {
+                    type: 'integer'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Metric Delta'
+        },
+        metric_value_num: {
+            anyOf: [
+                {
+                    type: 'integer'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Metric Value Num'
+        },
+        metric_value_bool: {
+            anyOf: [
+                {
+                    type: 'boolean'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Metric Value Bool'
+        },
+        id: {
+            type: 'integer',
+            title: 'Id'
+        },
+        agent_point_id: {
+            type: 'integer',
+            title: 'Agent Point Id'
+        }
+    },
+    type: 'object',
+    required: ['event_time', 'event_type', 'id', 'agent_point_id'],
+    title: 'AgentPointEventPublic'
+} as const;
+
+export const AgentPointEventUpdateSchema = {
+    properties: {
+        event_time: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Event Time'
+        },
+        event_type: {
+            type: 'string',
+            maxLength: 64,
+            minLength: 1,
+            title: 'Event Type'
+        },
+        metric_name: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 64
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Metric Name'
+        },
+        metric_delta: {
+            anyOf: [
+                {
+                    type: 'integer'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Metric Delta'
+        },
+        metric_value_num: {
+            anyOf: [
+                {
+                    type: 'integer'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Metric Value Num'
+        },
+        metric_value_bool: {
+            anyOf: [
+                {
+                    type: 'boolean'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Metric Value Bool'
+        },
+        agent_point_id: {
+            type: 'integer',
+            title: 'Agent Point Id'
+        }
+    },
+    type: 'object',
+    required: ['event_time', 'event_type', 'agent_point_id'],
+    title: 'AgentPointEventUpdate'
+} as const;
+
+export const AgentPointEventsPublicSchema = {
+    properties: {
+        data: {
+            items: {
+                '$ref': '#/components/schemas/AgentPointEventPublic'
+            },
+            type: 'array',
+            title: 'Data'
+        },
+        count: {
+            type: 'integer',
+            title: 'Count'
+        }
+    },
+    type: 'object',
+    required: ['data', 'count'],
+    title: 'AgentPointEventsPublic'
 } as const;
 
 export const AgentPointPublicSchema = {
     properties: {
         created_time: {
-            type: 'string',
-            format: 'date-time',
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
             title: 'Created Time'
-        },
-        is_cards_delivered: {
-            type: 'boolean',
-            title: 'Is Cards Delivered'
-        },
-        days_since_last_card_gived: {
-            type: 'integer',
-            minimum: 0,
-            title: 'Days Since Last Card Gived'
-        },
-        approved_applications: {
-            type: 'integer',
-            minimum: 0,
-            title: 'Approved Applications'
-        },
-        cards_gived: {
-            type: 'integer',
-            minimum: 0,
-            title: 'Cards Gived'
         },
         id: {
             type: 'integer',
@@ -71,35 +274,23 @@ export const AgentPointPublicSchema = {
         }
     },
     type: 'object',
-    required: ['created_time', 'is_cards_delivered', 'days_since_last_card_gived', 'approved_applications', 'cards_gived', 'id', 'location'],
+    required: ['id', 'location'],
     title: 'AgentPointPublic'
 } as const;
 
 export const AgentPointUpdateSchema = {
     properties: {
         created_time: {
-            type: 'string',
-            format: 'date-time',
+            anyOf: [
+                {
+                    type: 'string',
+                    format: 'date-time'
+                },
+                {
+                    type: 'null'
+                }
+            ],
             title: 'Created Time'
-        },
-        is_cards_delivered: {
-            type: 'boolean',
-            title: 'Is Cards Delivered'
-        },
-        days_since_last_card_gived: {
-            type: 'integer',
-            minimum: 0,
-            title: 'Days Since Last Card Gived'
-        },
-        approved_applications: {
-            type: 'integer',
-            minimum: 0,
-            title: 'Approved Applications'
-        },
-        cards_gived: {
-            type: 'integer',
-            minimum: 0,
-            title: 'Cards Gived'
         },
         location_id: {
             type: 'integer',
@@ -107,7 +298,7 @@ export const AgentPointUpdateSchema = {
         }
     },
     type: 'object',
-    required: ['created_time', 'is_cards_delivered', 'days_since_last_card_gived', 'approved_applications', 'cards_gived', 'location_id'],
+    required: ['location_id'],
     title: 'AgentPointUpdate'
 } as const;
 
@@ -652,6 +843,51 @@ export const RolesPublicSchema = {
     title: 'RolesPublic'
 } as const;
 
+export const TaskAgentPointManagerConfirmUpdateSchema = {
+    properties: {
+        confirmed: {
+            type: 'boolean',
+            title: 'Confirmed'
+        },
+        comment: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 4096
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Comment'
+        }
+    },
+    type: 'object',
+    required: ['confirmed'],
+    title: 'TaskAgentPointManagerConfirmUpdate',
+    description: 'Решение менеджера агентской точки по выполненной задаче.'
+} as const;
+
+export const TaskCompleteUpdateSchema = {
+    properties: {
+        comment: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 4096
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Comment'
+        }
+    },
+    type: 'object',
+    title: 'TaskCompleteUpdate',
+    description: 'Отметка задачи как выполненной с опциональным комментарием.'
+} as const;
+
 export const TaskCreateSchema = {
     properties: {
         start_time: {
@@ -762,6 +998,46 @@ export const TaskPublicSchema = {
     type: 'object',
     required: ['start_time', 'finish_time', 'comment', 'id', 'employee_id', 'task_type_id', 'agent_point_id', 'task_status_id'],
     title: 'TaskPublic'
+} as const;
+
+export const TaskSelfUpdateSchema = {
+    properties: {
+        task_status_id: {
+            type: 'integer',
+            title: 'Task Status Id'
+        },
+        comment: {
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 4096
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Comment'
+        }
+    },
+    type: 'object',
+    required: ['task_status_id'],
+    title: 'TaskSelfUpdate',
+    description: 'Обновление статуса и комментария выездным сотрудником к своей задаче.'
+} as const;
+
+export const TaskSkipUpdateSchema = {
+    properties: {
+        comment: {
+            type: 'string',
+            maxLength: 4096,
+            minLength: 1,
+            title: 'Comment'
+        }
+    },
+    type: 'object',
+    required: ['comment'],
+    title: 'TaskSkipUpdate',
+    description: 'Пропуск задачи с обязательным комментарием причины.'
 } as const;
 
 export const TaskStatusCreateSchema = {
@@ -977,7 +1253,15 @@ export const TasksMePublicSchema = {
         },
         route: {
             anyOf: [
-                {},
+                {
+                    items: {
+                        items: {
+                            type: 'number'
+                        },
+                        type: 'array'
+                    },
+                    type: 'array'
+                },
                 {
                     type: 'null'
                 }
@@ -989,7 +1273,7 @@ export const TasksMePublicSchema = {
         }
     },
     type: 'object',
-    required: ['tasks', 'route', 'start_location'],
+    required: ['tasks', 'start_location'],
     title: 'TasksMePublic'
 } as const;
 
@@ -1143,9 +1427,16 @@ export const UserUpdateSchema = {
             default: false
         },
         password: {
-            type: 'string',
-            maxLength: 128,
-            minLength: 1,
+            anyOf: [
+                {
+                    type: 'string',
+                    maxLength: 128,
+                    minLength: 1
+                },
+                {
+                    type: 'null'
+                }
+            ],
             title: 'Password'
         },
         role_id: {
@@ -1154,7 +1445,7 @@ export const UserUpdateSchema = {
         }
     },
     type: 'object',
-    required: ['login', 'name', 'surname', 'middle_name', 'password', 'role_id'],
+    required: ['login', 'name', 'surname', 'middle_name', 'role_id'],
     title: 'UserUpdate'
 } as const;
 
