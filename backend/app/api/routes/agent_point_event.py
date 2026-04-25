@@ -11,24 +11,10 @@ from app.models import (
 )
 from fastapi import APIRouter, HTTPException
 from sqlmodel import func, select
-from app.services.agent_point_event_schema import validate_agent_point_event_payload
+from app.repositories import agent_point_event as event_repository
+from app.services import agent_point_event_service
 
 router = APIRouter(prefix="/agent-point-events", tags=["agent-point-events"])
-
-
-def ensure_event_schema_or_422(
-    agent_point_event_in: AgentPointEventCreate | AgentPointEventUpdate,
-) -> None:
-    try:
-        validate_agent_point_event_payload(
-            event_type=agent_point_event_in.event_type,
-            metric_name=agent_point_event_in.metric_name,
-            metric_delta=agent_point_event_in.metric_delta,
-            metric_value_num=agent_point_event_in.metric_value_num,
-            metric_value_bool=agent_point_event_in.metric_value_bool,
-        )
-    except ValueError as exc:
-        raise HTTPException(status_code=422, detail=str(exc))
 
 
 @router.post("/", response_model=AgentPointEventPublic)
@@ -41,12 +27,9 @@ def create_agent_point_event(
     """
     Create new agent_point_event.
     """
-    ensure_event_schema_or_422(agent_point_event_in)
-    agent_point_event = AgentPointEvent.model_validate(agent_point_event_in)
-    session.add(agent_point_event)
-    session.commit()
-    session.refresh(agent_point_event)
-    return agent_point_event
+    return agent_point_event_service.create_event(
+        session=session, payload=agent_point_event_in
+    )
 
 
 @router.get("/", response_model=AgentPointEventsPublic)
@@ -75,7 +58,11 @@ def read_agent_point_event_by_id(
     """
     Get a specific agent_point_event by id.
     """
-    agent_point_event = session.get(AgentPointEvent, agent_point_event_id)
+    agent_point_event = event_repository.get_by_id(
+        session=session, event_id=agent_point_event_id
+    )
+    if not agent_point_event:
+        raise HTTPException(status_code=404, detail="AgentPointEvent not found")
     return agent_point_event
 
 
@@ -90,16 +77,12 @@ def update_agent_point_event(
     """
     Update an agent_point_event.
     """
-    agent_point_event = session.get(AgentPointEvent, id)
+    agent_point_event = event_repository.get_by_id(session=session, event_id=id)
     if not agent_point_event:
         raise HTTPException(status_code=404, detail="AgentPointEvent not found")
-    ensure_event_schema_or_422(agent_point_event_in)
-    update_dict = agent_point_event_in.model_dump(exclude_unset=True)
-    agent_point_event.sqlmodel_update(update_dict)
-    session.add(agent_point_event)
-    session.commit()
-    session.refresh(agent_point_event)
-    return agent_point_event
+    return agent_point_event_service.update_event(
+        session=session, event=agent_point_event, payload=agent_point_event_in
+    )
 
 
 @router.delete("/{agent_point_event_id}")
@@ -111,7 +94,11 @@ def delete_agent_point_event(
     """
     Delete a agent_point_event.
     """
-    agent_point_event = session.get(AgentPointEvent, agent_point_event_id)
+    agent_point_event = event_repository.get_by_id(
+        session=session, event_id=agent_point_event_id
+    )
+    if not agent_point_event:
+        raise HTTPException(status_code=404, detail="AgentPointEvent not found")
     session.delete(agent_point_event)
     session.commit()
     return Message(message="AgentPointEvent deleted successfully")

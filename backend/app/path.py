@@ -1,6 +1,9 @@
 from typing import Dict, List, Optional, Tuple
 
 import requests
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def get_route_osm(
@@ -50,11 +53,11 @@ def get_route_osm(
         if data.get("code") == "Ok" and data.get("routes"):
             return data
 
-        print("Маршрут не найден")
+        logger.info("OSRM route was not found for provided points")
         return None
 
-    except requests.exceptions.RequestException as e:
-        print(f"Ошибка при запросе: {e}")
+    except requests.exceptions.RequestException:
+        logger.exception("OSRM request failed")
         return None
 
 
@@ -112,27 +115,3 @@ def edge_fields_from_osm_response(
     return (distance_km, time_seconds, route_points)
 
 
-# Пример использования OSM
-if __name__ == "__main__":
-    # Координаты в формате (широта, долгота), порядок — порядок посещения
-    route_points = [
-        (55.751244, 37.617633),  # Красная площадь, Москва
-        (55.7558, 37.6173),  # промежуточная точка
-        (55.703885, 37.530553),  # МГУ, Москва
-    ]
-
-    route = get_route_osm(route_points)
-
-    if route:
-        parsed = parse_osm_route(route)
-        print(f"Расстояние: {parsed['distance_km']:.2f} км")
-        print(f"Время в пути: {parsed['duration_minutes']:.0f} минут")
-        print(f"\nВсего шагов: {len(parsed['steps'])}")
-
-        # Выводим  шаги
-        for i, step in enumerate(parsed["steps"], 1):
-            print(f"{i}. {step['location']} ({step['distance']:.0f} м)")
-            # Формат location: [долгота, широта] (внимание: порядок отличается от обычного)
-            # 1. [37.617577, 55.751256] (33 м)
-            # 2. [37.617394, 55.751527] (40 м)
-            # 3. [37.618018, 55.751618] (56 м)

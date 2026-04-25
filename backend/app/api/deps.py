@@ -171,3 +171,11 @@ def get_field_employee_user(current_user: CurrentUser) -> User:
 
 
 FieldEmployeeUser = Annotated[User, Depends(get_field_employee_user)]
+
+
+def ensure_field_employee_task_access(*, field_user: User, task_employee_id: int) -> None:
+    if field_user.employee is None or task_employee_id != field_user.employee.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Можно изменять только свои задачи",
+        )

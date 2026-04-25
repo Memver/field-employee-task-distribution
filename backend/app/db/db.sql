@@ -72,7 +72,8 @@ INSERT INTO public.task_status
 )
 	VALUES 
 	(1, 'ASSIGNED'),
-	(2, 'COMPLETED');
+	(2, 'COMPLETED'),
+	(3, 'SKIPPED');
 
 INSERT INTO public.user
 (
