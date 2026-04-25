@@ -436,6 +436,24 @@ class AgentPointsPublic(SQLModel):
     count: int
 
 
+class AgentPointEventCreate(AgentPointEventBase):
+    agent_point_id: int = Field(nullable=False)
+
+
+class AgentPointEventUpdate(AgentPointEventBase):
+    agent_point_id: int = Field(nullable=False)
+
+
+class AgentPointEventPublic(AgentPointEventBase):
+    id: int
+    agent_point_id: int = Field(nullable=False)
+
+
+class AgentPointEventsPublic(SQLModel):
+    data: list[AgentPointEventPublic]
+    count: int
+
+
 class TaskCreate(TaskBase):
     employee_id: int = Field(nullable=False)
     task_type_id: int = Field(nullable=False)
