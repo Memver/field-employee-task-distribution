@@ -10,6 +10,9 @@ from app.distanse_matrix import get_distance_and_time_matrix
 from app.models import (
     AgentPoint,
     AgentPointEvent,
+    DistributionAssignmentPublic,
+    DistributionReportPublic,
+    DistributionUnplacedPublic,
     Employee,
     Location,
     LocationPublic,
@@ -25,7 +28,7 @@ from app.repositories import task_status as task_status_repository
 from app.services.agent_point_events import build_agent_point_metrics_snapshots
 from app.services.routing_gateway import build_route
 
-def distribute_tasks(*, session: Session) -> Message:
+def distribute_tasks(*, session: Session) -> DistributionReportPublic:
     employees = session.exec(
         select(Employee).options(
             joinedload(Employee.user),
@@ -51,8 +54,10 @@ def distribute_tasks(*, session: Session) -> Message:
         session=session, name=TaskStatusName.ASSIGNED.value
     )
     if assigned_status is None:
-        return Message(
-            message="Task status 'ASSIGNED' not found. Distribution cancelled."
+        return DistributionReportPublic(
+            message="Task status 'ASSIGNED' not found. Distribution cancelled.",
+            assignments=[],
+            unplaced=[],
         )
 
     old_assigned_tasks = task_repository.get_by_status_id(
@@ -71,13 +76,13 @@ def distribute_tasks(*, session: Session) -> Message:
         prev = carryover_days_by_agent_point.get(old_task.agent_point_id, 0)
         carryover_days_by_agent_point[old_task.agent_point_id] = max(prev, age_days + 1)
 
-    planned_tasks = distribute_solve(
+    report = distribute_solve(
         employees=employees,
         agent_points=agent_points,
         task_types=task_types,
         locations=locations,
         time_matrix=time_matrix,
-        horizon_days=3,
+        horizon_days=1,
         carryover_days_by_agent_point=carryover_days_by_agent_point,
         snapshots_by_agent_point=snapshots_by_agent_point,
     )
@@ -91,17 +96,44 @@ def distribute_tasks(*, session: Session) -> Message:
             finish_time=planned_task.finish_time,
             comment=planned_task.comment,
         )
-        for planned_task in planned_tasks
+        for planned_task in report.planned_tasks
     ]
     task_repository.replace_assigned_tasks(
         session=session, old_assigned_tasks=old_assigned_tasks, new_tasks=new_tasks
     )
-    return Message(
-        message=(
-            f"Distribution completed. Matrices prepared for solve: {len(locations)}x{len(locations)}. "
-            f"Loaded employees={len(employees)}, agent_points={len(agent_points)}, task_types={len(task_types)}. "
-            f"Removed old assigned={len(old_assigned_tasks)}, created assigned={len(new_tasks)}."
-        )
+    message = (
+        f"Distribution completed. Matrices prepared for solve: {len(locations)}x{len(locations)}. "
+        f"Loaded employees={len(employees)}, agent_points={len(agent_points)}, task_types={len(task_types)}. "
+        f"Removed old assigned={len(old_assigned_tasks)}, created assigned={len(new_tasks)}, "
+        f"unplaced={len(report.unplaced)}."
+    )
+    return DistributionReportPublic(
+        message=message,
+        assignments=[
+            DistributionAssignmentPublic(
+                employee_id=assignment.employee_id,
+                employee_full_name=assignment.employee_full_name,
+                agent_point_id=assignment.agent_point_id,
+                agent_point_address=assignment.agent_point_address,
+                task_type_id=assignment.task_type_id,
+                task_type_name=assignment.task_type_name,
+                day_index=assignment.day_index,
+                start_time=assignment.start_time,
+                finish_time=assignment.finish_time,
+                reason=assignment.reason,
+            )
+            for assignment in report.assignments
+        ],
+        unplaced=[
+            DistributionUnplacedPublic(
+                agent_point_id=item.agent_point_id,
+                agent_point_address=item.agent_point_address,
+                task_type_id=item.task_type_id,
+                task_type_name=item.task_type_name,
+                reason=item.reason,
+            )
+            for item in report.unplaced
+        ],
     )
 
 

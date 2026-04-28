@@ -37,7 +37,7 @@ import { handleError } from "@/utils"
 
 const formSchema = z.object({
   name: z.string().min(1),
-  execution_time: z.coerce.number().int().positive(),
+  execution_time: z.coerce.number().positive(),
   min_grade_id: z.coerce.number().int().positive(),
   priority_id: z.coerce.number().int().positive(),
 })
@@ -109,9 +109,9 @@ const EditUser = ({ taskType, onSuccess }: Props) => {
                 name="execution_time"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Время выполнения</FormLabel>
+                    <FormLabel>Время выполнения, часы (можно дробное)</FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} />
+                      <Input type="number" step="0.1" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

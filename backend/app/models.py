@@ -141,7 +141,7 @@ class TaskTypeBase(SQLModel):
         unique=True,
         nullable=False,
     )
-    execution_time: int = Field(
+    execution_time: float = Field(
         gt=0,
         nullable=False,
     )
@@ -549,6 +549,33 @@ class TasksMePublic(SQLModel):
     tasks: list[TaskMePublic]
     route: list[list[float]] | None = None
     start_location: LocationPublic
+
+
+class DistributionAssignmentPublic(SQLModel):
+    employee_id: int
+    employee_full_name: str
+    agent_point_id: int
+    agent_point_address: str | None
+    task_type_id: int
+    task_type_name: str
+    day_index: int
+    start_time: datetime
+    finish_time: datetime
+    reason: str
+
+
+class DistributionUnplacedPublic(SQLModel):
+    agent_point_id: int
+    agent_point_address: str | None
+    task_type_id: int | None
+    task_type_name: str | None
+    reason: str
+
+
+class DistributionReportPublic(SQLModel):
+    message: str
+    assignments: list[DistributionAssignmentPublic]
+    unplaced: list[DistributionUnplacedPublic]
 
 
 # Generic message

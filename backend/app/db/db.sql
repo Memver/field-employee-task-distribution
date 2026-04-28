@@ -117,12 +117,12 @@ INSERT INTO public.task_type
 	id, name, execution_time, min_grade_id, priority_id
 )
 	VALUES 
-	-- (priority LOW, performTime 2.0, min grade MIDDLE)
-	(1, 'SALES_STIMULATION', 2, 2, 1),
-	-- (priority MIDDLE, performTime 2.0, min grade SENIOR)
-	(2, 'AGENT_TRAINING', 2, 3, 2),
-	-- (priority LOW, performTime 5.0, min grade JUNIOR)
-	(3, 'CARDS_DELIVERY', 5, 1, 1);
+	-- (priority HIGH, perform_time 4ч, min grade SENIOR)
+	(1, 'SALES_STIMULATION', 4, 3, 3),
+	-- (priority MIDDLE, perform_time 2ч, min grade MIDDLE)
+	(2, 'AGENT_TRAINING', 2, 2, 2),
+	-- (priority LOW, perform_time 1.5ч, min grade JUNIOR)
+	(3, 'CARDS_DELIVERY', 1.5, 1, 1);
 
 
 INSERT INTO public.agent_point

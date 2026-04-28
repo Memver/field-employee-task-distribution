@@ -22,6 +22,37 @@ class TaskCandidate:
     agent_point: AgentPoint
     metrics: AgentPointMetricsSnapshot
     priority_level: int
+    type_reason: str
+
+
+@dataclass
+class TaskAssignment:
+    employee_id: int
+    employee_full_name: str
+    agent_point_id: int
+    agent_point_address: str | None
+    task_type_id: int
+    task_type_name: str
+    day_index: int
+    start_time: datetime
+    finish_time: datetime
+    reason: str
+
+
+@dataclass
+class TaskUnplaced:
+    agent_point_id: int
+    agent_point_address: str | None
+    task_type_id: int | None
+    task_type_name: str | None
+    reason: str
+
+
+@dataclass
+class DistributionReport:
+    planned_tasks: list[PlannedTask]
+    assignments: list[TaskAssignment]
+    unplaced: list[TaskUnplaced]
 
 
 DROP_PENALTY_HOURS_BY_PRIORITY = {
@@ -29,14 +60,15 @@ DROP_PENALTY_HOURS_BY_PRIORITY = {
     "middle": 5,
     "low": 2,
 }
-FIXED_SOLVER_TIME_LIMIT_SECONDS = 60
+FIXED_SOLVER_TIME_LIMIT_SECONDS = 10
+RECENT_CONNECTION_DAYS = 1
 
 
 def _select_task_type_for_agent_point(
     agent_point: AgentPoint,
     metrics: AgentPointMetricsSnapshot,
     task_types: list[TaskType],
-) -> TaskType | None:
+) -> tuple[TaskType, str] | None:
     task_types_by_name = {task_type.name: task_type for task_type in task_types}
 
     connected_yesterday = False
@@ -45,27 +77,41 @@ def _select_task_type_for_agent_point(
         created_time = agent_point.created_time
         if created_time.tzinfo is None:
             created_time = created_time.replace(tzinfo=timezone.utc)
-        connected_yesterday = (now_utc.date() - created_time.date()).days <= 1
+        connected_yesterday = (
+            now_utc.date() - created_time.date()
+        ).days <= RECENT_CONNECTION_DAYS
 
-    if (
-        (connected_yesterday or not metrics.is_cards_delivered)
-        and "CARDS_DELIVERY" in task_types_by_name
-    ):
-        return task_types_by_name["CARDS_DELIVERY"]
+    if connected_yesterday and "CARDS_DELIVERY" in task_types_by_name:
+        return (
+            task_types_by_name["CARDS_DELIVERY"],
+            "Точка подключена недавно — назначена доставка карт",
+        )
+    if (not metrics.is_cards_delivered) and "CARDS_DELIVERY" in task_types_by_name:
+        return (
+            task_types_by_name["CARDS_DELIVERY"],
+            "Карты ещё не доставлены — назначена доставка карт",
+        )
 
     days_since_last_card_gived = metrics.days_since_last_card_gived
     if (
-        (
-            (
-                days_since_last_card_gived is not None
-                and days_since_last_card_gived > 7
-                and metrics.approved_applications > 0
-            )
-            or (days_since_last_card_gived is not None and days_since_last_card_gived > 14)
-        )
+        days_since_last_card_gived is not None
+        and days_since_last_card_gived > 7
+        and metrics.approved_applications > 0
         and "SALES_STIMULATION" in task_types_by_name
     ):
-        return task_types_by_name["SALES_STIMULATION"]
+        return (
+            task_types_by_name["SALES_STIMULATION"],
+            "Карты не выдавались более 7 дней при наличии одобренных заявок — стимулирование продаж",
+        )
+    if (
+        days_since_last_card_gived is not None
+        and days_since_last_card_gived > 14
+        and "SALES_STIMULATION" in task_types_by_name
+    ):
+        return (
+            task_types_by_name["SALES_STIMULATION"],
+            "Карты не выдавались более 14 дней — стимулирование продаж",
+        )
 
     if (
         metrics.cards_gived > 0
@@ -73,33 +119,61 @@ def _select_task_type_for_agent_point(
         and (metrics.cards_gived / metrics.approved_applications) < 0.5
         and "AGENT_TRAINING" in task_types_by_name
     ):
-        return task_types_by_name["AGENT_TRAINING"]
+        return (
+            task_types_by_name["AGENT_TRAINING"],
+            "Низкая конверсия (cards_gived/approved_applications < 0.5) — обучение агента",
+        )
 
     if not task_types:
         return None
-    return max(
+    fallback = max(
         task_types, key=lambda task_type: task_type.priority.level if task_type.priority else 0
     )
+    return (fallback, "Выбран тип задачи с максимальным приоритетом")
 
 
 def _to_candidate(
-    agent_point: AgentPoint, task_type: TaskType, metrics: AgentPointMetricsSnapshot
+    agent_point: AgentPoint,
+    task_type: TaskType,
+    metrics: AgentPointMetricsSnapshot,
+    type_reason: str,
 ) -> TaskCandidate:
     return TaskCandidate(
         task_type=task_type,
         agent_point=agent_point,
         metrics=metrics,
         priority_level=task_type.priority.level if task_type.priority else 0,
+        type_reason=type_reason,
     )
+
+
+def _employee_full_name(employee: Employee) -> str:
+    user = getattr(employee, "user", None)
+    if user is None:
+        return f"employee #{employee.id}"
+    parts = [getattr(user, "surname", "") or "", getattr(user, "name", "") or "", getattr(user, "middle_name", "") or ""]
+    full = " ".join(part for part in parts if part).strip()
+    return full or f"employee #{employee.id}"
+
+
+def _agent_point_address(agent_point: AgentPoint) -> str | None:
+    location = getattr(agent_point, "location", None)
+    if location is None:
+        return None
+    return getattr(location, "address", None)
 
 
 def _priority_penalty(candidate: TaskCandidate, carryover_days: int) -> int:
     """
     Policy:
     - penalty задается как эквивалент часов дороги;
-    - penalty зависит только от бизнес-приоритета задачи.
+    - базовый penalty зависит от бизнес-приоритета задачи;
+    - перенесённые с прошлых дней задачи (carryover_days > 0) идут как HIGH —
+      это требование ТЗ: «оставшиеся переносятся на следующий день с высоким приоритетом».
     """
-    if candidate.priority_level >= 110:
+    if carryover_days > 0:
+        penalty_hours = DROP_PENALTY_HOURS_BY_PRIORITY["high"]
+    elif candidate.priority_level >= 110:
         penalty_hours = DROP_PENALTY_HOURS_BY_PRIORITY["high"]
     elif candidate.priority_level >= 60:
         penalty_hours = DROP_PENALTY_HOURS_BY_PRIORITY["middle"]
@@ -161,7 +235,7 @@ def solve(
     horizon_days: int = 3,
     carryover_days_by_agent_point: dict[int, int] | None = None,
     snapshots_by_agent_point: dict[int, AgentPointMetricsSnapshot] | None = None,
-) -> list[PlannedTask]:
+) -> DistributionReport:
     """
     Policy распределения:
     1) тип задачи определяется по правилам ТЗ;
@@ -170,7 +244,7 @@ def solve(
     4) при дефиците ресурса задачи могут быть перенесены (drop) по penalty-приоритетам.
     """
     if not employees or not agent_points or not task_types or not locations:
-        return []
+        return DistributionReport(planned_tasks=[], assignments=[], unplaced=[])
 
     location_index_by_id = {location.id: idx for idx, location in enumerate(locations)}
 
@@ -186,25 +260,54 @@ def solve(
     workday_seconds = 8 * 60 * 60
     horizon_days = max(horizon_days, 1)
 
+    unplaced: list[TaskUnplaced] = []
     candidates: list[TaskCandidate] = []
     for agent_point in agent_points:
         metrics = snapshots_by_agent_point.get(agent_point.id, AgentPointMetricsSnapshot())
-        task_type = _select_task_type_for_agent_point(agent_point, metrics, task_types)
-        if task_type is None:
+        selection = _select_task_type_for_agent_point(agent_point, metrics, task_types)
+        if selection is None:
+            unplaced.append(
+                TaskUnplaced(
+                    agent_point_id=agent_point.id,
+                    agent_point_address=_agent_point_address(agent_point),
+                    task_type_id=None,
+                    task_type_name=None,
+                    reason="Не подобран тип задачи по правилам",
+                )
+            )
             continue
-        candidates.append(_to_candidate(agent_point, task_type, metrics))
+        task_type, type_reason = selection
+        candidates.append(_to_candidate(agent_point, task_type, metrics, type_reason))
 
     if not candidates:
-        return []
+        return DistributionReport(planned_tasks=[], assignments=[], unplaced=unplaced)
 
     valid_candidates: list[TaskCandidate] = []
     for candidate in candidates:
         task_type = candidate.task_type
         agent_point = candidate.agent_point
         if agent_point.location is None:
+            unplaced.append(
+                TaskUnplaced(
+                    agent_point_id=agent_point.id,
+                    agent_point_address=None,
+                    task_type_id=task_type.id,
+                    task_type_name=task_type.name,
+                    reason="У точки не указана локация",
+                )
+            )
             continue
 
         if location_index_by_id.get(agent_point.location.id) is None:
+            unplaced.append(
+                TaskUnplaced(
+                    agent_point_id=agent_point.id,
+                    agent_point_address=_agent_point_address(agent_point),
+                    task_type_id=task_type.id,
+                    task_type_name=task_type.name,
+                    reason="Локация точки отсутствует в матрице расстояний",
+                )
+            )
             continue
 
         min_required_level = task_type.min_grade.level if task_type.min_grade else 0
@@ -214,11 +317,20 @@ def solve(
             if employee.grade is not None and employee.grade.level >= min_required_level
         ]
         if not eligible_employees:
+            unplaced.append(
+                TaskUnplaced(
+                    agent_point_id=agent_point.id,
+                    agent_point_address=_agent_point_address(agent_point),
+                    task_type_id=task_type.id,
+                    task_type_name=task_type.name,
+                    reason="Нет сотрудников с нужным грейдом для типа задачи",
+                )
+            )
             continue
         valid_candidates.append(candidate)
 
     if not valid_candidates:
-        return []
+        return DistributionReport(planned_tasks=[], assignments=[], unplaced=unplaced)
 
     num_tasks = len(valid_candidates)
     vehicle_day_infos: list[tuple[Employee, int]] = []
@@ -288,7 +400,8 @@ def solve(
             if employee.grade is not None and employee.grade.level >= min_required_level
         ]
         task_index = manager.NodeToIndex(task_node)
-        routing.SetAllowedVehiclesForIndex(allowed_vehicles, task_index)
+        if len(allowed_vehicles) < num_vehicles:
+            routing.VehicleVar(task_index).SetValues([*allowed_vehicles, -1])
 
         carryover_days = carryover_days_by_agent_point.get(candidate.agent_point.id, 0)
         routing.AddDisjunction(
@@ -307,14 +420,37 @@ def solve(
 
     solution = routing.SolveWithParameters(search_parameters)
     if not solution:
-        return []
+        for candidate in valid_candidates:
+            unplaced.append(
+                TaskUnplaced(
+                    agent_point_id=candidate.agent_point.id,
+                    agent_point_address=_agent_point_address(candidate.agent_point),
+                    task_type_id=candidate.task_type.id,
+                    task_type_name=candidate.task_type.name,
+                    reason="Планировщик не нашёл решения",
+                )
+            )
+        return DistributionReport(planned_tasks=[], assignments=[], unplaced=unplaced)
 
     planned_tasks: list[PlannedTask] = []
+    assignments: list[TaskAssignment] = []
     dropped_task_nodes: set[int] = set()
     for task_node in range(num_tasks):
         task_index = manager.NodeToIndex(task_node)
         if solution.Value(routing.NextVar(task_index)) == task_index:
             dropped_task_nodes.add(task_node)
+
+    for dropped_node in dropped_task_nodes:
+        candidate = valid_candidates[dropped_node]
+        unplaced.append(
+            TaskUnplaced(
+                agent_point_id=candidate.agent_point.id,
+                agent_point_address=_agent_point_address(candidate.agent_point),
+                task_type_id=candidate.task_type.id,
+                task_type_name=candidate.task_type.name,
+                reason="Задача отброшена планировщиком (penalty по приоритету)",
+            )
+        )
 
     for vehicle_idx, (employee, day_idx) in enumerate(vehicle_day_infos):
         index = routing.Start(vehicle_idx)
@@ -341,10 +477,34 @@ def solve(
                         task_type_id=candidate.task_type.id,
                         start_time=start_time,
                         finish_time=finish_time,
-                        comment="Auto distributed (OR-Tools rolling horizon)",
+                    )
+                )
+                full_name = _employee_full_name(employee)
+                assignment_reason = (
+                    f"{candidate.type_reason}. "
+                    f"Назначена сотруднику {full_name} на день {day_idx + 1} из {horizon_days}, "
+                    f"слот {start_time:%Y-%m-%d %H:%M}–{finish_time:%H:%M}"
+                )
+                assignments.append(
+                    TaskAssignment(
+                        employee_id=employee.id,
+                        employee_full_name=full_name,
+                        agent_point_id=candidate.agent_point.id,
+                        agent_point_address=_agent_point_address(candidate.agent_point),
+                        task_type_id=candidate.task_type.id,
+                        task_type_name=candidate.task_type.name,
+                        day_index=day_idx,
+                        start_time=start_time,
+                        finish_time=finish_time,
+                        reason=assignment_reason,
                     )
                 )
             index = solution.Value(routing.NextVar(index))
 
     planned_tasks.sort(key=lambda item: (item.employee_id, item.start_time))
-    return planned_tasks
+    assignments.sort(key=lambda item: (item.employee_id, item.start_time))
+    return DistributionReport(
+        planned_tasks=planned_tasks,
+        assignments=assignments,
+        unplaced=unplaced,
+    )

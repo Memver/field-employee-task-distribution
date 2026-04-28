@@ -10,6 +10,7 @@ from app.api.deps import (
 )
 from app.core.roles import is_employee_manager_user, is_field_employee_user
 from app.models import (
+    DistributionReportPublic,
     Message,
     TaskCompleteUpdate,
     TaskSkipUpdate,
@@ -43,8 +44,10 @@ def create_task(
     return task
 
 
-@router.post("/distribute")
-def distribute_tasks(*, session: SessionDep, _em: EmployeeManagerUser) -> Message:
+@router.post("/distribute", response_model=DistributionReportPublic)
+def distribute_tasks(
+    *, session: SessionDep, _em: EmployeeManagerUser
+) -> DistributionReportPublic:
     # Контекст: распределение использует матрицы расстояний/времени, а /tasks/me строит маршрут.
     # Детали интеграции с OSRM вынесены в сервисный слой (task_service + routing gateway).
     return task_service.distribute_tasks(session=session)
