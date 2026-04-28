@@ -24,7 +24,7 @@ def get_route_osm(
     mode: str = "driving"  # driving, walking, bicycling
 
     # OSRM API endpoint
-    base_url = "http://router.project-osrm.org/route/v1"
+    base_url = "http://localhost:5000/route/v1"
 
     # Преобразование режима передвижения
     profile = {"driving": "driving", "walking": "walking", "bicycling": "cycling"}.get(

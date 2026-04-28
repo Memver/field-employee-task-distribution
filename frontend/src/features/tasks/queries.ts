@@ -1,4 +1,4 @@
-import { TasksService } from "@/client"
+import { TaskStatusesService, TasksService } from "@/client"
 import { queryKeys } from "@/lib/queryKeys"
 
 export function getAdminTasksQueryOptions() {
@@ -11,6 +11,13 @@ export function getAdminTasksQueryOptions() {
 export function getFieldEmployeeTasksQueryOptions() {
   return {
     queryFn: () => TasksService.readTasksMe({ skip: 0, limit: 100 }),
-    queryKey: queryKeys.tasks.all,
+    queryKey: queryKeys.tasks.me,
+  }
+}
+
+export function getTaskStatusesQueryOptions() {
+  return {
+    queryFn: () => TaskStatusesService.readTaskStatuses({ skip: 0, limit: 100 }),
+    queryKey: queryKeys.taskStatuses.all,
   }
 }

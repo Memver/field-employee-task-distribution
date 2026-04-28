@@ -26,6 +26,7 @@ import { Route as LayoutItemsRouteImport } from './routes/_layout/items'
 import { Route as LayoutGradesRouteImport } from './routes/_layout/grades'
 import { Route as LayoutEmployeesRouteImport } from './routes/_layout/employees'
 import { Route as LayoutAgentPointsRouteImport } from './routes/_layout/agent-points'
+import { Route as LayoutAgentPointEventsRouteImport } from './routes/_layout/agent-point-events'
 import { Route as LayoutAdminRouteImport } from './routes/_layout/admin'
 
 const SignupRoute = SignupRouteImport.update({
@@ -112,6 +113,11 @@ const LayoutAgentPointsRoute = LayoutAgentPointsRouteImport.update({
   path: '/agent-points',
   getParentRoute: () => LayoutRoute,
 } as any)
+const LayoutAgentPointEventsRoute = LayoutAgentPointEventsRouteImport.update({
+  id: '/agent-point-events',
+  path: '/agent-point-events',
+  getParentRoute: () => LayoutRoute,
+} as any)
 const LayoutAdminRoute = LayoutAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -125,6 +131,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/admin': typeof LayoutAdminRoute
+  '/agent-point-events': typeof LayoutAgentPointEventsRoute
   '/agent-points': typeof LayoutAgentPointsRoute
   '/employees': typeof LayoutEmployeesRoute
   '/grades': typeof LayoutGradesRoute
@@ -143,6 +150,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/admin': typeof LayoutAdminRoute
+  '/agent-point-events': typeof LayoutAgentPointEventsRoute
   '/agent-points': typeof LayoutAgentPointsRoute
   '/employees': typeof LayoutEmployeesRoute
   '/grades': typeof LayoutGradesRoute
@@ -164,6 +172,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/_layout/admin': typeof LayoutAdminRoute
+  '/_layout/agent-point-events': typeof LayoutAgentPointEventsRoute
   '/_layout/agent-points': typeof LayoutAgentPointsRoute
   '/_layout/employees': typeof LayoutEmployeesRoute
   '/_layout/grades': typeof LayoutGradesRoute
@@ -186,6 +195,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signup'
     | '/admin'
+    | '/agent-point-events'
     | '/agent-points'
     | '/employees'
     | '/grades'
@@ -204,6 +214,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signup'
     | '/admin'
+    | '/agent-point-events'
     | '/agent-points'
     | '/employees'
     | '/grades'
@@ -224,6 +235,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signup'
     | '/_layout/admin'
+    | '/_layout/agent-point-events'
     | '/_layout/agent-points'
     | '/_layout/employees'
     | '/_layout/grades'
@@ -367,6 +379,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutAgentPointsRouteImport
       parentRoute: typeof LayoutRoute
     }
+    '/_layout/agent-point-events': {
+      id: '/_layout/agent-point-events'
+      path: '/agent-point-events'
+      fullPath: '/agent-point-events'
+      preLoaderRoute: typeof LayoutAgentPointEventsRouteImport
+      parentRoute: typeof LayoutRoute
+    }
     '/_layout/admin': {
       id: '/_layout/admin'
       path: '/admin'
@@ -379,6 +398,7 @@ declare module '@tanstack/react-router' {
 
 interface LayoutRouteChildren {
   LayoutAdminRoute: typeof LayoutAdminRoute
+  LayoutAgentPointEventsRoute: typeof LayoutAgentPointEventsRoute
   LayoutAgentPointsRoute: typeof LayoutAgentPointsRoute
   LayoutEmployeesRoute: typeof LayoutEmployeesRoute
   LayoutGradesRoute: typeof LayoutGradesRoute
@@ -395,6 +415,7 @@ interface LayoutRouteChildren {
 
 const LayoutRouteChildren: LayoutRouteChildren = {
   LayoutAdminRoute: LayoutAdminRoute,
+  LayoutAgentPointEventsRoute: LayoutAgentPointEventsRoute,
   LayoutAgentPointsRoute: LayoutAgentPointsRoute,
   LayoutEmployeesRoute: LayoutEmployeesRoute,
   LayoutGradesRoute: LayoutGradesRoute,

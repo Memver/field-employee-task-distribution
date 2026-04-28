@@ -5,6 +5,7 @@ export const queryKeys = {
   tasks: {
     all: ["tasks"] as const,
     admin: ["tasks-admin"] as const,
+    me: ["tasks-me"] as const,
   },
   items: {
     all: ["items"] as const,
@@ -23,6 +24,9 @@ export const queryKeys = {
   },
   agentPoints: {
     all: ["agent-points"] as const,
+  },
+  agentPointEvents: {
+    all: ["agent-point-events"] as const,
   },
   grades: {
     all: ["grades"] as const,

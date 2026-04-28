@@ -7,7 +7,7 @@ from routingpy import OSRM
 def get_distance_matrix(
     locations: List[Tuple[float, float]],
     profile: str = "driving",
-    host: str = "http://router.project-osrm.org",
+    host: str = "http://localhost:5000",
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
     Вычисляет матрицы времени и расстояний через OSRM.
