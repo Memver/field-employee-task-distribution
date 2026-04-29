@@ -92,6 +92,12 @@ class Settings(BaseSettings):
     EMAIL_TEST_USER: EmailStr = "test@example.com"
     FIRST_SUPERUSER: EmailStr
     FIRST_SUPERUSER_PASSWORD: str
+    OSRM_BASE_URL: str = "http://localhost:5000"
+    DROP_PENALTY_HIGH_HOURS: int = 10
+    DROP_PENALTY_MIDDLE_HOURS: int = 5
+    DROP_PENALTY_LOW_HOURS: int = 2
+    SOLVER_TIME_LIMIT_SECONDS: int = 10
+    RECENT_CONNECTION_DAYS: int = 1
 
     def _check_default_secret(self, var_name: str, value: str | None) -> None:
         if value == "changethis":

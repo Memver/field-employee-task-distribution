@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 
+from app.core.config import settings
 from app.models import AgentPoint, Employee, Location, TaskType
 from app.services.agent_point_events import AgentPointMetricsSnapshot
 from ortools.constraint_solver import pywrapcp, routing_enums_pb2
@@ -56,12 +57,12 @@ class DistributionReport:
 
 
 DROP_PENALTY_HOURS_BY_PRIORITY = {
-    "high": 10,
-    "middle": 5,
-    "low": 2,
+    "high": settings.DROP_PENALTY_HIGH_HOURS,
+    "middle": settings.DROP_PENALTY_MIDDLE_HOURS,
+    "low": settings.DROP_PENALTY_LOW_HOURS,
 }
-FIXED_SOLVER_TIME_LIMIT_SECONDS = 10
-RECENT_CONNECTION_DAYS = 1
+FIXED_SOLVER_TIME_LIMIT_SECONDS = settings.SOLVER_TIME_LIMIT_SECONDS
+RECENT_CONNECTION_DAYS = settings.RECENT_CONNECTION_DAYS
 
 
 def _select_task_type_for_agent_point(

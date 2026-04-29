@@ -1,5 +1,6 @@
 from typing import Dict, List, Optional, Tuple
 
+from app.core.config import settings
 import requests
 import logging
 
@@ -24,7 +25,7 @@ def get_route_osm(
     mode: str = "driving"  # driving, walking, bicycling
 
     # OSRM API endpoint
-    base_url = "http://localhost:5000/route/v1"
+    base_url = f"{settings.OSRM_BASE_URL.rstrip('/')}/route/v1"
 
     # Преобразование режима передвижения
     profile = {"driving": "driving", "walking": "walking", "bicycling": "cycling"}.get(

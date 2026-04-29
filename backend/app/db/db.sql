@@ -161,6 +161,13 @@ VALUES
     (29, 31, '2023-01-01 00:00:00+00'::timestamptz),
     (31, 32, '2023-01-01 00:00:00+00'::timestamptz);
 
+INSERT INTO public.agent_point_manager
+(
+    agent_point_id, user_id
+)
+VALUES
+    (1, 11);
+
 INSERT INTO public.agent_point_event
 (
     agent_point_id, event_time, event_type, metric_name, metric_value_bool
@@ -367,5 +374,6 @@ ALTER SEQUENCE public.priority_id_seq RESTART WITH 100;
 ALTER SEQUENCE public.task_status_id_seq RESTART WITH 100;
 ALTER SEQUENCE public.task_type_id_seq RESTART WITH 100;
 ALTER SEQUENCE public.agent_point_id_seq RESTART WITH 100;
+ALTER SEQUENCE public.agent_point_manager_id_seq RESTART WITH 100;
 ALTER SEQUENCE public.agent_point_event_id_seq RESTART WITH 1000;
 ALTER SEQUENCE public.task_id_seq RESTART WITH 100;

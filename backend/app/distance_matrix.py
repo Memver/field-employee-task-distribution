@@ -1,13 +1,14 @@
 from typing import List, Tuple
 
 import numpy as np
+from app.core.config import settings
 from routingpy import OSRM
 
 
 def get_distance_matrix(
     locations: List[Tuple[float, float]],
     profile: str = "driving",
-    host: str = "http://localhost:5000",
+    host: str | None = None,
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
     Вычисляет матрицы времени и расстояний через OSRM.
@@ -22,7 +23,7 @@ def get_distance_matrix(
             - Первая матрица: время в секундах (N x N)
             - Вторая матрица: расстояние в метрах (N x N)
     """
-    client = OSRM(base_url=host)
+    client = OSRM(base_url=host or settings.OSRM_BASE_URL)
 
     matrix = client.matrix(locations=locations, profile=profile)
 

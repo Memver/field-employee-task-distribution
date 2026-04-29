@@ -55,7 +55,7 @@ def distribute_tasks(*, session: Session) -> DistributionReportPublic:
     )
     if assigned_status is None:
         return DistributionReportPublic(
-            message="Task status 'ASSIGNED' not found. Distribution cancelled.",
+            message="Статус задачи 'ASSIGNED' не найден. Распределение отменено.",
             assignments=[],
             unplaced=[],
         )
@@ -102,10 +102,10 @@ def distribute_tasks(*, session: Session) -> DistributionReportPublic:
         session=session, old_assigned_tasks=old_assigned_tasks, new_tasks=new_tasks
     )
     message = (
-        f"Distribution completed. Matrices prepared for solve: {len(locations)}x{len(locations)}. "
-        f"Loaded employees={len(employees)}, agent_points={len(agent_points)}, task_types={len(task_types)}. "
-        f"Removed old assigned={len(old_assigned_tasks)}, created assigned={len(new_tasks)}, "
-        f"unplaced={len(report.unplaced)}."
+        f"Распределение завершено. Матрицы подготовлены для расчета: {len(locations)}x{len(locations)}. "
+        f"Загружено сотрудников={len(employees)}, агентских точек={len(agent_points)}, типов задач={len(task_types)}. "
+        f"Удалено старых назначенных={len(old_assigned_tasks)}, создано назначенных={len(new_tasks)}, "
+        f"неразмещенных={len(report.unplaced)}."
     )
     return DistributionReportPublic(
         message=message,

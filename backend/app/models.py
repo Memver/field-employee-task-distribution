@@ -108,6 +108,9 @@ class User(UserBase, table=True):
     employee: Optional["Employee"] = Relationship(
         back_populates="user", cascade_delete=True
     )
+    agent_point_manager: Optional["AgentPointManager"] = Relationship(
+        back_populates="user", cascade_delete=True
+    )
 
 
 class EmployeeBase(SQLModel):
@@ -184,6 +187,33 @@ class AgentPoint(AgentPointBase, table=True):
 
     tasks: list[Optional["Task"]] = Relationship(back_populates="agent_point")
     events: list[Optional["AgentPointEvent"]] = Relationship(back_populates="agent_point")
+    managers: list[Optional["AgentPointManager"]] = Relationship(
+        back_populates="agent_point"
+    )
+
+
+class AgentPointManagerBase(SQLModel):
+    pass
+
+
+class AgentPointManager(AgentPointManagerBase, table=True):
+    __tablename__ = "agent_point_manager"
+
+    id: int = Field(default=None, primary_key=True)
+    agent_point_id: int = Field(
+        foreign_key="agent_point.id",
+        nullable=False,
+        ondelete="CASCADE",
+    )
+    user_id: int = Field(
+        foreign_key="user.id",
+        unique=True,
+        nullable=False,
+        ondelete="CASCADE",
+    )
+
+    agent_point: Optional["AgentPoint"] = Relationship(back_populates="managers")
+    user: Optional["User"] = Relationship(back_populates="agent_point_manager")
 
 
 class AgentPointEventBase(SQLModel):

@@ -23,6 +23,13 @@ import {
 } from "@/features/tasks/queries"
 import useCustomToast from "@/hooks/useCustomToast"
 
+const OSM_TILE_URL =
+  import.meta.env.VITE_OSM_TILE_URL ??
+  "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+const OSM_ATTRIBUTION =
+  import.meta.env.VITE_OSM_ATTRIBUTION ??
+  '<a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+
 const DefaultIcon = L.icon({
   iconUrl: icon,
   shadowUrl: iconShadow,
@@ -223,8 +230,8 @@ export function FieldEmployee() {
               scrollWheelZoom={false}
             >
               <TileLayer
-                attribution='<a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                attribution={OSM_ATTRIBUTION}
+                url={OSM_TILE_URL}
               />
               {hasValidRoute && (
                 <Polyline positions={routePoints} pathOptions={routeOptions} />
