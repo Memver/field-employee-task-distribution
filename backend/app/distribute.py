@@ -582,25 +582,15 @@ def solve(
             _priority_penalty(candidate, carryover_days=carryover_days),
         )
 
-        tier = _route_priority_tier(candidate, carryover_days)
-        if tier == "high":
-            soft_ub = settings.ROUTE_SOFT_DEADLINE_HIGH_SECONDS
-            soft_coeff = settings.ROUTE_SOFT_UPPER_VIOLATION_COST_HIGH
-        elif tier == "middle":
-            soft_ub = settings.ROUTE_SOFT_DEADLINE_MIDDLE_SECONDS
-            soft_coeff = settings.ROUTE_SOFT_UPPER_VIOLATION_COST_MIDDLE
-        else:
-            soft_ub = settings.ROUTE_SOFT_DEADLINE_LOW_SECONDS
-            soft_coeff = settings.ROUTE_SOFT_UPPER_VIOLATION_COST_LOW
-        if soft_ub is not None and soft_coeff > 0:
-            time_dimension.SetCumulVarSoftUpperBound(task_index, soft_ub, soft_coeff)
+        # Stage 1 simplification: keep hard constraints + drop penalties only.
+        # Soft time-priority bounds are intentionally removed to simplify behavior.
 
     search_parameters = pywrapcp.DefaultRoutingSearchParameters()
     search_parameters.first_solution_strategy = (
-        routing_enums_pb2.FirstSolutionStrategy.PARALLEL_CHEAPEST_INSERTION
+        routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC
     )
     search_parameters.local_search_metaheuristic = (
-        routing_enums_pb2.LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH
+        routing_enums_pb2.LocalSearchMetaheuristic.AUTOMATIC
     )
     search_parameters.time_limit.seconds = FIXED_SOLVER_TIME_LIMIT_SECONDS
 
