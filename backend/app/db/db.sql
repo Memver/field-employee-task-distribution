@@ -117,7 +117,7 @@ INSERT INTO public.task_type
 	id, name, execution_time, min_grade_id, priority_id
 )
 	VALUES 
-	-- (priority HIGH, perform_time 4ч, min grade SENIOR)
+	-- (priority HIGH, min grade SENIOR)
 	(1, 'SALES_STIMULATION', 4, 3, 3),
 	-- (priority MIDDLE, perform_time 2ч, min grade MIDDLE)
 	(2, 'AGENT_TRAINING', 2, 2, 2),

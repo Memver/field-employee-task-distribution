@@ -1,3 +1,7 @@
+import logging
+import math
+import statistics
+from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 
@@ -5,6 +9,8 @@ from app.core.config import settings
 from app.models import AgentPoint, Employee, Location, TaskType
 from app.services.agent_point_events import AgentPointMetricsSnapshot
 from ortools.constraint_solver import pywrapcp, routing_enums_pb2
+
+logger = logging.getLogger("uvicorn.error")
 
 
 @dataclass
@@ -24,6 +30,8 @@ class TaskCandidate:
     metrics: AgentPointMetricsSnapshot
     priority_level: int
     type_reason: str
+    selection_score: float
+    selected_not_max_priority: bool
 
 
 @dataclass
@@ -69,7 +77,9 @@ def _select_task_type_for_agent_point(
     agent_point: AgentPoint,
     metrics: AgentPointMetricsSnapshot,
     task_types: list[TaskType],
-) -> tuple[TaskType, str] | None:
+    employees: list[Employee],
+    carryover_days: int = 0,
+) -> tuple[TaskType, str, float, bool, list[tuple[str, float]]] | None:
     task_types_by_name = {task_type.name: task_type for task_type in task_types}
     matched_candidates: list[tuple[TaskType, str]] = []
 
@@ -139,13 +149,68 @@ def _select_task_type_for_agent_point(
     if not matched_candidates:
         return None
 
-    selected_task_type, selected_reason = max(
-        matched_candidates,
-        key=lambda candidate: (
-            candidate[0].priority.level if candidate[0].priority else 0
+    max_priority_level = max(
+        (
+            task_type.priority.level
+            for task_type in task_types
+            if task_type.priority is not None
         ),
+        default=1,
     )
-    return selected_task_type, selected_reason
+    total_employees = max(1, len(employees))
+    urgency = 1.0 if carryover_days > 0 else 0.0
+    weight_priority = settings.TASK_SCORE_WEIGHT_PRIORITY
+    weight_urgency = settings.TASK_SCORE_WEIGHT_URGENCY
+    weight_feasibility = settings.TASK_SCORE_WEIGHT_FEASIBILITY
+    weight_service_hours = settings.TASK_SCORE_WEIGHT_SERVICE_HOURS
+
+    scored_candidates: list[tuple[TaskType, str, float]] = []
+    for task_type, reason in matched_candidates:
+        priority_level = task_type.priority.level if task_type.priority else 0
+        priority_norm = priority_level / max_priority_level
+        min_required_level = task_type.min_grade.level if task_type.min_grade else 0
+        feasible_count = sum(
+            1
+            for employee in employees
+            if employee.grade is not None and employee.grade.level >= min_required_level
+        )
+        feasibility = feasible_count / total_employees
+        service_hours = float(task_type.execution_time)
+        score = (
+            weight_priority * priority_norm
+            + weight_urgency * urgency
+            + weight_feasibility * feasibility
+            - weight_service_hours * service_hours
+        )
+        scored_candidates.append((task_type, reason, score))
+
+    scored_candidates.sort(
+        key=lambda item: (
+            item[2],
+            item[0].priority.level if item[0].priority else 0,
+            -float(item[0].execution_time),
+        ),
+        reverse=True,
+    )
+    selected_task_type, selected_reason, selected_score = scored_candidates[0]
+    max_priority_level_in_candidates = max(
+        item[0].priority.level if item[0].priority else 0 for item in scored_candidates
+    )
+    selected_priority_level = (
+        selected_task_type.priority.level if selected_task_type.priority else 0
+    )
+    selected_not_max_priority = selected_priority_level < max_priority_level_in_candidates
+    top2_scores = [
+        (item[0].name, round(item[2], 4))
+        for item in scored_candidates[:2]
+    ]
+    return (
+        selected_task_type,
+        selected_reason,
+        selected_score,
+        selected_not_max_priority,
+        top2_scores,
+    )
 
 
 def _to_candidate(
@@ -153,6 +218,8 @@ def _to_candidate(
     task_type: TaskType,
     metrics: AgentPointMetricsSnapshot,
     type_reason: str,
+    selection_score: float,
+    selected_not_max_priority: bool,
 ) -> TaskCandidate:
     return TaskCandidate(
         task_type=task_type,
@@ -160,6 +227,8 @@ def _to_candidate(
         metrics=metrics,
         priority_level=task_type.priority.level if task_type.priority else 0,
         type_reason=type_reason,
+        selection_score=selection_score,
+        selected_not_max_priority=selected_not_max_priority,
     )
 
 
@@ -198,10 +267,11 @@ def _priority_penalty(candidate: TaskCandidate, carryover_days: int) -> int:
     - перенесённые с прошлых дней задачи (carryover_days > 0) идут как HIGH —
       это требование ТЗ: «оставшиеся переносятся на следующий день с высоким приоритетом».
     """
-    if carryover_days > 0:
-        penalty_hours = DROP_PENALTY_HOURS_BY_PRIORITY["high"]
-    elif candidate.priority_level >= 110:
-        penalty_hours = DROP_PENALTY_HOURS_BY_PRIORITY["high"]
+    if carryover_days > 0 or candidate.priority_level >= 110:
+        penalty_hours = (
+            DROP_PENALTY_HOURS_BY_PRIORITY["high"]
+            * settings.DROP_PENALTY_HIGH_MULTIPLIER
+        )
     elif candidate.priority_level >= 60:
         penalty_hours = DROP_PENALTY_HOURS_BY_PRIORITY["middle"]
     else:
@@ -210,14 +280,144 @@ def _priority_penalty(candidate: TaskCandidate, carryover_days: int) -> int:
     return penalty_hours * 60 * 60
 
 
+def _high_target_bonus_penalty_seconds(
+    *,
+    candidate: TaskCandidate,
+    total_high_eligible: int,
+    max_high_drops_allowed: int,
+) -> int:
+    """Soft high-target: add extra drop penalty for high tasks if target requires it."""
+    if candidate.priority_level < 110:
+        return 0
+    if total_high_eligible <= 0:
+        return 0
+    # If we can only afford a limited number of high drops, push solver away from dropping.
+    if max_high_drops_allowed < total_high_eligible:
+        bonus_hours = max(0, settings.HIGH_TARGET_DROP_PENALTY_BONUS_HOURS)
+        return bonus_hours * 60 * 60
+    return 0
+
+
+def _build_distribution_metrics(
+    *,
+    valid_candidates: list[TaskCandidate],
+    assigned_task_nodes: set[int],
+    dropped_task_nodes: set[int],
+    carryover_days_by_agent_point: dict[int, int],
+    total_travel_seconds_to_assigned: int,
+    employee_workload_seconds: dict[int, int],
+    selected_score_sum_assigned: float,
+    selected_score_count_assigned: int,
+    not_max_priority_selected_count: int,
+    selection_debug_sample: dict[str, object] | None,
+    total_high_eligible: int,
+    target_high_assigned: int,
+    return_to_start: bool,
+) -> dict[str, object]:
+    tier_metrics: dict[str, dict[str, int]] = {
+        "high": {"eligible": 0, "assigned": 0, "dropped": 0},
+        "middle": {"eligible": 0, "assigned": 0, "dropped": 0},
+        "low": {"eligible": 0, "assigned": 0, "dropped": 0},
+    }
+    type_metrics: dict[str, dict[str, int]] = defaultdict(
+        lambda: {"eligible": 0, "assigned": 0, "dropped": 0}
+    )
+    carryover_metrics = {"eligible": 0, "assigned": 0, "dropped": 0}
+
+    for node_idx, candidate in enumerate(valid_candidates):
+        carryover_days = carryover_days_by_agent_point.get(candidate.agent_point.id, 0)
+        tier = _route_priority_tier(candidate, carryover_days)
+        task_type_name = candidate.task_type.name
+        is_carryover = carryover_days > 0
+
+        tier_metrics[tier]["eligible"] += 1
+        type_metrics[task_type_name]["eligible"] += 1
+        if is_carryover:
+            carryover_metrics["eligible"] += 1
+        if node_idx in assigned_task_nodes:
+            tier_metrics[tier]["assigned"] += 1
+            type_metrics[task_type_name]["assigned"] += 1
+            if is_carryover:
+                carryover_metrics["assigned"] += 1
+        if node_idx in dropped_task_nodes:
+            tier_metrics[tier]["dropped"] += 1
+            type_metrics[task_type_name]["dropped"] += 1
+            if is_carryover:
+                carryover_metrics["dropped"] += 1
+
+    assigned_count = len(assigned_task_nodes)
+    avg_travel_minutes = 0.0
+    if assigned_count > 0:
+        avg_travel_minutes = (total_travel_seconds_to_assigned / assigned_count) / 60
+    high_assigned_share = 0.0
+    high_assigned_count = tier_metrics["high"]["assigned"]
+    if assigned_count > 0:
+        high_assigned_share = high_assigned_count / assigned_count
+    workload_values = list(employee_workload_seconds.values())
+    active_employees = sum(1 for item in workload_values if item > 0)
+    workload_min = min(workload_values) if workload_values else 0
+    workload_median = int(statistics.median(workload_values)) if workload_values else 0
+    workload_max = max(workload_values) if workload_values else 0
+    workload_cv = 0.0
+    if workload_values:
+        workload_mean = sum(workload_values) / len(workload_values)
+        if workload_mean > 0:
+            workload_cv = statistics.pstdev(workload_values) / workload_mean
+    avg_selected_score_assigned = 0.0
+    if selected_score_count_assigned > 0:
+        avg_selected_score_assigned = selected_score_sum_assigned / selected_score_count_assigned
+    high_target_gap = max(0, target_high_assigned - high_assigned_count)
+
+    return {
+        "totals": {
+            "eligible": len(valid_candidates),
+            "assigned": assigned_count,
+            "dropped": len(dropped_task_nodes),
+        },
+        "tiers": tier_metrics,
+        "task_types": dict(type_metrics),
+        "carryover": carryover_metrics,
+        "high_assigned_share": round(high_assigned_share, 4),
+        "avg_travel_minutes_to_assigned": round(avg_travel_minutes, 2),
+        "employees": {
+            "total": len(workload_values),
+            "active": active_employees,
+            "idle": max(0, len(workload_values) - active_employees),
+            "workload_seconds": {
+                "min": workload_min,
+                "median": workload_median,
+                "max": workload_max,
+                "cv": round(workload_cv, 4),
+            },
+        },
+        "selection": {
+            "not_max_priority_selected_count": not_max_priority_selected_count,
+            "avg_selected_score_assigned": round(avg_selected_score_assigned, 4),
+            "debug_sample": selection_debug_sample,
+        },
+        "high_target": {
+            "eligible": total_high_eligible,
+            "target_assigned": target_high_assigned,
+            "assigned": high_assigned_count,
+            "gap": high_target_gap,
+        },
+        "routing_mode": {
+            "return_to_start": return_to_start,
+        },
+    }
+
+
 def _build_travel_callback(
     manager: pywrapcp.RoutingIndexManager,
     node_location_idx: list[int],
     time_matrix: list[list[float]],
+    first_end_node: int,
 ):
     def travel_callback(from_index: int, to_index: int) -> int:
         from_node = manager.IndexToNode(from_index)
         to_node = manager.IndexToNode(to_index)
+        if to_node >= first_end_node:
+            return 0
         from_loc = node_location_idx[from_node]
         to_loc = node_location_idx[to_node]
         return max(0, int(float(time_matrix[from_loc][to_loc])))
@@ -230,13 +430,17 @@ def _build_time_callback(
     node_location_idx: list[int],
     node_service_seconds: list[int],
     time_matrix: list[list[float]],
+    first_end_node: int,
 ):
     def time_callback(from_index: int, to_index: int) -> int:
         from_node = manager.IndexToNode(from_index)
         to_node = manager.IndexToNode(to_index)
-        from_loc = node_location_idx[from_node]
-        to_loc = node_location_idx[to_node]
-        travel_seconds = int(float(time_matrix[from_loc][to_loc]))
+        if to_node >= first_end_node:
+            travel_seconds = 0
+        else:
+            from_loc = node_location_idx[from_node]
+            to_loc = node_location_idx[to_node]
+            travel_seconds = int(float(time_matrix[from_loc][to_loc]))
         service_seconds = node_service_seconds[from_node]
         return max(0, travel_seconds + service_seconds)
 
@@ -271,12 +475,20 @@ def solve(
     """
     Policy распределения:
     1) тип задачи определяется по правилам ТЗ;
-    2) hard constraints: грейд, 8 часов на смену, ежедневный возврат на базу;
+    2) hard constraints: грейд, 8 часов на смену, без обязательного возврата на базу;
     3) objective: минимизация суммарного времени дороги плюс мягкие штрафы за превышение
        «желаемого» времени прибытия по приоритету (SetCumulVarSoftUpperBound на Time);
     4) при дефиците ресурса задачи могут быть отброшены (AddDisjunction): приоритет задаёт
        штраф за drop; перенесённые с прошлых дней считаются как высокий приоритет.
     """
+    logger.info(
+        "Distribution solver started: employees=%s, agent_points=%s, task_types=%s, locations=%s, horizon_days=%s",
+        len(employees),
+        len(agent_points),
+        len(task_types),
+        len(locations),
+        horizon_days,
+    )
     if not employees or not agent_points or not task_types or not locations:
         return DistributionReport(planned_tasks=[], assignments=[], unplaced=[])
 
@@ -299,6 +511,8 @@ def solve(
 
     unplaced: list[TaskUnplaced] = []
     candidates: list[TaskCandidate] = []
+    not_max_priority_selected_count = 0
+    selection_debug_sample: dict[str, object] | None = None
     for agent_point in agent_points:
         metrics = snapshots_by_agent_point.get(agent_point.id, AgentPointMetricsSnapshot())
         forced_task_type_id = forced_task_type_ids_by_agent_point.get(agent_point.id)
@@ -318,9 +532,19 @@ def solve(
             selection = (
                 forced_task_type,
                 "Точка в backlog — повторная попытка назначения переносимой задачи",
+                0.0,
+                False,
+                [(forced_task_type.name, 0.0)],
             )
         else:
-            selection = _select_task_type_for_agent_point(agent_point, metrics, task_types)
+            carryover_days = carryover_days_by_agent_point.get(agent_point.id, 0)
+            selection = _select_task_type_for_agent_point(
+                agent_point,
+                metrics,
+                task_types,
+                employees,
+                carryover_days=carryover_days,
+            )
         if selection is None:
             unplaced.append(
                 TaskUnplaced(
@@ -332,8 +556,31 @@ def solve(
                 )
             )
             continue
-        task_type, type_reason = selection
-        candidates.append(_to_candidate(agent_point, task_type, metrics, type_reason))
+        (
+            task_type,
+            type_reason,
+            selected_score,
+            selected_not_max_priority,
+            top2_scores,
+        ) = selection
+        if selected_not_max_priority:
+            not_max_priority_selected_count += 1
+        if selection_debug_sample is None and len(top2_scores) >= 2:
+            selection_debug_sample = {
+                "agent_point_id": agent_point.id,
+                "selected_task_type": task_type.name,
+                "top2_scores": top2_scores,
+            }
+        candidates.append(
+            _to_candidate(
+                agent_point,
+                task_type,
+                metrics,
+                type_reason,
+                selected_score,
+                selected_not_max_priority,
+            )
+        )
 
     if not candidates:
         return DistributionReport(planned_tasks=[], assignments=[], unplaced=unplaced)
@@ -389,6 +636,12 @@ def solve(
         return DistributionReport(planned_tasks=[], assignments=[], unplaced=unplaced)
 
     num_tasks = len(valid_candidates)
+    total_high_eligible = sum(
+        1 for candidate in valid_candidates if candidate.priority_level >= 110
+    )
+    min_high_coverage = min(max(settings.HIGH_TARGET_MIN_COVERAGE, 0.0), 1.0)
+    target_high_assigned = int(math.ceil(total_high_eligible * min_high_coverage))
+    max_high_drops_allowed = max(0, total_high_eligible - target_high_assigned)
     vehicle_day_infos: list[tuple[Employee, int]] = []
     for day_idx in range(horizon_days):
         for employee in employees:
@@ -406,6 +659,14 @@ def solve(
             _execution_time_hours_to_seconds(candidate.task_type.execution_time)
         )
 
+    start_node_offset = num_tasks
+    end_node_offset = num_tasks + num_vehicles
+    for employee, _day_idx in vehicle_day_infos:
+        loc_idx = location_index_by_id.get(employee.start_location_id)
+        if loc_idx is None:
+            loc_idx = 0
+        node_location_idx.append(loc_idx)
+        node_service_seconds.append(0)
     for employee, _day_idx in vehicle_day_infos:
         loc_idx = location_index_by_id.get(employee.start_location_id)
         if loc_idx is None:
@@ -414,9 +675,8 @@ def solve(
         node_service_seconds.append(0)
 
     for vehicle_idx in range(num_vehicles):
-        depot_node = num_tasks + vehicle_idx
-        starts.append(depot_node)
-        ends.append(depot_node)
+        starts.append(start_node_offset + vehicle_idx)
+        ends.append(end_node_offset + vehicle_idx)
 
     manager = pywrapcp.RoutingIndexManager(len(node_location_idx), num_vehicles, starts, ends)
     routing = pywrapcp.RoutingModel(manager)
@@ -427,6 +687,7 @@ def solve(
             node_location_idx=node_location_idx,
             node_service_seconds=node_service_seconds,
             time_matrix=time_matrix,
+            first_end_node=end_node_offset,
         )
     )
     # Optimize by total route load, not only travel: travel + service.
@@ -439,6 +700,23 @@ def solve(
         "Time",
     )
     time_dimension = routing.GetDimensionOrDie("Time")
+    # Secondary objective: softly reduce employee idle time without overriding
+    # priority-based task completion and route efficiency.
+    target_utilization = min(max(settings.BALANCE_TARGET_UTILIZATION, 0.0), 1.0)
+    target_work_seconds = int(workday_seconds * target_utilization)
+    underload_cost = max(0, settings.BALANCE_UNDERLOAD_COST_PER_SEC)
+    overload_cost = max(0, settings.BALANCE_OVERLOAD_COST_PER_SEC)
+    if target_work_seconds > 0 and (underload_cost > 0 or overload_cost > 0):
+        for vehicle_idx in range(num_vehicles):
+            end_index = routing.End(vehicle_idx)
+            if underload_cost > 0:
+                time_dimension.SetCumulVarSoftLowerBound(
+                    end_index, target_work_seconds, underload_cost
+                )
+            if overload_cost > 0:
+                time_dimension.SetCumulVarSoftUpperBound(
+                    end_index, target_work_seconds, overload_cost
+                )
 
     for task_node in range(num_tasks):
         candidate = valid_candidates[task_node]
@@ -455,9 +733,15 @@ def solve(
             routing.VehicleVar(task_index).SetValues([*allowed_vehicles, -1])
 
         carryover_days = carryover_days_by_agent_point.get(candidate.agent_point.id, 0)
+        base_drop_penalty = _priority_penalty(candidate, carryover_days=carryover_days)
+        high_target_bonus = _high_target_bonus_penalty_seconds(
+            candidate=candidate,
+            total_high_eligible=total_high_eligible,
+            max_high_drops_allowed=max_high_drops_allowed,
+        )
         routing.AddDisjunction(
             [task_index],
-            _priority_penalty(candidate, carryover_days=carryover_days),
+            base_drop_penalty + high_target_bonus,
         )
 
         tier = _route_priority_tier(candidate, carryover_days)
@@ -516,12 +800,31 @@ def solve(
             )
         )
 
+    assigned_task_nodes: set[int] = set()
+    total_travel_seconds_to_assigned = 0
+    employee_workload_seconds: dict[int, int] = {employee.id: 0 for employee in employees}
+    selected_score_sum_assigned = 0.0
+    selected_score_count_assigned = 0
     for vehicle_idx, (employee, day_idx) in enumerate(vehicle_day_infos):
         index = routing.Start(vehicle_idx)
+        route_end_index = routing.End(vehicle_idx)
+        route_work_seconds = int(solution.Value(time_dimension.CumulVar(route_end_index)))
+        employee_workload_seconds[employee.id] = (
+            employee_workload_seconds.get(employee.id, 0) + route_work_seconds
+        )
+        previous_node = manager.IndexToNode(index)
         while not routing.IsEnd(index):
             node = manager.IndexToNode(index)
             if node < num_tasks and node not in dropped_task_nodes:
                 candidate = valid_candidates[node]
+                previous_loc_idx = node_location_idx[previous_node]
+                current_loc_idx = node_location_idx[node]
+                total_travel_seconds_to_assigned += int(
+                    float(time_matrix[previous_loc_idx][current_loc_idx])
+                )
+                assigned_task_nodes.add(node)
+                selected_score_sum_assigned += candidate.selection_score
+                selected_score_count_assigned += 1
                 start_seconds_in_shift = int(solution.Value(time_dimension.CumulVar(index)))
                 execution_seconds = _execution_time_hours_to_seconds(
                     candidate.task_type.execution_time
@@ -565,7 +868,25 @@ def solve(
                         reason=assignment_reason,
                     )
                 )
+                previous_node = node
             index = solution.Value(routing.NextVar(index))
+
+    metrics = _build_distribution_metrics(
+        valid_candidates=valid_candidates,
+        assigned_task_nodes=assigned_task_nodes,
+        dropped_task_nodes=dropped_task_nodes,
+        carryover_days_by_agent_point=carryover_days_by_agent_point,
+        total_travel_seconds_to_assigned=total_travel_seconds_to_assigned,
+        employee_workload_seconds=employee_workload_seconds,
+        selected_score_sum_assigned=selected_score_sum_assigned,
+        selected_score_count_assigned=selected_score_count_assigned,
+        not_max_priority_selected_count=not_max_priority_selected_count,
+        selection_debug_sample=selection_debug_sample,
+        total_high_eligible=total_high_eligible,
+        target_high_assigned=target_high_assigned,
+        return_to_start=False,
+    )
+    logger.info("Distribution solver metrics: %s", metrics)
 
     planned_tasks.sort(key=lambda item: (item.employee_id, item.start_time))
     assignments.sort(key=lambda item: (item.employee_id, item.start_time))

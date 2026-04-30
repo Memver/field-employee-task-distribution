@@ -1,3 +1,4 @@
+import logging
 import sentry_sdk
 from app.api.main import api_router
 from app.core.config import settings
@@ -6,6 +7,17 @@ from fastapi.responses import JSONResponse
 from fastapi.routing import APIRoute
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.cors import CORSMiddleware
+
+
+if settings.ENVIRONMENT == "local":
+    # Route app-level logs (e.g. app.distribute) through uvicorn console handlers.
+    uvicorn_error_logger = logging.getLogger("uvicorn.error")
+    app_logger = logging.getLogger("app")
+    app_logger.setLevel(logging.INFO)
+    if uvicorn_error_logger.handlers:
+        app_logger.handlers = uvicorn_error_logger.handlers
+        app_logger.propagate = False
+    app_logger.info("App logger initialized at INFO level")
 
 
 def custom_generate_unique_id(route: APIRoute) -> str:

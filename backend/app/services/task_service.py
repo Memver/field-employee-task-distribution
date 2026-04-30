@@ -5,6 +5,7 @@ from sqlalchemy.orm import joinedload
 from sqlmodel import Session, select
 
 from app.core.constants import TaskStatusName, TaskTypeName
+from app.core.config import settings
 from app.distribute import solve as distribute_solve
 from app.distanse_matrix import get_distance_and_time_matrix
 from app.models import (
@@ -89,7 +90,7 @@ def distribute_tasks(*, session: Session) -> DistributionReportPublic:
         task_types=task_types,
         locations=locations,
         time_matrix=time_matrix,
-        horizon_days=1,
+        horizon_days=max(1, settings.DISTRIBUTION_HORIZON_DAYS),
         carryover_days_by_agent_point=carryover_days_by_agent_point,
         forced_task_type_ids_by_agent_point=forced_task_type_ids_by_agent_point,
         snapshots_by_agent_point=snapshots_by_agent_point,
