@@ -61,6 +61,50 @@ class DistributionReport:
     unplaced: list[TaskUnplaced]
 
 
+@dataclass
+class PreparedInput:
+    planning_start: datetime
+    horizon_days: int
+    workday_seconds: int
+    carryover_days_by_agent_point: dict[int, int]
+    forced_task_type_ids_by_agent_point: dict[int, int]
+    snapshots_by_agent_point: dict[int, AgentPointMetricsSnapshot]
+    task_types_by_id: dict[int, TaskType]
+    location_index_by_id: dict[int, int]
+
+
+@dataclass
+class CandidateBuildResult:
+    candidates: list[TaskCandidate]
+    unplaced: list[TaskUnplaced]
+
+
+@dataclass
+class RoutingContext:
+    manager: pywrapcp.RoutingIndexManager
+    routing: pywrapcp.RoutingModel
+    time_dimension: pywrapcp.RoutingDimension
+    valid_candidates: list[TaskCandidate]
+    vehicle_day_infos: list[tuple[Employee, int]]
+    node_location_idx: list[int]
+    workday_seconds: int
+    starts: list[int]
+    ends: list[int]
+    num_tasks: int
+    num_vehicles: int
+
+
+@dataclass
+class SolveExtractionResult:
+    planned_tasks: list[PlannedTask]
+    assignments: list[TaskAssignment]
+    unplaced: list[TaskUnplaced]
+    assigned_task_nodes: set[int]
+    dropped_task_nodes: set[int]
+    total_travel_seconds_to_assigned: int
+    employee_workload_seconds: dict[int, int]
+
+
 DROP_PENALTY_HOURS_BY_PRIORITY = {
     "high": settings.DROP_PENALTY_HIGH_HOURS,
     "middle": settings.DROP_PENALTY_MIDDLE_HOURS,
@@ -355,63 +399,49 @@ def _work_seconds_to_datetime(
     return planning_start + timedelta(days=day_offset, seconds=seconds_in_day)
 
 
-def solve(
+def _prepare_input(
     *,
-    employees: list[Employee],
-    agent_points: list[AgentPoint],
-    task_types: list[TaskType],
     locations: list[Location],
-    time_matrix: list[list[float]],
-    planning_start: datetime | None = None,
-    horizon_days: int = 3,
-    carryover_days_by_agent_point: dict[int, int] | None = None,
-    forced_task_type_ids_by_agent_point: dict[int, int] | None = None,
-    snapshots_by_agent_point: dict[int, AgentPointMetricsSnapshot] | None = None,
-) -> DistributionReport:
-    """
-    Policy распределения:
-    1) тип задачи определяется по правилам ТЗ;
-    2) hard constraints: грейд, 8 часов на смену, без обязательного возврата на базу;
-    3) objective: минимизация суммарного времени дороги плюс мягкие штрафы за превышение
-       «желаемого» времени прибытия по приоритету (SetCumulVarSoftUpperBound на Time);
-    4) при дефиците ресурса задачи могут быть отброшены (AddDisjunction): приоритет задаёт
-       штраф за drop; перенесённые с прошлых дней считаются как высокий приоритет.
-    """
-    logger.info(
-        "Distribution solver started: employees=%s, agent_points=%s, task_types=%s, locations=%s, horizon_days=%s",
-        len(employees),
-        len(agent_points),
-        len(task_types),
-        len(locations),
-        horizon_days,
-    )
-    if not employees or not agent_points or not task_types or not locations:
-        return DistributionReport(planned_tasks=[], assignments=[], unplaced=[])
-
-    location_index_by_id = {location.id: idx for idx, location in enumerate(locations)}
-
+    task_types: list[TaskType],
+    planning_start: datetime | None,
+    horizon_days: int,
+    carryover_days_by_agent_point: dict[int, int] | None,
+    forced_task_type_ids_by_agent_point: dict[int, int] | None,
+    snapshots_by_agent_point: dict[int, AgentPointMetricsSnapshot] | None,
+) -> PreparedInput:
     if planning_start is None:
         planning_start = datetime.now(timezone.utc).replace(
             hour=8, minute=0, second=0, microsecond=0
         )
-    if carryover_days_by_agent_point is None:
-        carryover_days_by_agent_point = {}
-    if forced_task_type_ids_by_agent_point is None:
-        forced_task_type_ids_by_agent_point = {}
-    if snapshots_by_agent_point is None:
-        snapshots_by_agent_point = {}
-    task_types_by_id = {task_type.id: task_type for task_type in task_types}
+    return PreparedInput(
+        planning_start=planning_start,
+        horizon_days=max(horizon_days, 1),
+        workday_seconds=8 * 60 * 60,
+        carryover_days_by_agent_point=carryover_days_by_agent_point or {},
+        forced_task_type_ids_by_agent_point=forced_task_type_ids_by_agent_point or {},
+        snapshots_by_agent_point=snapshots_by_agent_point or {},
+        task_types_by_id={task_type.id: task_type for task_type in task_types},
+        location_index_by_id={location.id: idx for idx, location in enumerate(locations)},
+    )
 
-    workday_seconds = 8 * 60 * 60
-    horizon_days = max(horizon_days, 1)
 
-    unplaced: list[TaskUnplaced] = []
+def _build_task_candidates(
+    *,
+    agent_points: list[AgentPoint],
+    task_types: list[TaskType],
+    prepared: PreparedInput,
+) -> CandidateBuildResult:
     candidates: list[TaskCandidate] = []
+    unplaced: list[TaskUnplaced] = []
     for agent_point in agent_points:
-        metrics = snapshots_by_agent_point.get(agent_point.id, AgentPointMetricsSnapshot())
-        forced_task_type_id = forced_task_type_ids_by_agent_point.get(agent_point.id)
+        metrics = prepared.snapshots_by_agent_point.get(
+            agent_point.id, AgentPointMetricsSnapshot()
+        )
+        forced_task_type_id = prepared.forced_task_type_ids_by_agent_point.get(
+            agent_point.id
+        )
         if forced_task_type_id is not None:
-            forced_task_type = task_types_by_id.get(forced_task_type_id)
+            forced_task_type = prepared.task_types_by_id.get(forced_task_type_id)
             if forced_task_type is None:
                 unplaced.append(
                     TaskUnplaced(
@@ -441,19 +471,18 @@ def solve(
             )
             continue
         task_type, type_reason = selection
-        candidates.append(
-            _to_candidate(
-                agent_point,
-                task_type,
-                metrics,
-                type_reason,
-            )
-        )
+        candidates.append(_to_candidate(agent_point, task_type, metrics, type_reason))
+    return CandidateBuildResult(candidates=candidates, unplaced=unplaced)
 
-    if not candidates:
-        return DistributionReport(planned_tasks=[], assignments=[], unplaced=unplaced)
 
+def _validate_candidates(
+    *,
+    candidates: list[TaskCandidate],
+    employees: list[Employee],
+    location_index_by_id: dict[int, int],
+) -> CandidateBuildResult:
     valid_candidates: list[TaskCandidate] = []
+    unplaced: list[TaskUnplaced] = []
     for candidate in candidates:
         task_type = candidate.task_type
         agent_point = candidate.agent_point
@@ -499,15 +528,30 @@ def solve(
             )
             continue
         valid_candidates.append(candidate)
+    return CandidateBuildResult(candidates=valid_candidates, unplaced=unplaced)
 
-    if not valid_candidates:
-        return DistributionReport(planned_tasks=[], assignments=[], unplaced=unplaced)
 
-    num_tasks = len(valid_candidates)
+def _build_vehicle_day_infos(
+    *, employees: list[Employee], horizon_days: int
+) -> list[tuple[Employee, int]]:
     vehicle_day_infos: list[tuple[Employee, int]] = []
     for day_idx in range(horizon_days):
         for employee in employees:
             vehicle_day_infos.append((employee, day_idx))
+    return vehicle_day_infos
+
+
+def _build_routing_context(
+    *,
+    employees: list[Employee],
+    valid_candidates: list[TaskCandidate],
+    prepared: PreparedInput,
+    time_matrix: list[list[float]],
+) -> RoutingContext:
+    num_tasks = len(valid_candidates)
+    vehicle_day_infos = _build_vehicle_day_infos(
+        employees=employees, horizon_days=prepared.horizon_days
+    )
     num_vehicles = len(vehicle_day_infos)
     starts: list[int] = []
     ends: list[int] = []
@@ -515,7 +559,7 @@ def solve(
     node_service_seconds: list[int] = []
 
     for candidate in valid_candidates:
-        loc_idx = location_index_by_id[candidate.agent_point.location.id]
+        loc_idx = prepared.location_index_by_id[candidate.agent_point.location.id]
         node_location_idx.append(loc_idx)
         node_service_seconds.append(
             _execution_time_hours_to_seconds(candidate.task_type.execution_time)
@@ -524,13 +568,13 @@ def solve(
     start_node_offset = num_tasks
     end_node_offset = num_tasks + num_vehicles
     for employee, _day_idx in vehicle_day_infos:
-        loc_idx = location_index_by_id.get(employee.start_location_id)
+        loc_idx = prepared.location_index_by_id.get(employee.start_location_id)
         if loc_idx is None:
             loc_idx = 0
         node_location_idx.append(loc_idx)
         node_service_seconds.append(0)
     for employee, _day_idx in vehicle_day_infos:
-        loc_idx = location_index_by_id.get(employee.start_location_id)
+        loc_idx = prepared.location_index_by_id.get(employee.start_location_id)
         if loc_idx is None:
             loc_idx = 0
         node_location_idx.append(loc_idx)
@@ -542,7 +586,6 @@ def solve(
 
     manager = pywrapcp.RoutingIndexManager(len(node_location_idx), num_vehicles, starts, ends)
     routing = pywrapcp.RoutingModel(manager)
-
     time_callback_index = routing.RegisterTransitCallback(
         _build_time_callback(
             manager=manager,
@@ -552,39 +595,56 @@ def solve(
             first_end_node=end_node_offset,
         )
     )
-    # Optimize by total route load, not only travel: travel + service.
     routing.SetArcCostEvaluatorOfAllVehicles(time_callback_index)
     routing.AddDimension(
         time_callback_index,
         0,
-        workday_seconds,
+        prepared.workday_seconds,
         True,
         "Time",
     )
-    time_dimension = routing.GetDimensionOrDie("Time")
-    for task_node in range(num_tasks):
-        candidate = valid_candidates[task_node]
+    return RoutingContext(
+        manager=manager,
+        routing=routing,
+        time_dimension=routing.GetDimensionOrDie("Time"),
+        valid_candidates=valid_candidates,
+        vehicle_day_infos=vehicle_day_infos,
+        node_location_idx=node_location_idx,
+        workday_seconds=prepared.workday_seconds,
+        starts=starts,
+        ends=ends,
+        num_tasks=num_tasks,
+        num_vehicles=num_vehicles,
+    )
+
+
+def _configure_constraints_and_objective(
+    *,
+    context: RoutingContext,
+    carryover_days_by_agent_point: dict[int, int],
+) -> None:
+    for task_node in range(context.num_tasks):
+        candidate = context.valid_candidates[task_node]
         min_required_level = (
             candidate.task_type.min_grade.level if candidate.task_type.min_grade else 0
         )
         allowed_vehicles = [
             vehicle_idx
-            for vehicle_idx, (employee, _day_idx) in enumerate(vehicle_day_infos)
+            for vehicle_idx, (employee, _day_idx) in enumerate(context.vehicle_day_infos)
             if employee.grade is not None and employee.grade.level >= min_required_level
         ]
-        task_index = manager.NodeToIndex(task_node)
-        if len(allowed_vehicles) < num_vehicles:
-            routing.VehicleVar(task_index).SetValues([*allowed_vehicles, -1])
+        task_index = context.manager.NodeToIndex(task_node)
+        if len(allowed_vehicles) < context.num_vehicles:
+            context.routing.VehicleVar(task_index).SetValues([*allowed_vehicles, -1])
 
         carryover_days = carryover_days_by_agent_point.get(candidate.agent_point.id, 0)
-        routing.AddDisjunction(
+        context.routing.AddDisjunction(
             [task_index],
             _priority_penalty(candidate, carryover_days=carryover_days),
         )
 
-        # Stage 1 simplification: keep hard constraints + drop penalties only.
-        # Soft time-priority bounds are intentionally removed to simplify behavior.
 
+def _build_search_parameters() -> pywrapcp.DefaultRoutingSearchParameters:
     search_parameters = pywrapcp.DefaultRoutingSearchParameters()
     search_parameters.first_solution_strategy = (
         routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC
@@ -593,31 +653,30 @@ def solve(
         routing_enums_pb2.LocalSearchMetaheuristic.AUTOMATIC
     )
     search_parameters.time_limit.seconds = FIXED_SOLVER_TIME_LIMIT_SECONDS
+    return search_parameters
 
-    solution = routing.SolveWithParameters(search_parameters)
-    if not solution:
-        for candidate in valid_candidates:
-            unplaced.append(
-                TaskUnplaced(
-                    agent_point_id=candidate.agent_point.id,
-                    agent_point_address=_agent_point_address(candidate.agent_point),
-                    task_type_id=candidate.task_type.id,
-                    task_type_name=candidate.task_type.name,
-                    reason="Планировщик не нашёл решения",
-                )
-            )
-        return DistributionReport(planned_tasks=[], assignments=[], unplaced=unplaced)
 
+def _extract_solution(
+    *,
+    context: RoutingContext,
+    solution: pywrapcp.Assignment,
+    unplaced: list[TaskUnplaced],
+    employees: list[Employee],
+    planning_start: datetime,
+    horizon_days: int,
+    time_matrix: list[list[float]],
+) -> SolveExtractionResult:
     planned_tasks: list[PlannedTask] = []
     assignments: list[TaskAssignment] = []
     dropped_task_nodes: set[int] = set()
-    for task_node in range(num_tasks):
-        task_index = manager.NodeToIndex(task_node)
-        if solution.Value(routing.NextVar(task_index)) == task_index:
+    for task_node in range(context.num_tasks):
+        task_index = context.manager.NodeToIndex(task_node)
+        # Next(task)==task means task is dropped via disjunction.
+        if solution.Value(context.routing.NextVar(task_index)) == task_index:
             dropped_task_nodes.add(task_node)
 
     for dropped_node in dropped_task_nodes:
-        candidate = valid_candidates[dropped_node]
+        candidate = context.valid_candidates[dropped_node]
         unplaced.append(
             TaskUnplaced(
                 agent_point_id=candidate.agent_point.id,
@@ -631,37 +690,41 @@ def solve(
     assigned_task_nodes: set[int] = set()
     total_travel_seconds_to_assigned = 0
     employee_workload_seconds: dict[int, int] = {employee.id: 0 for employee in employees}
-    for vehicle_idx, (employee, day_idx) in enumerate(vehicle_day_infos):
-        index = routing.Start(vehicle_idx)
-        route_end_index = routing.End(vehicle_idx)
-        route_work_seconds = int(solution.Value(time_dimension.CumulVar(route_end_index)))
+    for vehicle_idx, (employee, day_idx) in enumerate(context.vehicle_day_infos):
+        index = context.routing.Start(vehicle_idx)
+        route_end_index = context.routing.End(vehicle_idx)
+        route_work_seconds = int(
+            solution.Value(context.time_dimension.CumulVar(route_end_index))
+        )
         employee_workload_seconds[employee.id] = (
             employee_workload_seconds.get(employee.id, 0) + route_work_seconds
         )
-        previous_node = manager.IndexToNode(index)
-        while not routing.IsEnd(index):
-            node = manager.IndexToNode(index)
-            if node < num_tasks and node not in dropped_task_nodes:
-                candidate = valid_candidates[node]
-                previous_loc_idx = node_location_idx[previous_node]
-                current_loc_idx = node_location_idx[node]
+        previous_node = context.manager.IndexToNode(index)
+        while not context.routing.IsEnd(index):
+            node = context.manager.IndexToNode(index)
+            if node < context.num_tasks and node not in dropped_task_nodes:
+                candidate = context.valid_candidates[node]
+                previous_loc_idx = context.node_location_idx[previous_node]
+                current_loc_idx = context.node_location_idx[node]
                 total_travel_seconds_to_assigned += int(
                     float(time_matrix[previous_loc_idx][current_loc_idx])
                 )
                 assigned_task_nodes.add(node)
-                start_seconds_in_shift = int(solution.Value(time_dimension.CumulVar(index)))
+                start_seconds_in_shift = int(
+                    solution.Value(context.time_dimension.CumulVar(index))
+                )
                 execution_seconds = _execution_time_hours_to_seconds(
                     candidate.task_type.execution_time
                 )
                 finish_seconds_in_shift = start_seconds_in_shift + execution_seconds
-                start_seconds = day_idx * workday_seconds + start_seconds_in_shift
-                finish_seconds = day_idx * workday_seconds + finish_seconds_in_shift
+                start_seconds = day_idx * context.workday_seconds + start_seconds_in_shift
+                finish_seconds = day_idx * context.workday_seconds + finish_seconds_in_shift
 
                 start_time = _work_seconds_to_datetime(
-                    planning_start, start_seconds, workday_seconds
+                    planning_start, start_seconds, context.workday_seconds
                 )
                 finish_time = _work_seconds_to_datetime(
-                    planning_start, finish_seconds, workday_seconds
+                    planning_start, finish_seconds, context.workday_seconds
                 )
                 planned_tasks.append(
                     PlannedTask(
@@ -693,23 +756,129 @@ def solve(
                     )
                 )
                 previous_node = node
-            index = solution.Value(routing.NextVar(index))
-
-    metrics = _build_distribution_metrics(
-        valid_candidates=valid_candidates,
+            index = solution.Value(context.routing.NextVar(index))
+    return SolveExtractionResult(
+        planned_tasks=planned_tasks,
+        assignments=assignments,
+        unplaced=unplaced,
         assigned_task_nodes=assigned_task_nodes,
         dropped_task_nodes=dropped_task_nodes,
-        carryover_days_by_agent_point=carryover_days_by_agent_point,
         total_travel_seconds_to_assigned=total_travel_seconds_to_assigned,
         employee_workload_seconds=employee_workload_seconds,
+    )
+
+
+def solve(
+    *,
+    employees: list[Employee],
+    agent_points: list[AgentPoint],
+    task_types: list[TaskType],
+    locations: list[Location],
+    time_matrix: list[list[float]],
+    planning_start: datetime | None = None,
+    horizon_days: int = 3,
+    carryover_days_by_agent_point: dict[int, int] | None = None,
+    forced_task_type_ids_by_agent_point: dict[int, int] | None = None,
+    snapshots_by_agent_point: dict[int, AgentPointMetricsSnapshot] | None = None,
+) -> DistributionReport:
+    """
+    Policy распределения:
+    1) тип задачи определяется по правилам ТЗ;
+    2) hard constraints: грейд, 8 часов на смену, без обязательного возврата на базу;
+    3) objective: минимизация суммарного времени дороги плюс мягкие штрафы за превышение
+       «желаемого» времени прибытия по приоритету (SetCumulVarSoftUpperBound на Time);
+    4) при дефиците ресурса задачи могут быть отброшены (AddDisjunction): приоритет задаёт
+       штраф за drop; перенесённые с прошлых дней считаются как высокий приоритет.
+    """
+    logger.info(
+        "Distribution solver started: employees=%s, agent_points=%s, task_types=%s, locations=%s, horizon_days=%s",
+        len(employees),
+        len(agent_points),
+        len(task_types),
+        len(locations),
+        horizon_days,
+    )
+    if not employees or not agent_points or not task_types or not locations:
+        return DistributionReport(planned_tasks=[], assignments=[], unplaced=[])
+
+    prepared = _prepare_input(
+        locations=locations,
+        task_types=task_types,
+        planning_start=planning_start,
+        horizon_days=horizon_days,
+        carryover_days_by_agent_point=carryover_days_by_agent_point,
+        forced_task_type_ids_by_agent_point=forced_task_type_ids_by_agent_point,
+        snapshots_by_agent_point=snapshots_by_agent_point,
+    )
+    stage_candidates = _build_task_candidates(
+        agent_points=agent_points,
+        task_types=task_types,
+        prepared=prepared,
+    )
+    if not stage_candidates.candidates:
+        return DistributionReport(
+            planned_tasks=[],
+            assignments=[],
+            unplaced=stage_candidates.unplaced,
+        )
+    stage_validated = _validate_candidates(
+        candidates=stage_candidates.candidates,
+        employees=employees,
+        location_index_by_id=prepared.location_index_by_id,
+    )
+    unplaced = [*stage_candidates.unplaced, *stage_validated.unplaced]
+    if not stage_validated.candidates:
+        return DistributionReport(planned_tasks=[], assignments=[], unplaced=unplaced)
+
+    context = _build_routing_context(
+        employees=employees,
+        valid_candidates=stage_validated.candidates,
+        prepared=prepared,
+        time_matrix=time_matrix,
+    )
+    _configure_constraints_and_objective(
+        context=context,
+        carryover_days_by_agent_point=prepared.carryover_days_by_agent_point,
+    )
+    solution = context.routing.SolveWithParameters(_build_search_parameters())
+    if not solution:
+        for candidate in context.valid_candidates:
+            unplaced.append(
+                TaskUnplaced(
+                    agent_point_id=candidate.agent_point.id,
+                    agent_point_address=_agent_point_address(candidate.agent_point),
+                    task_type_id=candidate.task_type.id,
+                    task_type_name=candidate.task_type.name,
+                    reason="Планировщик не нашёл решения",
+                )
+            )
+        return DistributionReport(planned_tasks=[], assignments=[], unplaced=unplaced)
+
+    extracted = _extract_solution(
+        context=context,
+        solution=solution,
+        unplaced=unplaced,
+        employees=employees,
+        planning_start=prepared.planning_start,
+        horizon_days=prepared.horizon_days,
+        time_matrix=time_matrix,
+    )
+
+    metrics = _build_distribution_metrics(
+        valid_candidates=context.valid_candidates,
+        assigned_task_nodes=extracted.assigned_task_nodes,
+        dropped_task_nodes=extracted.dropped_task_nodes,
+        carryover_days_by_agent_point=prepared.carryover_days_by_agent_point,
+        total_travel_seconds_to_assigned=extracted.total_travel_seconds_to_assigned,
+        employee_workload_seconds=extracted.employee_workload_seconds,
         return_to_start=False,
     )
     logger.info("Distribution solver metrics: %s", metrics)
 
-    planned_tasks.sort(key=lambda item: (item.employee_id, item.start_time))
-    assignments.sort(key=lambda item: (item.employee_id, item.start_time))
+    extracted.planned_tasks.sort(key=lambda item: (item.employee_id, item.start_time))
+    extracted.assignments.sort(key=lambda item: (item.employee_id, item.start_time))
     return DistributionReport(
-        planned_tasks=planned_tasks,
-        assignments=assignments,
-        unplaced=unplaced,
+        planned_tasks=extracted.planned_tasks,
+        assignments=extracted.assignments,
+        unplaced=extracted.unplaced,
     )

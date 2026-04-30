@@ -237,8 +237,6 @@ def read_tasks_me(*, session: Session, employee_id: int, start_location_id: int,
             and task.agent_point.location.lon is not None
         ):
             points.append((task.agent_point.location.lat, task.agent_point.location.lon))
-    if start_location and start_location.lat is not None and start_location.lon is not None:
-        points.append((start_location.lat, start_location.lon))
 
     route = build_route(points)
     return TasksMePublic(

@@ -81,7 +81,7 @@ def read_tasks_me(
     limit: int = 100,
 ) -> Any:
     """
-    Retrieve my tasks with route path from start location through all tasks and back.
+    Retrieve my tasks with route path from start location through all tasks.
     """
     current_employee = field_user.employee
     return task_service.read_tasks_me(

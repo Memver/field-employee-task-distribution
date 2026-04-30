@@ -79,6 +79,32 @@ function normalizeRoute(route: unknown): [number, number][] {
   // Backend returns points as [lon, lat], Leaflet expects [lat, lon].
   return route.filter(isValidCoordinatePair).map(([lon, lat]) => [lat, lon])
 }
+
+function pointsAreEqual(
+  first: [number, number],
+  second: [number, number],
+  epsilon = 1e-6,
+): boolean {
+  return (
+    Math.abs(first[0] - second[0]) <= epsilon &&
+    Math.abs(first[1] - second[1]) <= epsilon
+  )
+}
+
+function trimReturnPoint(routePoints: [number, number][]): [number, number][] {
+  if (routePoints.length < 2) {
+    return routePoints
+  }
+
+  const firstPoint = routePoints[0]
+  const lastPoint = routePoints[routePoints.length - 1]
+
+  if (pointsAreEqual(firstPoint, lastPoint)) {
+    return routePoints.slice(0, -1)
+  }
+
+  return routePoints
+}
 export function FieldEmployee() {
   const { showErrorToast } = useCustomToast()
   const { data } = useSuspenseQuery(getFieldEmployeeTasksQueryOptions())
@@ -109,7 +135,7 @@ export function FieldEmployee() {
 
   const position = [data.start_location.lat, data.start_location.lon]
 
-  const routePoints = normalizeRoute(data.route)
+  const routePoints = trimReturnPoint(normalizeRoute(data.route))
   const hasTasks = data.tasks.length > 0
   const hasValidRoute = routePoints.length >= 2
   const statusesById = useMemo(
