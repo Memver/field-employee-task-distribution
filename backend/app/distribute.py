@@ -164,6 +164,17 @@ def _agent_point_address(agent_point: AgentPoint) -> str | None:
     return getattr(location, "address", None)
 
 
+def _route_priority_tier(candidate: TaskCandidate, carryover_days: int) -> str:
+    """Same tiers as drop penalties: carryover and HIGH priority map to 'high'."""
+    if carryover_days > 0:
+        return "high"
+    if candidate.priority_level >= 110:
+        return "high"
+    if candidate.priority_level >= 60:
+        return "middle"
+    return "low"
+
+
 def _priority_penalty(candidate: TaskCandidate, carryover_days: int) -> int:
     """
     Policy:
@@ -242,8 +253,10 @@ def solve(
     Policy распределения:
     1) тип задачи определяется по правилам ТЗ;
     2) hard constraints: грейд, 8 часов на смену, ежедневный возврат на базу;
-    3) objective: минимизация суммарного времени дороги;
-    4) при дефиците ресурса задачи могут быть перенесены (drop) по penalty-приоритетам.
+    3) objective: минимизация суммарного времени дороги плюс мягкие штрафы за превышение
+       «желаемого» времени прибытия по приоритету (SetCumulVarSoftUpperBound на Time);
+    4) при дефиците ресурса задачи могут быть отброшены (AddDisjunction): приоритет задаёт
+       штраф за drop; перенесённые с прошлых дней считаются как высокий приоритет.
     """
     if not employees or not agent_points or not task_types or not locations:
         return DistributionReport(planned_tasks=[], assignments=[], unplaced=[])
@@ -432,6 +445,19 @@ def solve(
             [task_index],
             _priority_penalty(candidate, carryover_days=carryover_days),
         )
+
+        tier = _route_priority_tier(candidate, carryover_days)
+        if tier == "high":
+            soft_ub = settings.ROUTE_SOFT_DEADLINE_HIGH_SECONDS
+            soft_coeff = settings.ROUTE_SOFT_UPPER_VIOLATION_COST_HIGH
+        elif tier == "middle":
+            soft_ub = settings.ROUTE_SOFT_DEADLINE_MIDDLE_SECONDS
+            soft_coeff = settings.ROUTE_SOFT_UPPER_VIOLATION_COST_MIDDLE
+        else:
+            soft_ub = settings.ROUTE_SOFT_DEADLINE_LOW_SECONDS
+            soft_coeff = settings.ROUTE_SOFT_UPPER_VIOLATION_COST_LOW
+        if soft_ub is not None and soft_coeff > 0:
+            time_dimension.SetCumulVarSoftUpperBound(task_index, soft_ub, soft_coeff)
 
     search_parameters = pywrapcp.DefaultRoutingSearchParameters()
     search_parameters.first_solution_strategy = (

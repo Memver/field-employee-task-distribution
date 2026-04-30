@@ -98,6 +98,15 @@ class Settings(BaseSettings):
     DROP_PENALTY_LOW_HOURS: int = 2
     SOLVER_TIME_LIMIT_SECONDS: int = 10
     RECENT_CONNECTION_DAYS: int = 1
+    # Soft upper bound on Time dimension cumul at task nodes (seconds from shift start).
+    # Encourages visiting higher-priority tasks earlier without breaking the 8h hard limit.
+    ROUTE_SOFT_DEADLINE_HIGH_SECONDS: int = 3 * 60 * 60
+    ROUTE_SOFT_DEADLINE_MIDDLE_SECONDS: int = 5 * 60 * 60
+    ROUTE_SOFT_DEADLINE_LOW_SECONDS: int | None = None
+    # Linear penalty added to objective per second of cumul above soft deadline (0 disables).
+    ROUTE_SOFT_UPPER_VIOLATION_COST_HIGH: int = 2
+    ROUTE_SOFT_UPPER_VIOLATION_COST_MIDDLE: int = 1
+    ROUTE_SOFT_UPPER_VIOLATION_COST_LOW: int = 0
 
     def _check_default_secret(self, var_name: str, value: str | None) -> None:
         if value == "changethis":
