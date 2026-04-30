@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from typing import Optional
 
 from pydantic import EmailStr, model_validator
@@ -321,6 +321,53 @@ class Task(TaskBase, table=True):
     agent_point: Optional["AgentPoint"] = Relationship(back_populates="tasks")
     task_status: Optional["TaskStatus"] = Relationship()
     ap_manager_user: Optional["User"] = Relationship()
+
+
+class TaskCarryoverBase(SQLModel):
+    carryover_days: int = Field(gt=0, nullable=False, default=1)
+    planned_for_date: date = Field(nullable=False)
+    source_reason: str = Field(min_length=1, max_length=1024, nullable=False)
+    created_at: datetime = Field(
+        default_factory=get_datetime_utc,
+        sa_column=Column(DateTime(timezone=True), nullable=False),
+    )
+    updated_at: datetime = Field(
+        default_factory=get_datetime_utc,
+        sa_column=Column(DateTime(timezone=True), nullable=False),
+    )
+
+
+class TaskCarryover(TaskCarryoverBase, table=True):
+    __tablename__ = "task_carryover"
+    __table_args__ = (
+        UniqueConstraint(
+            "agent_point_id",
+            "task_type_id",
+            "planned_for_date",
+            name="uq_task_carryover_agent_point_task_type_planned_for_date",
+        ),
+        Index("ix_task_carryover_planned_for_date", "planned_for_date"),
+        Index(
+            "ix_task_carryover_agent_point_id_planned_for_date",
+            "agent_point_id",
+            "planned_for_date",
+        ),
+    )
+
+    id: int = Field(default=None, primary_key=True)
+    agent_point_id: int = Field(
+        foreign_key="agent_point.id",
+        nullable=False,
+        ondelete="CASCADE",
+    )
+    task_type_id: int = Field(
+        foreign_key="task_type.id",
+        nullable=False,
+        ondelete="CASCADE",
+    )
+
+    agent_point: Optional["AgentPoint"] = Relationship()
+    task_type: Optional["TaskType"] = Relationship()
 
 
 class RoleCreate(RoleBase):

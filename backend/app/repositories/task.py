@@ -21,4 +21,3 @@ def replace_assigned_tasks(
         session.delete(old_task)
     for task in new_tasks:
         session.add(task)
-    session.commit()

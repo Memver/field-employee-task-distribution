@@ -377,3 +377,4 @@ ALTER SEQUENCE public.agent_point_id_seq RESTART WITH 100;
 ALTER SEQUENCE public.agent_point_manager_id_seq RESTART WITH 100;
 ALTER SEQUENCE public.agent_point_event_id_seq RESTART WITH 1000;
 ALTER SEQUENCE public.task_id_seq RESTART WITH 100;
+ALTER SEQUENCE public.task_carryover_id_seq RESTART WITH 100;

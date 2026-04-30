@@ -235,6 +235,7 @@ def solve(
     planning_start: datetime | None = None,
     horizon_days: int = 3,
     carryover_days_by_agent_point: dict[int, int] | None = None,
+    forced_task_type_ids_by_agent_point: dict[int, int] | None = None,
     snapshots_by_agent_point: dict[int, AgentPointMetricsSnapshot] | None = None,
 ) -> DistributionReport:
     """
@@ -255,8 +256,11 @@ def solve(
         )
     if carryover_days_by_agent_point is None:
         carryover_days_by_agent_point = {}
+    if forced_task_type_ids_by_agent_point is None:
+        forced_task_type_ids_by_agent_point = {}
     if snapshots_by_agent_point is None:
         snapshots_by_agent_point = {}
+    task_types_by_id = {task_type.id: task_type for task_type in task_types}
 
     workday_seconds = 8 * 60 * 60
     horizon_days = max(horizon_days, 1)
@@ -265,7 +269,26 @@ def solve(
     candidates: list[TaskCandidate] = []
     for agent_point in agent_points:
         metrics = snapshots_by_agent_point.get(agent_point.id, AgentPointMetricsSnapshot())
-        selection = _select_task_type_for_agent_point(agent_point, metrics, task_types)
+        forced_task_type_id = forced_task_type_ids_by_agent_point.get(agent_point.id)
+        if forced_task_type_id is not None:
+            forced_task_type = task_types_by_id.get(forced_task_type_id)
+            if forced_task_type is None:
+                unplaced.append(
+                    TaskUnplaced(
+                        agent_point_id=agent_point.id,
+                        agent_point_address=_agent_point_address(agent_point),
+                        task_type_id=forced_task_type_id,
+                        task_type_name=None,
+                        reason="Для переносимой задачи не найден task_type",
+                    )
+                )
+                continue
+            selection = (
+                forced_task_type,
+                "Точка в backlog — повторная попытка назначения переносимой задачи",
+            )
+        else:
+            selection = _select_task_type_for_agent_point(agent_point, metrics, task_types)
         if selection is None:
             unplaced.append(
                 TaskUnplaced(

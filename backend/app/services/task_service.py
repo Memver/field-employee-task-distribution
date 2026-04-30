@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from fastapi import HTTPException
 from sqlalchemy.orm import joinedload
@@ -18,12 +18,14 @@ from app.models import (
     LocationPublic,
     Message,
     Task,
+    TaskCarryover,
     TaskMePublic,
     TaskStatus,
     TaskType,
     TasksMePublic,
 )
 from app.repositories import task as task_repository
+from app.repositories import task_carryover as task_carryover_repository
 from app.repositories import task_status as task_status_repository
 from app.services.agent_point_events import build_agent_point_metrics_snapshots
 from app.services.routing_gateway import build_route
@@ -60,21 +62,26 @@ def distribute_tasks(*, session: Session) -> DistributionReportPublic:
             unplaced=[],
         )
 
+    today_utc = datetime.now(timezone.utc).date()
+    tomorrow_utc = today_utc + timedelta(days=1)
     old_assigned_tasks = task_repository.get_by_status_id(
         session=session, task_status_id=assigned_status.id
     )
-
-    today_utc = datetime.now(timezone.utc).date()
+    due_backlog = task_carryover_repository.get_due_backlog(session=session, today=today_utc)
     carryover_days_by_agent_point: dict[int, int] = {}
-    for old_task in old_assigned_tasks:
-        if old_task.start_time is None:
-            continue
-        task_date = old_task.start_time
-        if task_date.tzinfo is None:
-            task_date = task_date.replace(tzinfo=timezone.utc)
-        age_days = max((today_utc - task_date.date()).days, 0)
-        prev = carryover_days_by_agent_point.get(old_task.agent_point_id, 0)
-        carryover_days_by_agent_point[old_task.agent_point_id] = max(prev, age_days + 1)
+    forced_task_type_ids_by_agent_point: dict[int, int] = {}
+    due_backlog_by_key: dict[tuple[int, int], TaskCarryover] = {}
+    for carryover in due_backlog:
+        key = (carryover.agent_point_id, carryover.task_type_id)
+        existing = due_backlog_by_key.get(key)
+        if existing is None or carryover.carryover_days > existing.carryover_days:
+            due_backlog_by_key[key] = carryover
+        prev_days = carryover_days_by_agent_point.get(carryover.agent_point_id, 0)
+        if carryover.carryover_days > prev_days:
+            carryover_days_by_agent_point[carryover.agent_point_id] = carryover.carryover_days
+            forced_task_type_ids_by_agent_point[carryover.agent_point_id] = (
+                carryover.task_type_id
+            )
 
     report = distribute_solve(
         employees=employees,
@@ -84,6 +91,7 @@ def distribute_tasks(*, session: Session) -> DistributionReportPublic:
         time_matrix=time_matrix,
         horizon_days=1,
         carryover_days_by_agent_point=carryover_days_by_agent_point,
+        forced_task_type_ids_by_agent_point=forced_task_type_ids_by_agent_point,
         snapshots_by_agent_point=snapshots_by_agent_point,
     )
     new_tasks = [
@@ -101,11 +109,80 @@ def distribute_tasks(*, session: Session) -> DistributionReportPublic:
     task_repository.replace_assigned_tasks(
         session=session, old_assigned_tasks=old_assigned_tasks, new_tasks=new_tasks
     )
+
+    assigned_keys = {
+        (planned_task.agent_point_id, planned_task.task_type_id)
+        for planned_task in report.planned_tasks
+    }
+    removed_backlog_ids = {
+        carryover.id
+        for key, carryover in due_backlog_by_key.items()
+        if key in assigned_keys and carryover.id is not None
+    }
+
+    upsert_candidate_keys = {
+        (item.agent_point_id, item.task_type_id)
+        for item in report.unplaced
+        if item.task_type_id is not None
+    }
+    existing_tomorrow_backlog = task_carryover_repository.get_by_keys(
+        session=session,
+        key_pairs=upsert_candidate_keys,
+        planned_for_dates={tomorrow_utc},
+    )
+    existing_tomorrow_by_key = {
+        (item.agent_point_id, item.task_type_id, item.planned_for_date): item
+        for item in existing_tomorrow_backlog
+    }
+    created_backlog_count = 0
+    updated_backlog_count = 0
+
+    now_utc = datetime.now(timezone.utc)
+    for item in report.unplaced:
+        if item.task_type_id is None:
+            continue
+        due_key = (item.agent_point_id, item.task_type_id)
+        previous_due = due_backlog_by_key.get(due_key)
+        if previous_due is not None and previous_due.id is not None:
+            removed_backlog_ids.add(previous_due.id)
+        next_carryover_days = (
+            previous_due.carryover_days + 1 if previous_due is not None else 1
+        )
+        tomorrow_key = (item.agent_point_id, item.task_type_id, tomorrow_utc)
+        existing_tomorrow = existing_tomorrow_by_key.get(tomorrow_key)
+        if existing_tomorrow is not None:
+            existing_tomorrow.carryover_days = max(
+                existing_tomorrow.carryover_days, next_carryover_days
+            )
+            existing_tomorrow.source_reason = item.reason
+            existing_tomorrow.updated_at = now_utc
+            session.add(existing_tomorrow)
+            updated_backlog_count += 1
+            continue
+        session.add(
+            TaskCarryover(
+                agent_point_id=item.agent_point_id,
+                task_type_id=item.task_type_id,
+                carryover_days=next_carryover_days,
+                planned_for_date=tomorrow_utc,
+                source_reason=item.reason,
+                created_at=now_utc,
+                updated_at=now_utc,
+            )
+        )
+        created_backlog_count += 1
+
+    removed_backlog_count = task_carryover_repository.remove_by_ids(
+        session=session, item_ids=removed_backlog_ids
+    )
+    session.commit()
     message = (
         f"Распределение завершено. Матрицы подготовлены для расчета: {len(locations)}x{len(locations)}. "
         f"Загружено сотрудников={len(employees)}, агентских точек={len(agent_points)}, типов задач={len(task_types)}. "
         f"Удалено старых назначенных={len(old_assigned_tasks)}, создано назначенных={len(new_tasks)}, "
-        f"неразмещенных={len(report.unplaced)}."
+        f"неразмещенных={len(report.unplaced)}. "
+        f"Backlog: добавлено={created_backlog_count}, обновлено={updated_backlog_count}, "
+        f"закрыто_переносов={removed_backlog_count}."
     )
     return DistributionReportPublic(
         message=message,
