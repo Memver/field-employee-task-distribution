@@ -108,19 +108,6 @@ class Settings(BaseSettings):
     ROUTE_SOFT_UPPER_VIOLATION_COST_HIGH: int = 5
     ROUTE_SOFT_UPPER_VIOLATION_COST_MIDDLE: int = 1
     ROUTE_SOFT_UPPER_VIOLATION_COST_LOW: int = 0
-    # Soft balancing of employee workload (secondary objective).
-    BALANCE_TARGET_UTILIZATION: float = 0.5
-    BALANCE_UNDERLOAD_COST_PER_SEC: int = 1
-    BALANCE_OVERLOAD_COST_PER_SEC: int = 0
-    TASK_SCORE_WEIGHT_PRIORITY: float = 1.6
-    TASK_SCORE_WEIGHT_URGENCY: float = 0.8
-    TASK_SCORE_WEIGHT_FEASIBILITY: float = 0.9
-    TASK_SCORE_WEIGHT_SERVICE_HOURS: float = 0.2
-    # Soft target for high-priority coverage: adds bonus drop penalty for high tasks.
-    HIGH_TARGET_MIN_COVERAGE: float = 0.6
-    HIGH_TARGET_DROP_PENALTY_BONUS_HOURS: int = 2
-    # Planning horizon (days) for distribution run.
-    DISTRIBUTION_HORIZON_DAYS: int = 1
 
     def _check_default_secret(self, var_name: str, value: str | None) -> None:
         if value == "changethis":
