@@ -71,6 +71,7 @@ def _select_task_type_for_agent_point(
     task_types: list[TaskType],
 ) -> tuple[TaskType, str] | None:
     task_types_by_name = {task_type.name: task_type for task_type in task_types}
+    matched_candidates: list[tuple[TaskType, str]] = []
 
     connected_yesterday = False
     if agent_point.created_time is not None:
@@ -83,14 +84,18 @@ def _select_task_type_for_agent_point(
         ).days <= RECENT_CONNECTION_DAYS
 
     if connected_yesterday and "CARDS_DELIVERY" in task_types_by_name:
-        return (
-            task_types_by_name["CARDS_DELIVERY"],
-            "Точка подключена недавно — назначена доставка карт",
+        matched_candidates.append(
+            (
+                task_types_by_name["CARDS_DELIVERY"],
+                "Точка подключена вчера — назначена доставка карт",
+            )
         )
     if (not metrics.is_cards_delivered) and "CARDS_DELIVERY" in task_types_by_name:
-        return (
-            task_types_by_name["CARDS_DELIVERY"],
-            "Карты ещё не доставлены — назначена доставка карт",
+        matched_candidates.append(
+            (
+                task_types_by_name["CARDS_DELIVERY"],
+                "Карты ещё не доставлены — назначена доставка карт",
+            )
         )
 
     days_since_last_card_gived = metrics.days_since_last_card_gived
@@ -100,18 +105,22 @@ def _select_task_type_for_agent_point(
         and metrics.approved_applications > 0
         and "SALES_STIMULATION" in task_types_by_name
     ):
-        return (
-            task_types_by_name["SALES_STIMULATION"],
-            "Карты не выдавались более 7 дней при наличии одобренных заявок — стимулирование продаж",
+        matched_candidates.append(
+            (
+                task_types_by_name["SALES_STIMULATION"],
+                "Карты не выдавались более 7 дней при наличии одобренных заявок — стимулирование продаж",
+            )
         )
     if (
         days_since_last_card_gived is not None
         and days_since_last_card_gived > 14
         and "SALES_STIMULATION" in task_types_by_name
     ):
-        return (
-            task_types_by_name["SALES_STIMULATION"],
-            "Карты не выдавались более 14 дней — стимулирование продаж",
+        matched_candidates.append(
+            (
+                task_types_by_name["SALES_STIMULATION"],
+                "Карты не выдавались более 14 дней — стимулирование продаж",
+            )
         )
 
     if (
@@ -120,17 +129,23 @@ def _select_task_type_for_agent_point(
         and (metrics.cards_gived / metrics.approved_applications) < 0.5
         and "AGENT_TRAINING" in task_types_by_name
     ):
-        return (
-            task_types_by_name["AGENT_TRAINING"],
-            "Низкая конверсия (cards_gived/approved_applications < 0.5) — обучение агента",
+        matched_candidates.append(
+            (
+                task_types_by_name["AGENT_TRAINING"],
+                "Низкая конверсия (cards_gived/approved_applications < 0.5) — обучение агента",
+            )
         )
 
-    if not task_types:
+    if not matched_candidates:
         return None
-    fallback = max(
-        task_types, key=lambda task_type: task_type.priority.level if task_type.priority else 0
+
+    selected_task_type, selected_reason = max(
+        matched_candidates,
+        key=lambda candidate: (
+            candidate[0].priority.level if candidate[0].priority else 0
+        ),
     )
-    return (fallback, "Выбран тип задачи с максимальным приоритетом")
+    return selected_task_type, selected_reason
 
 
 def _to_candidate(
@@ -226,6 +241,10 @@ def _build_time_callback(
         return max(0, travel_seconds + service_seconds)
 
     return time_callback
+
+
+def _execution_time_hours_to_seconds(execution_time_hours: float) -> int:
+    return max(0, int(float(execution_time_hours) * 60 * 60))
 
 
 def _work_seconds_to_datetime(
@@ -383,7 +402,9 @@ def solve(
     for candidate in valid_candidates:
         loc_idx = location_index_by_id[candidate.agent_point.location.id]
         node_location_idx.append(loc_idx)
-        node_service_seconds.append(int(float(candidate.task_type.execution_time) * 60 * 60))
+        node_service_seconds.append(
+            _execution_time_hours_to_seconds(candidate.task_type.execution_time)
+        )
 
     for employee, _day_idx in vehicle_day_infos:
         loc_idx = location_index_by_id.get(employee.start_location_id)
@@ -400,15 +421,6 @@ def solve(
     manager = pywrapcp.RoutingIndexManager(len(node_location_idx), num_vehicles, starts, ends)
     routing = pywrapcp.RoutingModel(manager)
 
-    travel_callback_index = routing.RegisterTransitCallback(
-        _build_travel_callback(
-            manager=manager,
-            node_location_idx=node_location_idx,
-            time_matrix=time_matrix,
-        )
-    )
-    routing.SetArcCostEvaluatorOfAllVehicles(travel_callback_index)
-
     time_callback_index = routing.RegisterTransitCallback(
         _build_time_callback(
             manager=manager,
@@ -417,6 +429,8 @@ def solve(
             time_matrix=time_matrix,
         )
     )
+    # Optimize by total route load, not only travel: travel + service.
+    routing.SetArcCostEvaluatorOfAllVehicles(time_callback_index)
     routing.AddDimension(
         time_callback_index,
         0,
@@ -509,7 +523,9 @@ def solve(
             if node < num_tasks and node not in dropped_task_nodes:
                 candidate = valid_candidates[node]
                 start_seconds_in_shift = int(solution.Value(time_dimension.CumulVar(index)))
-                execution_seconds = int(float(candidate.task_type.execution_time) * 60 * 60)
+                execution_seconds = _execution_time_hours_to_seconds(
+                    candidate.task_type.execution_time
+                )
                 finish_seconds_in_shift = start_seconds_in_shift + execution_seconds
                 start_seconds = day_idx * workday_seconds + start_seconds_in_shift
                 finish_seconds = day_idx * workday_seconds + finish_seconds_in_shift
