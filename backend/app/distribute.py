@@ -64,7 +64,6 @@ class DistributionReport:
 @dataclass
 class PreparedInput:
     planning_start: datetime
-    horizon_days: int
     workday_seconds: int
     carryover_days_by_agent_point: dict[int, int]
     forced_task_type_ids_by_agent_point: dict[int, int]
@@ -85,7 +84,7 @@ class RoutingContext:
     routing: pywrapcp.RoutingModel
     time_dimension: pywrapcp.RoutingDimension
     valid_candidates: list[TaskCandidate]
-    vehicle_day_infos: list[tuple[Employee, int]]
+    employees: list[Employee]
     node_location_idx: list[int]
     workday_seconds: int
     starts: list[int]
@@ -404,7 +403,6 @@ def _prepare_input(
     locations: list[Location],
     task_types: list[TaskType],
     planning_start: datetime | None,
-    horizon_days: int,
     carryover_days_by_agent_point: dict[int, int] | None,
     forced_task_type_ids_by_agent_point: dict[int, int] | None,
     snapshots_by_agent_point: dict[int, AgentPointMetricsSnapshot] | None,
@@ -415,7 +413,6 @@ def _prepare_input(
         )
     return PreparedInput(
         planning_start=planning_start,
-        horizon_days=max(horizon_days, 1),
         workday_seconds=8 * 60 * 60,
         carryover_days_by_agent_point=carryover_days_by_agent_point or {},
         forced_task_type_ids_by_agent_point=forced_task_type_ids_by_agent_point or {},
@@ -531,16 +528,6 @@ def _validate_candidates(
     return CandidateBuildResult(candidates=valid_candidates, unplaced=unplaced)
 
 
-def _build_vehicle_day_infos(
-    *, employees: list[Employee], horizon_days: int
-) -> list[tuple[Employee, int]]:
-    vehicle_day_infos: list[tuple[Employee, int]] = []
-    for day_idx in range(horizon_days):
-        for employee in employees:
-            vehicle_day_infos.append((employee, day_idx))
-    return vehicle_day_infos
-
-
 def _build_routing_context(
     *,
     employees: list[Employee],
@@ -549,10 +536,7 @@ def _build_routing_context(
     time_matrix: list[list[float]],
 ) -> RoutingContext:
     num_tasks = len(valid_candidates)
-    vehicle_day_infos = _build_vehicle_day_infos(
-        employees=employees, horizon_days=prepared.horizon_days
-    )
-    num_vehicles = len(vehicle_day_infos)
+    num_vehicles = len(employees)
     starts: list[int] = []
     ends: list[int] = []
     node_location_idx: list[int] = []
@@ -567,13 +551,13 @@ def _build_routing_context(
 
     start_node_offset = num_tasks
     end_node_offset = num_tasks + num_vehicles
-    for employee, _day_idx in vehicle_day_infos:
+    for employee in employees:
         loc_idx = prepared.location_index_by_id.get(employee.start_location_id)
         if loc_idx is None:
             loc_idx = 0
         node_location_idx.append(loc_idx)
         node_service_seconds.append(0)
-    for employee, _day_idx in vehicle_day_infos:
+    for employee in employees:
         loc_idx = prepared.location_index_by_id.get(employee.start_location_id)
         if loc_idx is None:
             loc_idx = 0
@@ -608,7 +592,7 @@ def _build_routing_context(
         routing=routing,
         time_dimension=routing.GetDimensionOrDie("Time"),
         valid_candidates=valid_candidates,
-        vehicle_day_infos=vehicle_day_infos,
+        employees=employees,
         node_location_idx=node_location_idx,
         workday_seconds=prepared.workday_seconds,
         starts=starts,
@@ -630,7 +614,7 @@ def _configure_constraints_and_objective(
         )
         allowed_vehicles = [
             vehicle_idx
-            for vehicle_idx, (employee, _day_idx) in enumerate(context.vehicle_day_infos)
+            for vehicle_idx, employee in enumerate(context.employees)
             if employee.grade is not None and employee.grade.level >= min_required_level
         ]
         task_index = context.manager.NodeToIndex(task_node)
@@ -663,7 +647,6 @@ def _extract_solution(
     unplaced: list[TaskUnplaced],
     employees: list[Employee],
     planning_start: datetime,
-    horizon_days: int,
     time_matrix: list[list[float]],
 ) -> SolveExtractionResult:
     planned_tasks: list[PlannedTask] = []
@@ -690,7 +673,7 @@ def _extract_solution(
     assigned_task_nodes: set[int] = set()
     total_travel_seconds_to_assigned = 0
     employee_workload_seconds: dict[int, int] = {employee.id: 0 for employee in employees}
-    for vehicle_idx, (employee, day_idx) in enumerate(context.vehicle_day_infos):
+    for vehicle_idx, employee in enumerate(context.employees):
         index = context.routing.Start(vehicle_idx)
         route_end_index = context.routing.End(vehicle_idx)
         route_work_seconds = int(
@@ -717,14 +700,12 @@ def _extract_solution(
                     candidate.task_type.execution_time
                 )
                 finish_seconds_in_shift = start_seconds_in_shift + execution_seconds
-                start_seconds = day_idx * context.workday_seconds + start_seconds_in_shift
-                finish_seconds = day_idx * context.workday_seconds + finish_seconds_in_shift
 
                 start_time = _work_seconds_to_datetime(
-                    planning_start, start_seconds, context.workday_seconds
+                    planning_start, start_seconds_in_shift, context.workday_seconds
                 )
                 finish_time = _work_seconds_to_datetime(
-                    planning_start, finish_seconds, context.workday_seconds
+                    planning_start, finish_seconds_in_shift, context.workday_seconds
                 )
                 planned_tasks.append(
                     PlannedTask(
@@ -738,7 +719,7 @@ def _extract_solution(
                 full_name = _employee_full_name(employee)
                 assignment_reason = (
                     f"{candidate.type_reason}. "
-                    f"Назначена сотруднику {full_name} на день {day_idx + 1} из {horizon_days}, "
+                    f"Назначена сотруднику {full_name}, "
                     f"слот {start_time:%Y-%m-%d %H:%M}–{finish_time:%H:%M}"
                 )
                 assignments.append(
@@ -749,7 +730,7 @@ def _extract_solution(
                         agent_point_address=_agent_point_address(candidate.agent_point),
                         task_type_id=candidate.task_type.id,
                         task_type_name=candidate.task_type.name,
-                        day_index=day_idx,
+                        day_index=0,
                         start_time=start_time,
                         finish_time=finish_time,
                         reason=assignment_reason,
@@ -776,7 +757,6 @@ def solve(
     locations: list[Location],
     time_matrix: list[list[float]],
     planning_start: datetime | None = None,
-    horizon_days: int = 3,
     carryover_days_by_agent_point: dict[int, int] | None = None,
     forced_task_type_ids_by_agent_point: dict[int, int] | None = None,
     snapshots_by_agent_point: dict[int, AgentPointMetricsSnapshot] | None = None,
@@ -791,12 +771,11 @@ def solve(
        штраф за drop; перенесённые с прошлых дней считаются как высокий приоритет.
     """
     logger.info(
-        "Distribution solver started: employees=%s, agent_points=%s, task_types=%s, locations=%s, horizon_days=%s",
+        "Distribution solver started: employees=%s, agent_points=%s, task_types=%s, locations=%s",
         len(employees),
         len(agent_points),
         len(task_types),
         len(locations),
-        horizon_days,
     )
     if not employees or not agent_points or not task_types or not locations:
         return DistributionReport(planned_tasks=[], assignments=[], unplaced=[])
@@ -805,7 +784,6 @@ def solve(
         locations=locations,
         task_types=task_types,
         planning_start=planning_start,
-        horizon_days=horizon_days,
         carryover_days_by_agent_point=carryover_days_by_agent_point,
         forced_task_type_ids_by_agent_point=forced_task_type_ids_by_agent_point,
         snapshots_by_agent_point=snapshots_by_agent_point,
@@ -860,7 +838,6 @@ def solve(
         unplaced=unplaced,
         employees=employees,
         planning_start=prepared.planning_start,
-        horizon_days=prepared.horizon_days,
         time_matrix=time_matrix,
     )
 

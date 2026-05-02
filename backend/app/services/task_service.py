@@ -89,7 +89,6 @@ def distribute_tasks(*, session: Session) -> DistributionReportPublic:
         task_types=task_types,
         locations=locations,
         time_matrix=time_matrix,
-        horizon_days=1,
         carryover_days_by_agent_point=carryover_days_by_agent_point,
         forced_task_type_ids_by_agent_point=forced_task_type_ids_by_agent_point,
         snapshots_by_agent_point=snapshots_by_agent_point,
