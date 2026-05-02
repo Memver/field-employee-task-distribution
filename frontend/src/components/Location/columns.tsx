@@ -1,18 +1,17 @@
-import type { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@tanstack/react-table"
 
-import type { LocationPublic } from "@/client";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
-import { UserActionsMenu } from "./../Admin/UserActionsMenu";
+import type { LocationPublic } from "@/client"
+import { cn } from "@/lib/utils"
+import { UserActionsMenu } from "./UserActionsMenu"
 
-export type LocationTableData = LocationPublic & {};
+export type LocationTableData = LocationPublic & {}
 
 export const columns: ColumnDef<LocationTableData>[] = [
   {
     accessorKey: "address",
     header: "Адрес",
     cell: ({ row }) => {
-      const fullName = row.original.address;
+      const fullName = row.original.address
       return (
         <div className="flex items-center gap-2">
           <span
@@ -21,39 +20,41 @@ export const columns: ColumnDef<LocationTableData>[] = [
             {fullName || "N/A"}
           </span>
         </div>
-      );
+      )
     },
   },
   {
     accessorKey: "lat",
     header: "Широта",
     cell: ({ row }) => {
-      const fullName = row.original.lat;
+      const fullName = row.original.lat
       return (
-        <div className="flex items-center gap-2">
-          <span
-            className={cn("font-medium", !fullName && "text-muted-foreground")}
-          >
-            {fullName || "N/A"}
-          </span>
-        </div>
-      );
+        <span
+          className={cn(
+            "font-medium",
+            fullName == null && "text-muted-foreground",
+          )}
+        >
+          {fullName == null ? "N/A" : fullName}
+        </span>
+      )
     },
   },
   {
     accessorKey: "lon",
     header: "Долгота",
     cell: ({ row }) => {
-      const fullName = row.original.lon;
+      const fullName = row.original.lon
       return (
-        <div className="flex items-center gap-2">
-          <span
-            className={cn("font-medium", !fullName && "text-muted-foreground")}
-          >
-            {fullName || "N/A"}
-          </span>
-        </div>
-      );
+        <span
+          className={cn(
+            "font-medium",
+            fullName == null && "text-muted-foreground",
+          )}
+        >
+          {fullName == null ? "N/A" : fullName}
+        </span>
+      )
     },
   },
   {
@@ -61,8 +62,8 @@ export const columns: ColumnDef<LocationTableData>[] = [
     header: () => <span className="sr-only">Действия</span>,
     cell: ({ row }) => (
       <div className="flex justify-end">
-        <UserActionsMenu user={row.original} />
+        <UserActionsMenu location={row.original} />
       </div>
     ),
   },
-];
+]

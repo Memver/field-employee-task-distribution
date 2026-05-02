@@ -1,18 +1,44 @@
 from typing import Any
 
-from app.api.deps import SessionDep
-from app.models import Message, TaskStatus, TaskStatusesPublic, TaskStatusPublic
-from fastapi import APIRouter
+from app.api.deps import EmployeeManagerUser, ManagerOrFieldEmployeeUser, SessionDep
+from app.models import (
+    Message,
+    TaskStatus,
+    TaskStatusCreate,
+    TaskStatusesPublic,
+    TaskStatusPublic,
+    TaskStatusUpdate,
+)
+from fastapi import APIRouter, HTTPException
 from sqlmodel import func, select
 
 router = APIRouter(prefix="/task-statuses", tags=["task-statuses"])
+
+
+@router.post("/", response_model=TaskStatusPublic)
+def create_task_status(
+    *,
+    session: SessionDep,
+    _em: EmployeeManagerUser,
+    task_status_in: TaskStatusCreate,
+) -> Any:
+    """
+    Create new task_status.
+    """
+    task_status = TaskStatus.model_validate(task_status_in)
+    session.add(task_status)
+    session.commit()
+    session.refresh(task_status)
+    return task_status
 
 
 @router.get(
     "/",
     response_model=TaskStatusesPublic,
 )
-def read_task_statuses(session: SessionDep, skip: int = 0, limit: int = 100) -> Any:
+def read_task_statuses(
+    session: SessionDep, _reader: ManagerOrFieldEmployeeUser, skip: int = 0, limit: int = 100
+) -> Any:
     """
     Retrieve task_statuses.
     """
@@ -27,7 +53,9 @@ def read_task_statuses(session: SessionDep, skip: int = 0, limit: int = 100) -> 
 
 
 @router.get("/{task_status_id}", response_model=TaskStatusPublic)
-def read_task_status_by_id(task_status_id: int, session: SessionDep) -> Any:
+def read_task_status_by_id(
+    task_status_id: int, session: SessionDep, _reader: ManagerOrFieldEmployeeUser
+) -> Any:
     """
     Get a specific task_status by id.
     """
@@ -35,8 +63,32 @@ def read_task_status_by_id(task_status_id: int, session: SessionDep) -> Any:
     return task_status
 
 
+@router.put("/{id}", response_model=TaskStatusPublic)
+def update_task_status(
+    *,
+    session: SessionDep,
+    _em: EmployeeManagerUser,
+    id: int,
+    task_status_in: TaskStatusUpdate,
+) -> Any:
+    """
+    Update an task_status.
+    """
+    task_status = session.get(TaskStatus, id)
+    if not task_status:
+        raise HTTPException(status_code=404, detail="TaskStatus not found")
+    update_dict = task_status_in.model_dump(exclude_unset=True)
+    task_status.sqlmodel_update(update_dict)
+    session.add(task_status)
+    session.commit()
+    session.refresh(task_status)
+    return task_status
+
+
 @router.delete("/{task_status_id}")
-def delete_task_status(session: SessionDep, task_status_id: int) -> Message:
+def delete_task_status(
+    session: SessionDep, _em: EmployeeManagerUser, task_status_id: int
+) -> Message:
     """
     Delete a task_status.
     """

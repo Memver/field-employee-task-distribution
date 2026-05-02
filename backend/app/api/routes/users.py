@@ -1,47 +1,26 @@
 from typing import Any
 
-from app.api.deps import CurrentUser, SessionDep
+from app.api.deps import AdminUser, CurrentUser, SessionDep
+from app.core.roles import is_admin_user
 from app.core.security import get_password_hash
 from app.models import (
     Message,
-    UpdatePassword,
     User,
     UserCreate,
     UserPublic,
     UsersPublic,
     UserUpdate,
-    UserUpdateMe,
 )
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from sqlmodel import func, select
 
 router = APIRouter(prefix="/users", tags=["users"])
 
 
-@router.get(
-    "/",
-    response_model=UsersPublic,
-)
-def read_users(session: SessionDep, skip: int = 0, limit: int = 100) -> Any:
-    """
-    Retrieve users.
-    """
-
-    count_statement = select(func.count()).select_from(User)
-    count = session.exec(count_statement).one()
-
-    statement = select(User).offset(skip).limit(limit)
-    users = session.exec(statement).all()
-    users_role_str = [
-        UserPublic.model_validate(user, update={"role": user.role.name})
-        for user in users
-    ]
-
-    return UsersPublic(data=users_role_str, count=count)
-
-
 @router.post("/", response_model=UserPublic)
-def create_user(*, session: SessionDep, user_in: UserCreate) -> Any:
+def create_user(
+    *, session: SessionDep, _admin: AdminUser, user_in: UserCreate
+) -> Any:
     """
     Create new user.
     """
@@ -51,52 +30,27 @@ def create_user(*, session: SessionDep, user_in: UserCreate) -> Any:
     session.add(user)
     session.commit()
     session.refresh(user)
-    user_out = User.model_validate(user, update={"role": user.role.name})
-    return user_out
+    return user
 
 
-@router.put("/", response_model=UserPublic)
-def update_user(*, session: SessionDep, user_in: UserCreate) -> Any:
+@router.get(
+    "/",
+    response_model=UsersPublic,
+)
+def read_users(
+    session: SessionDep, _admin: AdminUser, skip: int = 0, limit: int = 100
+) -> Any:
     """
-    Update user.
+    Retrieve users.
     """
-    user = User.model_validate(
-        user_in, update={"hashed_password": get_password_hash(user_in.password)}
-    )
-    session.add(user)
-    session.commit()
-    session.refresh(user)
-    user_out = User.model_validate(user, update={"role": user.role.name})
-    return user_out
 
+    count_statement = select(func.count()).select_from(User)
+    count = session.exec(count_statement).one()
 
-# @router.patch("/me", response_model=UserPublic)
-# def update_user_me(
-#     *, session: SessionDep, user_in: UserUpdateMe, current_user: CurrentUser
-# ) -> Any:
-#     """
-#     Update own user.
-#     """
-#     user_data = user_in.model_dump(exclude_unset=True)
-#     current_user.sqlmodel_update(user_data)
-#     session.add(current_user)
-#     session.commit()
-#     session.refresh(current_user)
-#     return current_user
+    statement = select(User).offset(skip).limit(limit)
+    users = session.exec(statement).all()
 
-
-# @router.patch("/me/password", response_model=Message)
-# def update_password_me(
-#     *, session: SessionDep, body: UpdatePassword, current_user: CurrentUser
-# ) -> Any:
-#     """
-#     Update own password.
-#     """
-#     hashed_password = get_password_hash(body.new_password)
-#     current_user.hashed_password = hashed_password
-#     session.add(current_user)
-#     session.commit()
-#     return Message(message="Password updated successfully")
+    return UsersPublic(data=users, count=count)
 
 
 @router.get("/me", response_model=UserPublic)
@@ -104,20 +58,8 @@ def read_user_me(current_user: CurrentUser) -> Any:
     """
     Get current user.
     """
-    user = UserPublic.model_validate(
-        current_user, update={"role": current_user.role.name}
-    )
+    user = UserPublic.model_validate(current_user)
     return user
-
-
-# @router.delete("/me", response_model=Message)
-# def delete_user_me(session: SessionDep, current_user: CurrentUser) -> Any:
-#     """
-#     Delete own user.
-#     """
-#     session.delete(current_user)
-#     session.commit()
-#     return Message(message="User deleted successfully")
 
 
 @router.get("/{user_id}", response_model=UserPublic)
@@ -127,48 +69,62 @@ def read_user_by_id(
     """
     Get a specific user by id.
     """
+    if not is_admin_user(current_user.role) and current_user.id != user_id:
+        raise HTTPException(
+            status_code=403,
+            detail="Недостаточно прав для просмотра этого пользователя",
+        )
     user = session.get(User, user_id)
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
     return user
 
 
-# @router.patch(
-#     "/{user_id}",
-#     response_model=UserPublic,
-# )
-# def update_user(
-#     *,
-#     session: SessionDep,
-#     user_id: int,
-#     user_in: UserUpdate,
-# ) -> Any:
-#     """
-#     Update a user.
-#     """
+@router.put(
+    "/{id}",
+    response_model=UserPublic,
+)
+def update_user(
+    *,
+    session: SessionDep,
+    _admin: AdminUser,
+    id: int,
+    user_in: UserUpdate,
+) -> Any:
+    """
+    Update a user.
+    """
 
-#     db_user = session.get(User, user_id)
-#     user_data = user_in.model_dump(exclude_unset=True)
-#     extra_data = {}
-#     if "password" in user_data:
-#         password = user_data["password"]
-#         hashed_password = get_password_hash(password)
-#         extra_data["hashed_password"] = hashed_password
-#     db_user.sqlmodel_update(user_data, update=extra_data)
-#     session.add(db_user)
-#     session.commit()
-#     session.refresh(db_user)
-#     return db_user
+    db_user = session.get(User, id)
+    if not db_user:
+        raise HTTPException(
+            status_code=404,
+            detail="The user with this id does not exist in the system",
+        )
+
+    user_data = user_in.model_dump(exclude_unset=True)
+
+    extra_data = {}
+    if "password" in user_data:
+        password = user_data["password"]
+        hashed_password = get_password_hash(password)
+        extra_data["hashed_password"] = hashed_password
+
+    db_user.sqlmodel_update(user_data, update=extra_data)
+
+    session.add(db_user)
+    session.commit()
+    session.refresh(db_user)
+
+    return db_user
 
 
 @router.delete("/{user_id}")
-def delete_user(
-    session: SessionDep, current_user: CurrentUser, user_id: int
-) -> Message:
+def delete_user(session: SessionDep, _admin: AdminUser, user_id: int) -> Message:
     """
     Delete a user.
     """
     user = session.get(User, user_id)
-    # statement = delete(Item).where(col(Item.owner_id) == user_id)
-    # session.exec(statement)
     session.delete(user)
     session.commit()
     return Message(message="User deleted successfully")

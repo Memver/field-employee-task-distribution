@@ -1,35 +1,65 @@
-from typing import Any, List, Optional
+from typing import Any
 
-import shapely
-import shapely.wkb
-from app.api.deps import CurrentUser, SessionDep
+from app.api.deps import (
+    AgentPointManagerUser,
+    CurrentUser,
+    EmployeeManagerUser,
+    FieldEmployeeUser,
+    SessionDep,
+    ensure_field_employee_task_access,
+)
+from app.core.roles import is_employee_manager_user, is_field_employee_user
 from app.models import (
-    AgentPoint,
-    Location,
-    LocationEdge,
-    LocationPublic,
+    DistributionReportPublic,
     Message,
+    TaskCompleteUpdate,
+    TaskSkipUpdate,
     Task,
-    TaskMePublic,
+    TaskAgentPointManagerConfirmUpdate,
+    TaskCreate,
     TaskPublic,
+    TaskSelfUpdate,
     TasksMePublic,
     TasksPublic,
+    TaskUpdate,
 )
-from fastapi import APIRouter
-from geoalchemy2.functions import ST_Collect, ST_MakeLine
-from shapely.ops import linemerge
-from sqlalchemy import and_, or_, select
-from sqlalchemy.orm import joinedload, load_only, selectinload
+from fastapi import APIRouter, HTTPException
 from sqlmodel import func, select
+from app.repositories import task as task_repository
+from app.services import task_service
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
+
+@router.post("/", response_model=TaskPublic)
+def create_task(
+    *, session: SessionDep, _em: EmployeeManagerUser, task_in: TaskCreate
+) -> Any:
+    """
+    Create new task.
+    """
+    task = Task.model_validate(task_in)
+    session.add(task)
+    session.commit()
+    session.refresh(task)
+    return task
+
+
+@router.post("/distribute", response_model=DistributionReportPublic)
+def distribute_tasks(
+    *, session: SessionDep, _em: EmployeeManagerUser
+) -> DistributionReportPublic:
+    # Контекст: распределение использует матрицы расстояний/времени, а /tasks/me строит маршрут.
+    # Детали интеграции с OSRM вынесены в сервисный слой (task_service + routing gateway).
+    return task_service.distribute_tasks(session=session)
 
 
 @router.get(
     "/",
     response_model=TasksPublic,
 )
-def read_tasks(session: SessionDep, skip: int = 0, limit: int = 100) -> Any:
+def read_tasks(
+    session: SessionDep, _em: EmployeeManagerUser, skip: int = 0, limit: int = 100
+) -> Any:
     """
     Retrieve tasks.
     """
@@ -46,148 +76,171 @@ def read_tasks(session: SessionDep, skip: int = 0, limit: int = 100) -> Any:
 @router.get("/me", response_model=TasksMePublic)
 def read_tasks_me(
     session: SessionDep,
-    current_user: CurrentUser,
+    field_user: FieldEmployeeUser,
     skip: int = 0,
     limit: int = 100,
 ) -> Any:
     """
-    Retrieve my tasks with route path from start location through all tasks and back.
+    Retrieve my tasks with route path from start location through all tasks.
     """
-    # Get current employee
-    current_employee = current_user.employee
-
-    # Get start location
-    start_location = session.get(Location, current_employee.start_location_id)
-
-    # Query tasks for current employee with pagination
-    statement = (
-        select(Task)
-        .where(Task.employee_id == current_employee.id)
-        .options(joinedload(Task.agent_point).selectinload(AgentPoint.location))
-        .order_by(Task.start_time)
-        .offset(skip)
-        .limit(limit)
+    current_employee = field_user.employee
+    return task_service.read_tasks_me(
+        session=session,
+        employee_id=current_employee.id,
+        start_location_id=current_employee.start_location_id,
+        skip=skip,
+        limit=limit,
     )
-    #     statement = (
-    #     select(Task)
-    #     .where(Task.employee_id == current_employee.id)
-    #     .offset(skip)
-    #     .limit(limit)
-    #     .options(
-    #         selectinload(Task.agent_point).selectinload(AgentPoint.location),
-    #     )
-    #     .order_by(Task.start_time)
-    # )
-    tasks = session.exec(statement).all()
 
-    print(tasks)
 
-    # Prepare task list for response
-    tasks_me_public = []
-    location_ids = []
+@router.patch("/{task_id}/self", response_model=TaskPublic)
+def update_my_task_status(
+    *,
+    session: SessionDep,
+    field_user: FieldEmployeeUser,
+    task_id: int,
+    body: TaskSelfUpdate,
+) -> Any:
+    """
+    Выездной сотрудник: смена статуса и комментария только по своей задаче.
+    """
+    task = task_repository.get_by_id(session=session, task_id=task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    ensure_field_employee_task_access(
+        field_user=field_user, task_employee_id=task.employee_id
+    )
+    task.task_status_id = body.task_status_id
+    if body.comment is not None:
+        task.comment = body.comment
+    session.add(task)
+    session.commit()
+    session.refresh(task)
+    return task
 
-    # Add start location
-    location_ids.append(current_employee.start_location_id)
 
-    print(location_ids)
+@router.patch("/{task_id}/complete", response_model=TaskPublic)
+def complete_my_task(
+    *,
+    session: SessionDep,
+    field_user: FieldEmployeeUser,
+    task_id: int,
+    body: TaskCompleteUpdate,
+) -> Any:
+    """
+    Выездной сотрудник: отметить свою задачу как выполненную.
+    """
+    task = task_repository.get_by_id(session=session, task_id=task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    ensure_field_employee_task_access(
+        field_user=field_user, task_employee_id=task.employee_id
+    )
 
-    for task in tasks:
-        tasks_me_public.append(TaskMePublic.model_validate(task))
-        # Add task location
-        if task.agent_point and task.agent_point.location:
-            location_ids.append(task.agent_point.location.id)
+    return task_service.mark_task_completed(session=session, task=task, comment=body.comment)
 
-    # Add start location again to complete the route (return to start)
-    location_ids.append(current_employee.start_location_id)
 
-    # Build route by finding paths between consecutive locations
-    route = None
+@router.patch("/{task_id}/skip", response_model=TaskPublic)
+def skip_my_task(
+    *,
+    session: SessionDep,
+    field_user: FieldEmployeeUser,
+    task_id: int,
+    body: TaskSkipUpdate,
+) -> Any:
+    """
+    Выездной сотрудник: пропустить свою задачу с указанием причины.
+    """
+    task = task_repository.get_by_id(session=session, task_id=task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    ensure_field_employee_task_access(
+        field_user=field_user, task_employee_id=task.employee_id
+    )
 
-    if len(location_ids) > 1:
-        # Create pairs of consecutive locations
-        pairs = []
-        for i in range(len(location_ids) - 1):
-            from_id = location_ids[i]
-            to_id = location_ids[i + 1]
-            pairs.append((from_id, to_id))
+    return task_service.mark_task_skipped(session=session, task=task, comment=body.comment)
 
-        # Query edges for all pairs
-        if pairs:
-            # Build OR condition for all pairs
-            conditions = []
-            for from_id, to_id in pairs:
-                conditions.append(
-                    and_(
-                        LocationEdge.from_location_id == from_id,
-                        LocationEdge.to_location_id == to_id,
-                    )
-                )
 
-            edge_statement = (
-                select(LocationEdge)
-                .where(or_(*conditions))
-                .options(
-                    load_only(
-                        LocationEdge.route,
-                        LocationEdge.from_location_id,
-                        LocationEdge.to_location_id,
-                    )
-                )
-            )
+@router.patch("/{task_id}/complete-by-agent-point-manager", response_model=TaskPublic)
+def complete_task_by_agent_point_manager(
+    *,
+    session: SessionDep,
+    apm: AgentPointManagerUser,
+    task_id: int,
+    body: TaskAgentPointManagerConfirmUpdate,
+) -> Any:
+    """
+    Менеджер агентской точки: подтвердить или отклонить статус задачи.
+    """
+    task = task_repository.get_by_id(session=session, task_id=task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
 
-            edges = session.exec(edge_statement).all()
-
-            # Create a dictionary for quick lookup
-            edge_dict = {}
-            for edge in edges:
-                edge_dict[(edge.from_location_id, edge.to_location_id)] = edge.route
-
-            # Collect routes in order
-            route_parts = []
-            for from_id, to_id in pairs:
-                if (from_id, to_id) in edge_dict:
-                    route_parts.append(edge_dict[(from_id, to_id)])
-
-            # Combine all route parts into a single LineString if we have parts
-            if route_parts:
-                # Convert WKB elements to Shapely geometries
-                geometries = []
-                for wkb_element in route_parts:
-                    # Assuming WKBElement contains WKB data
-                    geom = shapely.wkb.loads(bytes(wkb_element.data))
-                    geometries.append(geom)
-
-                # Merge all LineStrings into one
-                merged = linemerge(geometries)
-                # Convert to WKT string instead of WKB binary
-                route = shapely.wkt.dumps(merged)
-
-    print(tasks)
-    print(route)
-    print(start_location)
-
-    return TasksMePublic(
-        tasks=tasks_me_public,
-        route=route,
-        start_location=LocationPublic.model_validate(start_location),
+    return task_service.confirm_task_by_ap_manager(
+        session=session,
+        task=task,
+        ap_manager_id=apm.id,
+        confirmed=body.confirmed,
+        comment=body.comment,
     )
 
 
 @router.get("/{task_id}", response_model=TaskPublic)
-def read_task_by_id(task_id: int, session: SessionDep) -> Any:
+def read_task_by_id(
+    task_id: int, session: SessionDep, current_user: CurrentUser
+) -> Any:
     """
     Get a specific task by id.
     """
-    task = session.get(Task, task_id)
+    task = task_repository.get_by_id(session=session, task_id=task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    if is_employee_manager_user(current_user.role):
+        return task
+    if (
+        is_field_employee_user(current_user.role)
+        and current_user.employee is not None
+        and task.employee_id == current_user.employee.id
+    ):
+        return task
+    raise HTTPException(
+        status_code=403,
+        detail="Недостаточно прав для просмотра этой задачи",
+    )
+
+
+@router.put("/{id}", response_model=TaskPublic)
+def update_task(
+    *,
+    session: SessionDep,
+    _em: EmployeeManagerUser,
+    id: int,
+    task_in: TaskUpdate,
+) -> Any:
+    """
+    Update an task.
+    """
+    task = session.get(Task, id)
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    update_dict = task_in.model_dump(exclude_unset=True)
+    task.sqlmodel_update(update_dict)
+    session.add(task)
+    session.commit()
+    session.refresh(task)
     return task
 
 
 @router.delete("/{task_id}")
-def delete_task(session: SessionDep, task_id: int) -> Message:
+def delete_task(
+    session: SessionDep, _em: EmployeeManagerUser, task_id: int
+) -> Message:
     """
     Delete a task.
     """
-    task = session.get(Task, task_id)
+    task = task_repository.get_by_id(session=session, task_id=task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
     # statement = delete(Item).where(col(Item.owner_id) == task_id)
     # session.exec(statement)
     session.delete(task)

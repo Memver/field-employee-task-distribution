@@ -1,21 +1,13 @@
+from pathlib import Path
+from datetime import date, timedelta
+
 from app.core.config import settings
-from app.models import Role, User, UserCreate
-from app.services import user as user_service
+from app.core.constants import TaskStatusName
+from app.models import User
+from app.repositories import task_status as task_status_repository
 from sqlmodel import Session, create_engine, select, text
 
 engine = create_engine(str(settings.SQLALCHEMY_DATABASE_URI))
-
-import pandas as pd
-from sqlalchemy import create_engine
-
-
-def csv_to_db_pandas(csv_file, engine, table_name):
-    # Чтение CSV
-    df = pd.read_csv(csv_file)
-
-    # Запись в БД
-    df.to_sql(table_name, engine, if_exists="replace", index=False)
-    print(f"Загружено {len(df)} строк в таблицу {table_name}")
 
 
 def init_db(session: Session) -> None:
@@ -25,30 +17,14 @@ def init_db(session: Session) -> None:
 
     users = session.exec(select(User).limit(2)).all()
     if not users:
-        with open("/app/backend/app/db/db.sql", "r", encoding="utf-8") as file:
+        sql_path = Path(__file__).resolve().parents[1] / "db" / "db.sql"
+        with open(sql_path, "r", encoding="utf-8") as file:
             sql_script = file.read()
 
         session.exec(text(sql_script))
+        _shift_agent_point_dates_to_today(session=session)
         session.commit()
-
-        csv_to_db_pandas(
-            "/app/backend/app/db/location_edge.csv", engine, "location_edge"
-        )
-
-        script = """-- Создаем новую колонку
-    ALTER TABLE location_edge 
-    ADD COLUMN IF NOT EXISTS route_geom geography(LINESTRING, 4326);
-    
-    -- Правильное преобразование: сначала декодируем hex в bytea, потом в геометрию
-    UPDATE location_edge 
-    SET route_geom = ST_GeomFromEWKB(decode(route, 'hex'))
-    WHERE route IS NOT NULL 
-      AND route != '' 
-      AND route_geom IS NULL;
-      ALTER TABLE location_edge DROP COLUMN IF EXISTS route;
-            ALTER TABLE location_edge RENAME COLUMN route_geom TO route;"""
-        session.exec(text(script))
-        session.commit()
+    _ensure_required_task_statuses(session=session)
     # role = session.exec(select(Role).where(Role.name == "ADMIN")).first()
     # if not role:
     #     role = Role(name="ADMIN")
@@ -70,3 +46,45 @@ def init_db(session: Session) -> None:
     #         role_id=1,
     #     )
     #     user = user_service.create(session=session, user_create=user_in)
+
+
+
+
+
+def _shift_agent_point_dates_to_today(*, session: Session) -> None:
+    """
+    Смещает даты подключения точек из датасета так, чтобы "вчера"
+    из исходного среза стало вчера относительно текущего дня.
+    """
+    reference_yesterday = date(2023, 1, 2)
+    target_yesterday = date.today() - timedelta(days=1)
+    shift_days = (target_yesterday - reference_yesterday).days
+    if shift_days == 0:
+        return
+
+    stmt = text(
+        """
+        UPDATE public.agent_point
+        SET created_time = created_time + (:shift_interval * INTERVAL '1 day')
+        """
+    ).bindparams(shift_interval=shift_days)
+    session.exec(stmt)
+
+    event_stmt = text(
+        """
+        UPDATE public.agent_point_event
+        SET event_time = event_time + (:shift_interval * INTERVAL '1 day')
+        WHERE metric_name = 'cards_gived'
+          AND event_type = 'cards_gived_changed'
+        """
+    ).bindparams(shift_interval=shift_days)
+    session.exec(event_stmt)
+
+
+def _ensure_required_task_statuses(*, session: Session) -> None:
+    for status_name in (
+        TaskStatusName.ASSIGNED.value,
+        TaskStatusName.COMPLETED.value,
+        TaskStatusName.SKIPPED.value,
+    ):
+        task_status_repository.ensure_exists(session=session, name=status_name)

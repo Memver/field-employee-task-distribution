@@ -36,7 +36,6 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8
     FRONTEND_HOST: str = "http://localhost:5173"
     ENVIRONMENT: Literal["local", "staging", "production"] = "local"
-
     BACKEND_CORS_ORIGINS: Annotated[
         list[AnyUrl] | str, BeforeValidator(parse_cors)
     ] = []
@@ -93,6 +92,22 @@ class Settings(BaseSettings):
     EMAIL_TEST_USER: EmailStr = "test@example.com"
     FIRST_SUPERUSER: EmailStr
     FIRST_SUPERUSER_PASSWORD: str
+    OSRM_BASE_URL: str = "http://localhost:5000"
+    DROP_PENALTY_HIGH_HOURS: int = 30
+    DROP_PENALTY_MIDDLE_HOURS: int = 8
+    DROP_PENALTY_LOW_HOURS: int = 2
+    DROP_PENALTY_HIGH_MULTIPLIER: int = 4
+    SOLVER_TIME_LIMIT_SECONDS: int = 10
+    RECENT_CONNECTION_DAYS: int = 1
+    # Soft upper bound on Time dimension cumul at task nodes (seconds from shift start).
+    # Encourages visiting higher-priority tasks earlier without breaking the 8h hard limit.
+    ROUTE_SOFT_DEADLINE_HIGH_SECONDS: int = 2 * 60 * 60
+    ROUTE_SOFT_DEADLINE_MIDDLE_SECONDS: int = 5 * 60 * 60
+    ROUTE_SOFT_DEADLINE_LOW_SECONDS: int | None = None
+    # Linear penalty added to objective per second of cumul above soft deadline (0 disables).
+    ROUTE_SOFT_UPPER_VIOLATION_COST_HIGH: int = 5
+    ROUTE_SOFT_UPPER_VIOLATION_COST_MIDDLE: int = 1
+    ROUTE_SOFT_UPPER_VIOLATION_COST_LOW: int = 0
 
     def _check_default_secret(self, var_name: str, value: str | None) -> None:
         if value == "changethis":

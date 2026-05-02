@@ -1,0 +1,124 @@
+import {
+  Briefcase,
+  CircleGauge,
+  Clock3,
+  ListChecks,
+  MapPinned,
+  Shield,
+  Target,
+  Users,
+  Wrench,
+  type LucideIcon,
+} from "lucide-react"
+
+export type RoleName =
+  | "ADMIN"
+  | "EMPLOYEE_MANAGER"
+  | "FIELD_EMPLOYEE"
+  | "AGENT_POINT_MANAGER"
+
+export type NavigationSection = {
+  key: string
+  title: string
+  path: string
+  icon: LucideIcon
+}
+
+const dashboardSection: NavigationSection = {
+  key: "dashboard",
+  title: "Dashboard",
+  path: "/",
+  icon: CircleGauge,
+}
+
+const sectionsByKey: Record<string, NavigationSection> = {
+  users: { key: "users", title: "Пользователи", path: "/admin", icon: Shield },
+  roles: { key: "roles", title: "Роли", path: "/roles", icon: Shield },
+  grades: { key: "grades", title: "Грейды", path: "/grades", icon: Briefcase },
+  locations: {
+    key: "locations",
+    title: "Локации",
+    path: "/locations",
+    icon: MapPinned,
+  },
+  priorities: {
+    key: "priorities",
+    title: "Приоритеты",
+    path: "/priorities",
+    icon: ListChecks,
+  },
+  taskStatuses: {
+    key: "taskStatuses",
+    title: "Статусы задач",
+    path: "/task-statuses",
+    icon: ListChecks,
+  },
+  employees: {
+    key: "employees",
+    title: "Выездные сотрудники",
+    path: "/employees",
+    icon: Users,
+  },
+  taskTypes: {
+    key: "taskTypes",
+    title: "Типы задач",
+    path: "/task-types",
+    icon: Wrench,
+  },
+  agentPoints: {
+    key: "agentPoints",
+    title: "Агентские точки",
+    path: "/agent-points",
+    icon: Target,
+  },
+  agentPointEvents: {
+    key: "agentPointEvents",
+    title: "События агентских точек",
+    path: "/agent-point-events",
+    icon: Clock3,
+  },
+  tasks: { key: "tasks", title: "Задачи", path: "/tasks", icon: Briefcase },
+}
+
+const roleSectionKeys: Record<RoleName, string[]> = {
+  ADMIN: ["users", "roles"],
+  EMPLOYEE_MANAGER: [
+    "grades",
+    "locations",
+    "priorities",
+    "taskStatuses",
+    "employees",
+    "taskTypes",
+    "agentPoints",
+    "agentPointEvents",
+    "tasks",
+  ],
+  FIELD_EMPLOYEE: [],
+  AGENT_POINT_MANAGER: ["agentPoints"],
+}
+
+export function getRoleName(roleName: string | undefined): RoleName | null {
+  if (!roleName) {
+    return null
+  }
+  if (roleName in roleSectionKeys) {
+    return roleName as RoleName
+  }
+  return null
+}
+
+export function getDashboardSections(roleName: string | undefined): NavigationSection[] {
+  const safeRole = getRoleName(roleName)
+  if (!safeRole) {
+    return []
+  }
+  return roleSectionKeys[safeRole].map((key) => sectionsByKey[key]).filter(Boolean)
+}
+
+export function getSidebarSections(roleName: string | undefined): NavigationSection[] {
+  return [dashboardSection, ...getDashboardSections(roleName)]
+}
+
+export function isFieldEmployeeRole(roleName: string | undefined): boolean {
+  return getRoleName(roleName) === "FIELD_EMPLOYEE"
+}

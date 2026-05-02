@@ -1,5 +1,3 @@
-CREATE EXTENSION IF NOT EXISTS postgis;
-
 INSERT INTO public.role
 (
 	id, name
@@ -72,7 +70,8 @@ INSERT INTO public.task_status
 )
 	VALUES 
 	(1, 'ASSIGNED'),
-	(2, 'COMPLETED');
+	(2, 'COMPLETED'),
+	(3, 'SKIPPED');
 
 INSERT INTO public.user
 (
@@ -88,7 +87,8 @@ INSERT INTO public.user
     (7, 3, 'belyaeva', '$argon2id$v=19$m=65536,t=3,p=4$Cr2d+zOfstb+PKyeE4mQ+w$FDbg5dHzox+LloOT4IM1h5BWZ4q+WZ5CWSGURU2DDwA', 'Евгения', 'Беляева', 'Антоновна', false),
     (8, 3, 'nikolaev', '$argon2id$v=19$m=65536,t=3,p=4$Cr2d+zOfstb+PKyeE4mQ+w$FDbg5dHzox+LloOT4IM1h5BWZ4q+WZ5CWSGURU2DDwA', 'Азарий', 'Николаев', 'Платонович', false),
 	(9, 1, 'admin', '$argon2id$v=19$m=65536,t=3,p=4$Cr2d+zOfstb+PKyeE4mQ+w$FDbg5dHzox+LloOT4IM1h5BWZ4q+WZ5CWSGURU2DDwA', 'Валерий', 'Евдокимов', 'Данилович', true),
-	(10, 2, 'manager', '$argon2id$v=19$m=65536,t=3,p=4$Cr2d+zOfstb+PKyeE4mQ+w$FDbg5dHzox+LloOT4IM1h5BWZ4q+WZ5CWSGURU2DDwA', 'Адам', 'Бобылёв', 'Тихонович', false);
+	(10, 2, 'manager', '$argon2id$v=19$m=65536,t=3,p=4$Cr2d+zOfstb+PKyeE4mQ+w$FDbg5dHzox+LloOT4IM1h5BWZ4q+WZ5CWSGURU2DDwA', 'Адам', 'Бобылёв', 'Тихонович', false),
+    (11, 4, 'ap_manager', '$argon2id$v=19$m=65536,t=3,p=4$Cr2d+zOfstb+PKyeE4mQ+w$FDbg5dHzox+LloOT4IM1h5BWZ4q+WZ5CWSGURU2DDwA', 'Адам', 'Бобылёв', 'Тихонович', false);
 
 INSERT INTO public.employee
 (
@@ -117,49 +117,192 @@ INSERT INTO public.task_type
 	id, name, execution_time, min_grade_id, priority_id
 )
 	VALUES 
-	-- (priority LOW, performTime 2.0, min grade MIDDLE)
-	(1, 'SALES_STIMULATION', 2, 2, 1),
-	-- (priority MIDDLE, performTime 2.0, min grade SENIOR)
-	(2, 'AGENT_TRAINING', 2, 3, 2),
-	-- (priority LOW, performTime 5.0, min grade JUNIOR)
-	(3, 'CARDS_DELIVERY', 5, 1, 1);
+	-- (priority HIGH, min grade SENIOR)
+	(1, 'SALES_STIMULATION', 4, 3, 3),
+	-- (priority MIDDLE, perform_time 2ч, min grade MIDDLE)
+	(2, 'AGENT_TRAINING', 2, 2, 2),
+	-- (priority LOW, perform_time 1.5ч, min grade JUNIOR)
+	(3, 'CARDS_DELIVERY', 1.5, 1, 1);
 
 
 INSERT INTO public.agent_point
 (
-	id, location_id, created_time, is_cards_delivered, days_since_last_card_gived, approved_applications, cards_gived
+    id, location_id, created_time
 )
-	VALUES 
-	-- Для упрощения, создадим время создания как '2023-01-01 00:00:00' для всех точек
-	(1, 4, '2023-01-01 00:00:00', true, 12, 19, 1),
-	(2, 5, '2023-01-01 00:00:00', true, 27, 19, 12),
-	(3, 6, '2023-01-01 00:00:00', true, 15, 29, 15),
-	(4, 7, '2023-01-01 00:00:00', false, 0, 5, 0),
-	(5, 8, '2023-01-01 00:00:00', true, 7, 14, 3),
-	(7, 9, '2023-01-01 00:00:00', true, 9, 10, 7),
-	(8, 10, '2023-01-01 00:00:00', true, 6, 65, 12),
-	(9, 11, '2023-01-01 00:00:00', true, 0, 38, 23),
-	(10, 12, '2023-01-01 00:00:00', false, 0, 14, 0),
-	(11, 13, '2023-01-01 00:00:00', true, 33, 84, 63),
-	(12, 14, '2023-01-01 00:00:00', true, 2, 15, 1),
-	(13, 15, '2023-01-01 00:00:00', true, 0, 19, 0),
-	(14, 16, '2023-01-01 00:00:00', false, 0, 0, 0),
-	(15, 17, '2023-01-01 00:00:00', false, 0, 0, 0),
-	(16, 18, '2023-01-01 00:00:00', true, 4, 21, 5),
-	(17, 19, '2023-01-01 00:00:00', false, 0, 6, 0),
-	(18, 20, '2023-01-01 00:00:00', true, 6, 18, 6),
-	(19, 21, '2023-01-01 00:00:00', true, 2, 96, 20),
-	(20, 22, '2023-01-01 00:00:00', true, 3, 20, 4),
-	(21, 23, '2023-01-01 00:00:00', false, 0, 0, 0),
-	(22, 24, '2023-01-01 00:00:00', false, 0, 0, 0),
-	(23, 25, '2023-01-01 00:00:00', true, 0, 16, 0),
-	(24, 26, '2023-01-01 00:00:00', true, 3, 43, 29),
-	(25, 27, '2023-01-01 00:00:00', true, 3, 13, 4),
-	(26, 28, '2023-01-01 00:00:00', true, 16, 45, 30),
-	(27, 29, '2023-01-01 00:00:00', true, 1, 19, 4),
-	(28, 30, '2023-01-01 00:00:00', true, 3, 20, 9),
-	(29, 31, '2023-01-01 00:00:00', true, 76, 82, 72),
-	(31, 32, '2023-01-01 00:00:00', false, 0, 10, 0);
+VALUES
+    -- Базовая дата среза датасета: 2023-01-02 (вчера), 2022-12-01 (давно)
+    (1, 4, '2022-12-01 00:00:00+00'::timestamptz),
+    (2, 5, '2022-12-01 00:00:00+00'::timestamptz),
+    (3, 6, '2022-12-01 00:00:00+00'::timestamptz),
+    (4, 7, '2022-12-01 00:00:00+00'::timestamptz),
+    (5, 8, '2022-12-01 00:00:00+00'::timestamptz),
+    (7, 9, '2022-12-01 00:00:00+00'::timestamptz),
+    (8, 10, '2022-12-01 00:00:00+00'::timestamptz),
+    (9, 11, '2022-12-01 00:00:00+00'::timestamptz),
+    (10, 12, '2022-12-01 00:00:00+00'::timestamptz),
+    (11, 13, '2022-12-01 00:00:00+00'::timestamptz),
+    (12, 14, '2022-12-01 00:00:00+00'::timestamptz),
+    (13, 15, '2022-12-01 00:00:00+00'::timestamptz),
+    (14, 16, '2023-01-02 00:00:00+00'::timestamptz),
+    (15, 17, '2023-01-02 00:00:00+00'::timestamptz),
+    (16, 18, '2022-12-01 00:00:00+00'::timestamptz),
+    (17, 19, '2023-01-02 00:00:00+00'::timestamptz),
+    (18, 20, '2022-12-01 00:00:00+00'::timestamptz),
+    (19, 21, '2022-12-01 00:00:00+00'::timestamptz),
+    (20, 22, '2022-12-01 00:00:00+00'::timestamptz),
+    (21, 23, '2023-01-02 00:00:00+00'::timestamptz),
+    (22, 24, '2023-01-02 00:00:00+00'::timestamptz),
+    (23, 25, '2022-12-01 00:00:00+00'::timestamptz),
+    (24, 26, '2022-12-01 00:00:00+00'::timestamptz),
+    (25, 27, '2022-12-01 00:00:00+00'::timestamptz),
+    (26, 28, '2022-12-01 00:00:00+00'::timestamptz),
+    (27, 29, '2022-12-01 00:00:00+00'::timestamptz),
+    (28, 30, '2022-12-01 00:00:00+00'::timestamptz),
+    (29, 31, '2022-12-01 00:00:00+00'::timestamptz),
+    (31, 32, '2022-12-01 00:00:00+00'::timestamptz);
+
+INSERT INTO public.agent_point_manager
+(
+    agent_point_id, user_id
+)
+VALUES
+    (1, 11);
+
+INSERT INTO public.agent_point_event
+(
+    agent_point_id, event_time, event_type, metric_name, metric_value_bool
+)
+SELECT
+    id,
+    event_time::timestamptz,
+    'cards_delivery_status_changed',
+    'is_cards_delivered',
+    is_cards_delivered
+FROM (
+    VALUES
+        (1, '2023-01-01 00:00:00+00'::timestamptz, true),
+        (2, '2023-01-01 00:00:00+00'::timestamptz, true),
+        (3, '2023-01-01 00:00:00+00'::timestamptz, true),
+        (4, '2023-01-01 00:00:00+00'::timestamptz, false),
+        (5, '2023-01-01 00:00:00+00'::timestamptz, true),
+        (7, '2023-01-01 00:00:00+00'::timestamptz, true),
+        (8, '2023-01-01 00:00:00+00'::timestamptz, true),
+        (9, '2023-01-01 00:00:00+00'::timestamptz, true),
+        (10, '2023-01-01 00:00:00+00'::timestamptz, false),
+        (11, '2023-01-01 00:00:00+00'::timestamptz, true),
+        (12, '2023-01-01 00:00:00+00'::timestamptz, true),
+        (13, '2023-01-01 00:00:00+00'::timestamptz, true),
+        (14, '2023-01-01 00:00:00+00'::timestamptz, false),
+        (15, '2023-01-01 00:00:00+00'::timestamptz, false),
+        (16, '2023-01-01 00:00:00+00'::timestamptz, true),
+        (17, '2023-01-01 00:00:00+00'::timestamptz, false),
+        (18, '2023-01-01 00:00:00+00'::timestamptz, true),
+        (19, '2023-01-01 00:00:00+00'::timestamptz, true),
+        (20, '2023-01-01 00:00:00+00'::timestamptz, true),
+        (21, '2023-01-01 00:00:00+00'::timestamptz, false),
+        (22, '2023-01-01 00:00:00+00'::timestamptz, false),
+        (23, '2023-01-01 00:00:00+00'::timestamptz, true),
+        (24, '2023-01-01 00:00:00+00'::timestamptz, true),
+        (25, '2023-01-01 00:00:00+00'::timestamptz, true),
+        (26, '2023-01-01 00:00:00+00'::timestamptz, true),
+        (27, '2023-01-01 00:00:00+00'::timestamptz, true),
+        (28, '2023-01-01 00:00:00+00'::timestamptz, true),
+        (29, '2023-01-01 00:00:00+00'::timestamptz, true),
+        (31, '2023-01-01 00:00:00+00'::timestamptz, false)
+) AS seed(id, event_time, is_cards_delivered);
+
+INSERT INTO public.agent_point_event
+(
+    agent_point_id, event_time, event_type, metric_name, metric_value_num
+)
+SELECT
+    id,
+    event_time::timestamptz,
+    'approved_applications_changed',
+    'approved_applications',
+    approved_applications
+FROM (
+    VALUES
+        (1, '2023-01-01 00:00:00+00'::timestamptz, 19),
+        (2, '2023-01-01 00:00:00+00'::timestamptz, 19),
+        (3, '2023-01-01 00:00:00+00'::timestamptz, 29),
+        (4, '2023-01-01 00:00:00+00'::timestamptz, 5),
+        (5, '2023-01-01 00:00:00+00'::timestamptz, 14),
+        (7, '2023-01-01 00:00:00+00'::timestamptz, 10),
+        (8, '2023-01-01 00:00:00+00'::timestamptz, 65),
+        (9, '2023-01-01 00:00:00+00'::timestamptz, 38),
+        (10, '2023-01-01 00:00:00+00'::timestamptz, 14),
+        (11, '2023-01-01 00:00:00+00'::timestamptz, 84),
+        (12, '2023-01-01 00:00:00+00'::timestamptz, 15),
+        (13, '2023-01-01 00:00:00+00'::timestamptz, 19),
+        (14, '2023-01-01 00:00:00+00'::timestamptz, 0),
+        (15, '2023-01-01 00:00:00+00'::timestamptz, 0),
+        (16, '2023-01-01 00:00:00+00'::timestamptz, 21),
+        (17, '2023-01-01 00:00:00+00'::timestamptz, 6),
+        (18, '2023-01-01 00:00:00+00'::timestamptz, 18),
+        (19, '2023-01-01 00:00:00+00'::timestamptz, 96),
+        (20, '2023-01-01 00:00:00+00'::timestamptz, 20),
+        (21, '2023-01-01 00:00:00+00'::timestamptz, 0),
+        (22, '2023-01-01 00:00:00+00'::timestamptz, 0),
+        (23, '2023-01-01 00:00:00+00'::timestamptz, 16),
+        (24, '2023-01-01 00:00:00+00'::timestamptz, 43),
+        (25, '2023-01-01 00:00:00+00'::timestamptz, 13),
+        (26, '2023-01-01 00:00:00+00'::timestamptz, 45),
+        (27, '2023-01-01 00:00:00+00'::timestamptz, 19),
+        (28, '2023-01-01 00:00:00+00'::timestamptz, 20),
+        (29, '2023-01-01 00:00:00+00'::timestamptz, 82),
+        (31, '2023-01-01 00:00:00+00'::timestamptz, 10)
+) AS seed(id, event_time, approved_applications);
+
+INSERT INTO public.agent_point_event
+(
+    agent_point_id, event_time, event_type, metric_name, metric_value_num
+)
+SELECT
+    seed.agent_point_id,
+    (
+        ap.created_time
+        + (
+            (DATE '2023-01-02' - ap.created_time::date)
+            - seed.days_after_last_card
+        ) * INTERVAL '1 day'
+    )::timestamptz,
+    'cards_gived_changed',
+    'cards_gived',
+    seed.cards_gived
+FROM (
+    VALUES
+        (1, 12, 1),
+        (2, 27, 12),
+        (3, 15, 15),
+        (4, 0, 0),
+        (5, 7, 3),
+        (7, 9, 7),
+        (8, 6, 12),
+        (9, 0, 23),
+        (10, 0, 0),
+        (11, 33, 63),
+        (12, 2, 1),
+        (13, 0, 0),
+        (14, 0, 0),
+        (15, 0, 0),
+        (16, 4, 5),
+        (17, 0, 0),
+        (18, 6, 6),
+        (19, 2, 20),
+        (20, 3, 4),
+        (21, 0, 0),
+        (22, 0, 0),
+        (23, 0, 0),
+        (24, 3, 29),
+        (25, 3, 4),
+        (26, 16, 30),
+        (27, 1, 4),
+        (28, 3, 9),
+        (29, 76, 72),
+        (31, 0, 0)
+) AS seed(agent_point_id, days_after_last_card, cards_gived)
+JOIN public.agent_point AS ap ON ap.id = seed.agent_point_id;
 
 INSERT INTO public.task
 (
@@ -199,36 +342,35 @@ INSERT INTO public.task
 
 	Maximum of the route distances: 30568m
 	*/
-	(1, 1, 8, '2026-03-01 08:00:00', '2026-03-01 09:00:00', 1, 1, ''),
-	(2, 1, 25, '2026-03-01 09:00:00', '2026-03-01 10:00:00', 1, 1, ''),
-	(3, 1, 18, '2026-03-01 10:00:00', '2026-03-01 11:00:00', 1, 1, ''),
-	(4, 1, 2, '2026-03-01 11:00:00', '2026-03-01 12:00:00', 1, 1, ''),
-	(5, 1, 15, '2026-03-01 12:00:00', '2026-03-01 13:00:00', 1, 1, ''),
-	(6, 1, 23, '2026-03-01 13:00:00', '2026-03-01 14:00:00', 1, 1, ''),
-	(7, 1, 21, '2026-03-01 14:00:00', '2026-03-01 15:00:00', 1, 1, ''),
-	(8, 1, 28, '2026-03-01 15:00:00', '2026-03-01 16:00:00', 1, 1, ''),
-	(9, 2, 14, '2026-03-01 08:00:00', '2026-03-01 09:00:00', 1, 1, ''),
-	(10, 2, 31, '2026-03-01 09:00:00', '2026-03-01 10:00:00', 1, 1, ''),
-	(11, 2, 13, '2026-03-01 10:00:00', '2026-03-01 11:00:00', 1, 1, ''),
-	(12, 2, 27, '2026-03-01 11:00:00', '2026-03-01 12:00:00', 1, 1, ''),
-	(13, 2, 29, '2026-03-01 12:00:00', '2026-03-01 13:00:00', 1, 1, ''),
-	(14, 2, 26, '2026-03-01 13:00:00', '2026-03-01 14:00:00', 1, 1, ''),
-	(15, 2, 7, '2026-03-01 14:00:00', '2026-03-01 15:00:00', 1, 1, ''),
-	(16, 2, 20, '2026-03-01 15:00:00', '2026-03-01 16:00:00', 1, 1, ''),
-	(17, 4, 5, '2026-03-01 08:00:00', '2026-03-01 09:00:00', 1, 1, ''),
-	(18, 4, 12, '2026-03-01 09:00:00', '2026-03-01 10:00:00', 1, 1, ''),
-	(19, 4, 4, '2026-03-01 10:00:00', '2026-03-01 11:00:00', 1, 1, ''),
-	(20, 4, 16, '2026-03-01 11:00:00', '2026-03-01 12:00:00', 1, 1, ''),
-	(21, 4, 24, '2026-03-01 12:00:00', '2026-03-01 13:00:00', 1, 1, ''),
-	(22, 4, 10, '2026-03-01 13:00:00', '2026-03-01 14:00:00', 1, 1, ''),
-	(23, 4, 1, '2026-03-01 14:00:00', '2026-03-01 15:00:00', 1, 1, ''),
-	(24, 7, 11, '2026-03-01 08:00:00', '2026-03-01 09:00:00', 1, 1, ''),
-	(25, 7, 22, '2026-03-01 09:00:00', '2026-03-01 10:00:00', 1, 1, ''),
-	(26, 7, 3, '2026-03-01 10:00:00', '2026-03-01 11:00:00', 1, 1, ''),
-	(27, 7, 17, '2026-03-01 11:00:00', '2026-03-01 12:00:00', 1, 1, ''),
-	(28, 7, 19, '2026-03-01 12:00:00', '2026-03-01 13:00:00', 1, 1, ''),
-	(29, 8, 9, '2026-03-01 08:00:00', '2026-03-01 09:00:00', 1, 1, '');
-	
+	(1, 1, 8, '2026-03-01 08:00:00+00'::timestamptz, '2026-03-01 09:00:00+00'::timestamptz, 1, 1, ''),
+	(2, 1, 25, '2026-03-01 09:00:00+00'::timestamptz, '2026-03-01 10:00:00+00'::timestamptz, 1, 1, ''),
+	(3, 1, 18, '2026-03-01 10:00:00+00'::timestamptz, '2026-03-01 11:00:00+00'::timestamptz, 1, 1, ''),
+	(4, 1, 2, '2026-03-01 11:00:00+00'::timestamptz, '2026-03-01 12:00:00+00'::timestamptz, 1, 1, ''),
+	(5, 1, 15, '2026-03-01 12:00:00+00'::timestamptz, '2026-03-01 13:00:00+00'::timestamptz, 1, 1, ''),
+	(6, 1, 23, '2026-03-01 13:00:00+00'::timestamptz, '2026-03-01 14:00:00+00'::timestamptz, 1, 1, ''),
+	(7, 1, 21, '2026-03-01 14:00:00+00'::timestamptz, '2026-03-01 15:00:00+00'::timestamptz, 1, 1, ''),
+	(8, 1, 28, '2026-03-01 15:00:00+00'::timestamptz, '2026-03-01 16:00:00+00'::timestamptz, 1, 1, ''),
+	(9, 2, 14, '2026-03-01 08:00:00+00'::timestamptz, '2026-03-01 09:00:00+00'::timestamptz, 1, 1, ''),
+	(10, 2, 31, '2026-03-01 09:00:00+00'::timestamptz, '2026-03-01 10:00:00+00'::timestamptz, 1, 1, ''),
+	(11, 2, 13, '2026-03-01 10:00:00+00'::timestamptz, '2026-03-01 11:00:00+00'::timestamptz, 1, 1, ''),
+	(12, 2, 27, '2026-03-01 11:00:00+00'::timestamptz, '2026-03-01 12:00:00+00'::timestamptz, 1, 1, ''),
+	(13, 2, 29, '2026-03-01 12:00:00+00'::timestamptz, '2026-03-01 13:00:00+00'::timestamptz, 1, 1, ''),
+	(14, 2, 26, '2026-03-01 13:00:00+00'::timestamptz, '2026-03-01 14:00:00+00'::timestamptz, 1, 1, ''),
+	(15, 2, 7, '2026-03-01 14:00:00+00'::timestamptz, '2026-03-01 15:00:00+00'::timestamptz, 1, 1, ''),
+	(16, 2, 20, '2026-03-01 15:00:00+00'::timestamptz, '2026-03-01 16:00:00+00'::timestamptz, 1, 1, ''),
+	(17, 4, 5, '2026-03-01 08:00:00+00'::timestamptz, '2026-03-01 09:00:00+00'::timestamptz, 1, 1, ''),
+	(18, 4, 12, '2026-03-01 09:00:00+00'::timestamptz, '2026-03-01 10:00:00+00'::timestamptz, 1, 1, ''),
+	(19, 4, 4, '2026-03-01 10:00:00+00'::timestamptz, '2026-03-01 11:00:00+00'::timestamptz, 1, 1, ''),
+	(20, 4, 16, '2026-03-01 11:00:00+00'::timestamptz, '2026-03-01 12:00:00+00'::timestamptz, 1, 1, ''),
+	(21, 4, 24, '2026-03-01 12:00:00+00'::timestamptz, '2026-03-01 13:00:00+00'::timestamptz, 1, 1, ''),
+	(22, 4, 10, '2026-03-01 13:00:00+00'::timestamptz, '2026-03-01 14:00:00+00'::timestamptz, 1, 1, ''),
+	(23, 4, 1, '2026-03-01 14:00:00+00'::timestamptz, '2026-03-01 15:00:00+00'::timestamptz, 1, 1, ''),
+	(24, 7, 11, '2026-03-01 08:00:00+00'::timestamptz, '2026-03-01 09:00:00+00'::timestamptz, 1, 1, ''),
+	(25, 7, 22, '2026-03-01 09:00:00+00'::timestamptz, '2026-03-01 10:00:00+00'::timestamptz, 1, 1, ''),
+	(26, 7, 3, '2026-03-01 10:00:00+00'::timestamptz, '2026-03-01 11:00:00+00'::timestamptz, 1, 1, ''),
+	(27, 7, 17, '2026-03-01 11:00:00+00'::timestamptz, '2026-03-01 12:00:00+00'::timestamptz, 1, 1, ''),
+	(28, 7, 19, '2026-03-01 12:00:00+00'::timestamptz, '2026-03-01 13:00:00+00'::timestamptz, 1, 1, ''),
+	(29, 8, 9, '2026-03-01 08:00:00+00'::timestamptz, '2026-03-01 09:00:00+00'::timestamptz, 1, 1, '');
 
 ALTER SEQUENCE public.role_id_seq RESTART WITH 100;
 ALTER SEQUENCE public.grade_id_seq RESTART WITH 100;
@@ -239,5 +381,7 @@ ALTER SEQUENCE public.priority_id_seq RESTART WITH 100;
 ALTER SEQUENCE public.task_status_id_seq RESTART WITH 100;
 ALTER SEQUENCE public.task_type_id_seq RESTART WITH 100;
 ALTER SEQUENCE public.agent_point_id_seq RESTART WITH 100;
+ALTER SEQUENCE public.agent_point_manager_id_seq RESTART WITH 100;
+ALTER SEQUENCE public.agent_point_event_id_seq RESTART WITH 1000;
 ALTER SEQUENCE public.task_id_seq RESTART WITH 100;
-ALTER SEQUENCE public.location_edge_id_seq RESTART WITH 2000;
+ALTER SEQUENCE public.task_carryover_id_seq RESTART WITH 100;

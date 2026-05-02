@@ -1,5 +1,6 @@
 from app.api.routes import (
     agent_point,
+    agent_point_event,
     employee,
     grade,
     location,
@@ -19,6 +20,7 @@ from fastapi import APIRouter
 api_router = APIRouter()
 api_router.include_router(login.router)
 api_router.include_router(agent_point.router)
+api_router.include_router(agent_point_event.router)
 api_router.include_router(grade.router)
 api_router.include_router(location.router)
 api_router.include_router(priority.router)

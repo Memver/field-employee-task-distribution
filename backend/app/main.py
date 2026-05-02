@@ -1,3 +1,4 @@
+import logging
 import sentry_sdk
 from app.api.main import api_router
 from app.core.config import settings
@@ -6,6 +7,17 @@ from fastapi.responses import JSONResponse
 from fastapi.routing import APIRoute
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.cors import CORSMiddleware
+
+
+if settings.ENVIRONMENT == "local":
+    # Route app-level logs (e.g. app.distribute) through uvicorn console handlers.
+    uvicorn_error_logger = logging.getLogger("uvicorn.error")
+    app_logger = logging.getLogger("app")
+    app_logger.setLevel(logging.INFO)
+    if uvicorn_error_logger.handlers:
+        app_logger.handlers = uvicorn_error_logger.handlers
+        app_logger.propagate = False
+    app_logger.info("App logger initialized at INFO level")
 
 
 def custom_generate_unique_id(route: APIRoute) -> str:
@@ -46,4 +58,32 @@ async def starlette_http_exception_handler(
     return JSONResponse(
         status_code=exc.status_code,
         content={"detail2": exc.detail},
+    )
+
+@app.exception_handler(Exception)
+async def generic_exception_handler(request: Request, exc: Exception):
+    # Логируем полную информацию об ошибке для отладки
+    print(f"500 ошибка на пути: {request.url.path}")
+    print(f"Метод: {request.method}")
+    print(f"Тип ошибки: {type(exc).__name__}")
+    print(f"Сообщение: {str(exc)}")
+    print("Трассировка:")
+    
+    # Формируем подробное сообщение об ошибке
+    error_message = f"{type(exc).__name__}: {str(exc)}"
+    
+    # В зависимости от окружения можно возвращать разную детализацию
+    if settings.ENVIRONMENT == "production":
+        # В продакшене показываем только тип ошибки
+        error_detail = f"Internal server error: {type(exc).__name__}"
+    else:
+        # В разработке показываем полную информацию
+        error_detail = error_message
+    
+    return JSONResponse(
+        status_code=500,
+        content={
+            "status": 500,
+            "error": error_detail,
+        },
     )

@@ -1,22 +1,12 @@
-import uuid
 from typing import Any
 
-from app.services import user as service
-from app.api.deps import CurrentUser, SessionDep, get_current_active_superuser
-from app.core.config import settings
-from app.core.security import get_password_hash, verify_password
+from app.api.deps import SessionDep, get_current_active_superuser
 from app.models import (
-    Message,
-    UpdatePassword,
     User,
-    UserCreate,
-    UserPublic,
     UsersPublic,
-    UserUpdate,
-    UserUpdateMe,
 )
-from fastapi import APIRouter, Depends, HTTPException
-from sqlmodel import col, delete, func, select
+from fastapi import APIRouter, Depends
+from sqlmodel import func, select
 
 router = APIRouter(prefix="/users", tags=["users"])
 
