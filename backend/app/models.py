@@ -7,7 +7,6 @@ from sqlmodel import (
     CheckConstraint,
     Column,
     Field,
-    Index,
     Relationship,
     SQLModel,
     UniqueConstraint,
@@ -345,12 +344,6 @@ class TaskCarryover(TaskCarryoverBase, table=True):
             "task_type_id",
             "planned_for_date",
             name="uq_task_carryover_agent_point_task_type_planned_for_date",
-        ),
-        Index("ix_task_carryover_planned_for_date", "planned_for_date"),
-        Index(
-            "ix_task_carryover_agent_point_id_planned_for_date",
-            "agent_point_id",
-            "planned_for_date",
         ),
     )
 
