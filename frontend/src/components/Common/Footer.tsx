@@ -1,10 +1,8 @@
 export function Footer() {
-  const _currentYear = new Date().getFullYear()
-
   return (
-    <footer className="border-t py-4 px-6">
-      <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
-        Footer
+    <footer className="border-t py-4">
+      <div className="mx-auto max-w-7xl px-4 text-center text-sm text-muted-foreground">
+        © 2026 официальный сайт
       </div>
     </footer>
   )

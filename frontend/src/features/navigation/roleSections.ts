@@ -3,12 +3,12 @@ import {
   CircleGauge,
   Clock3,
   ListChecks,
+  type LucideIcon,
   MapPinned,
   Shield,
   Target,
   Users,
   Wrench,
-  type LucideIcon,
 } from "lucide-react"
 
 export type RoleName =
@@ -23,6 +23,8 @@ export type NavigationSection = {
   path: string
   icon: LucideIcon
 }
+
+export type StartPagePath = "/admin" | "/tasks"
 
 const dashboardSection: NavigationSection = {
   key: "dashboard",
@@ -94,7 +96,13 @@ const roleSectionKeys: Record<RoleName, string[]> = {
     "tasks",
   ],
   FIELD_EMPLOYEE: [],
-  AGENT_POINT_MANAGER: ["agentPoints"],
+  AGENT_POINT_MANAGER: ["agentPoints", "tasks"],
+}
+
+const startPageByRole: Partial<Record<RoleName, StartPagePath>> = {
+  ADMIN: "/admin",
+  EMPLOYEE_MANAGER: "/tasks",
+  AGENT_POINT_MANAGER: "/tasks",
 }
 
 export function getRoleName(roleName: string | undefined): RoleName | null {
@@ -107,16 +115,32 @@ export function getRoleName(roleName: string | undefined): RoleName | null {
   return null
 }
 
-export function getDashboardSections(roleName: string | undefined): NavigationSection[] {
+export function getDashboardSections(
+  roleName: string | undefined,
+): NavigationSection[] {
   const safeRole = getRoleName(roleName)
   if (!safeRole) {
     return []
   }
-  return roleSectionKeys[safeRole].map((key) => sectionsByKey[key]).filter(Boolean)
+  return roleSectionKeys[safeRole]
+    .map((key) => sectionsByKey[key])
+    .filter(Boolean)
 }
 
-export function getSidebarSections(roleName: string | undefined): NavigationSection[] {
+export function getSidebarSections(
+  roleName: string | undefined,
+): NavigationSection[] {
   return [dashboardSection, ...getDashboardSections(roleName)]
+}
+
+export function getStartPagePath(
+  roleName: string | undefined,
+): StartPagePath | null {
+  const safeRole = getRoleName(roleName)
+  if (!safeRole) {
+    return null
+  }
+  return startPageByRole[safeRole] ?? null
 }
 
 export function isFieldEmployeeRole(roleName: string | undefined): boolean {

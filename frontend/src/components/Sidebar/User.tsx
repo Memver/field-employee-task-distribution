@@ -17,11 +17,12 @@ function UserInfo({
   onClick,
 }: UserInfoProps) {
   return (
-    <div
-      className="flex items-center justify-end gap-2.5 w-full min-w-0"
+    <button
+      type="button"
+      className="flex max-w-[2.5in] shrink-0 cursor-pointer items-center justify-end gap-2.5 rounded-md border-0 bg-transparent px-2 py-1 text-left hover:bg-accent"
       onClick={onClick}
     >
-      <div className="flex flex-col items-start min-w-0">
+      <div className="flex min-w-0 flex-1 flex-col items-start">
         <p className="text-sm font-medium truncate w-full opacity-70">
           {`${surname} ${name} ${middle_name}`}
         </p>
@@ -30,7 +31,7 @@ function UserInfo({
       <Avatar className="size-7">
         <AvatarFallback className="bg-blue-400 text-white" />
       </Avatar>
-    </div>
+    </button>
   )
 }
 
@@ -39,8 +40,6 @@ export function User({ user }: { user: any }) {
   const handleLogout = async () => {
     logout()
   }
-
-  console.log(user)
 
   if (!user) return null
 
