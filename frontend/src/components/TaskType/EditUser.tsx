@@ -10,6 +10,7 @@ import {
   TaskTypesService,
   type TaskTypeUpdate,
 } from "@/client"
+import { RelationSelect } from "@/components/Common/RelationSelect"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -31,7 +32,9 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
+import { useTaskTypeFormOptions } from "@/features/taskTypes/formOptions"
 import useCustomToast from "@/hooks/useCustomToast"
+import { toasts } from "@/lib/i18n/ru"
 import { queryKeys } from "@/lib/queryKeys"
 import { handleError } from "@/utils"
 
@@ -42,7 +45,7 @@ const formSchema = z.object({
   priority_id: z.coerce.number().int().positive(),
 })
 
-type FormData = z.infer<typeof formSchema>
+type FormData = z.output<typeof formSchema>
 
 interface Props {
   taskType: TaskTypePublic
@@ -53,9 +56,15 @@ const EditUser = ({ taskType, onSuccess }: Props) => {
   const [isOpen, setIsOpen] = useState(false)
   const queryClient = useQueryClient()
   const { showSuccessToast, showErrorToast } = useCustomToast()
+  const options = useTaskTypeFormOptions()
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
-    defaultValues: taskType,
+    defaultValues: {
+      name: taskType.name,
+      execution_time: taskType.execution_time,
+      min_grade_id: taskType.min_grade_id,
+      priority_id: taskType.priority_id,
+    },
     mode: "onBlur",
     criteriaMode: "all",
   })
@@ -64,7 +73,7 @@ const EditUser = ({ taskType, onSuccess }: Props) => {
     mutationFn: (data: TaskTypeUpdate) =>
       TaskTypesService.updateTaskType({ id: taskType.id, requestBody: data }),
     onSuccess: () => {
-      showSuccessToast("Task type updated successfully")
+      showSuccessToast(toasts.taskTypeUpdated)
       setIsOpen(false)
       onSuccess()
     },
@@ -122,9 +131,14 @@ const EditUser = ({ taskType, onSuccess }: Props) => {
                 name="min_grade_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>ID мин. грейда</FormLabel>
+                    <FormLabel>Мин. грейд</FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} />
+                      <RelationSelect
+                        value={String(field.value)}
+                        onChange={(v) => field.onChange(Number(v))}
+                        options={options.gradeOptions}
+                        disabled={options.isLoading}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -135,9 +149,14 @@ const EditUser = ({ taskType, onSuccess }: Props) => {
                 name="priority_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>ID приоритета</FormLabel>
+                    <FormLabel>Приоритет</FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} />
+                      <RelationSelect
+                        value={String(field.value)}
+                        onChange={(v) => field.onChange(Number(v))}
+                        options={options.priorityOptions}
+                        disabled={options.isLoading}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

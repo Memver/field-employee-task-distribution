@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form"
 import { z } from "zod"
 
 import { type AgentPointCreate, AgentPointsService } from "@/client"
+import { RelationSelect } from "@/components/Common/RelationSelect"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
@@ -28,7 +29,9 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
+import { useAgentPointFormOptions } from "@/features/agentPoints/formOptions"
 import useCustomToast from "@/hooks/useCustomToast"
+import { toasts } from "@/lib/i18n/ru"
 import { handleError } from "@/utils"
 
 const formSchema = z.object({
@@ -40,12 +43,13 @@ const formSchema = z.object({
   location_id: z.coerce.number().int().positive(),
 })
 
-type FormData = z.infer<typeof formSchema>
+type FormData = z.output<typeof formSchema>
 
 const AddUser = () => {
   const [isOpen, setIsOpen] = useState(false)
   const queryClient = useQueryClient()
   const { showSuccessToast, showErrorToast } = useCustomToast()
+  const options = useAgentPointFormOptions()
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -58,7 +62,7 @@ const AddUser = () => {
     mutationFn: (data: AgentPointCreate) =>
       AgentPointsService.createAgentPoint({ requestBody: data }),
     onSuccess: () => {
-      showSuccessToast("Agent point created successfully")
+      showSuccessToast(toasts.agentPointCreated)
       form.reset()
       setIsOpen(false)
     },
@@ -165,9 +169,14 @@ const AddUser = () => {
                 name="location_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>ID локации</FormLabel>
+                    <FormLabel>Локация</FormLabel>
                     <FormControl>
-                      <Input placeholder="1" type="number" {...field} />
+                      <RelationSelect
+                        value={field.value ? String(field.value) : ""}
+                        onChange={(v) => field.onChange(Number(v))}
+                        options={options.locationOptions}
+                        disabled={options.isLoading}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

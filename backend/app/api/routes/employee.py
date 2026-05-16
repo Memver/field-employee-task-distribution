@@ -9,6 +9,7 @@ from app.models import (
     EmployeeUpdate,
     Message,
 )
+from app.repositories.eager_loads import employee_load_options, get_employee
 from fastapi import APIRouter, HTTPException
 from sqlmodel import func, select
 
@@ -25,7 +26,7 @@ def create_employee(
     employee = Employee.model_validate(employee_in)
     session.add(employee)
     session.commit()
-    session.refresh(employee)
+    employee = get_employee(session, employee.id)
     return employee
 
 
@@ -43,7 +44,12 @@ def read_employees(
     count_statement = select(func.count()).select_from(Employee)
     count = session.exec(count_statement).one()
 
-    statement = select(Employee).offset(skip).limit(limit)
+    statement = (
+        select(Employee)
+        .options(*employee_load_options())
+        .offset(skip)
+        .limit(limit)
+    )
     employees = session.exec(statement).all()
 
     return EmployeesPublic(data=employees, count=count)
@@ -56,7 +62,9 @@ def read_employee_by_id(
     """
     Get a specific employee by id.
     """
-    employee = session.get(Employee, employee_id)
+    employee = get_employee(session, employee_id)
+    if not employee:
+        raise HTTPException(status_code=404, detail="Employee not found")
     return employee
 
 
@@ -78,7 +86,7 @@ def update_employee(
     employee.sqlmodel_update(update_dict)
     session.add(employee)
     session.commit()
-    session.refresh(employee)
+    employee = get_employee(session, id)
     return employee
 
 
@@ -90,8 +98,6 @@ def delete_employee(
     Delete a employee.
     """
     employee = session.get(Employee, employee_id)
-    # statement = delete(Item).where(col(Item.owner_id) == employee_id)
-    # session.exec(statement)
     session.delete(employee)
     session.commit()
     return Message(message="Employee deleted successfully")

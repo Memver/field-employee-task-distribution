@@ -7,6 +7,7 @@ import {
 } from "@tanstack/react-table"
 import { DataTablePagination } from "@/components/Common/DataTablePagination"
 import { EmptyState } from "@/components/Common/EmptyState"
+import { emptyTable } from "@/lib/i18n/ru"
 import {
   Table,
   TableBody,
@@ -19,11 +20,15 @@ import {
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
+  emptyTitle?: string
+  emptyDescription?: string
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
+  emptyTitle,
+  emptyDescription,
 }: DataTableProps<TData, TValue>) {
   const table = useReactTable({
     data,
@@ -70,7 +75,10 @@ export function DataTable<TData, TValue>({
                 colSpan={columns.length}
                 className="h-32 text-center text-muted-foreground"
               >
-                <EmptyState title="No results found." />
+                <EmptyState
+                  title={emptyTitle ?? emptyTable.defaultTitle}
+                  description={emptyDescription ?? emptyTable.defaultDescription}
+                />
               </TableCell>
             </TableRow>
           )}

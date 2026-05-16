@@ -282,7 +282,7 @@ export function FieldEmployee() {
                       <div className="text-xs">
                         Комментарий:{" "}
                         <span className="font-medium">
-                          {taskForms[task.id]?.comment || task.comment || "Нет комментария"}
+                          {taskForms[task.id]?.comment || task.comment || "—"}
                         </span>
                       </div>
                     </div>

@@ -10,6 +10,7 @@ import {
   AgentPointsService,
   type AgentPointUpdate,
 } from "@/client"
+import { RelationSelect } from "@/components/Common/RelationSelect"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
@@ -32,7 +33,9 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
+import { useAgentPointFormOptions } from "@/features/agentPoints/formOptions"
 import useCustomToast from "@/hooks/useCustomToast"
+import { toasts } from "@/lib/i18n/ru"
 import { handleError } from "@/utils"
 
 const formSchema = z.object({
@@ -44,7 +47,7 @@ const formSchema = z.object({
   location_id: z.coerce.number().int().positive(),
 })
 
-type FormData = z.infer<typeof formSchema>
+type FormData = z.output<typeof formSchema>
 
 interface EditUserProps {
   agentPoint: AgentPointPublic
@@ -55,6 +58,7 @@ const EditUser = ({ agentPoint, onSuccess }: EditUserProps) => {
   const [isOpen, setIsOpen] = useState(false)
   const queryClient = useQueryClient()
   const { showSuccessToast, showErrorToast } = useCustomToast()
+  const options = useAgentPointFormOptions()
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -76,7 +80,7 @@ const EditUser = ({ agentPoint, onSuccess }: EditUserProps) => {
         requestBody: data,
       }),
     onSuccess: () => {
-      showSuccessToast("Agent point updated successfully")
+      showSuccessToast(toasts.agentPointUpdated)
       setIsOpen(false)
       onSuccess()
     },
@@ -176,9 +180,14 @@ const EditUser = ({ agentPoint, onSuccess }: EditUserProps) => {
                 name="location_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>ID локации</FormLabel>
+                    <FormLabel>Локация</FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} />
+                      <RelationSelect
+                        value={String(field.value)}
+                        onChange={(v) => field.onChange(Number(v))}
+                        options={options.locationOptions}
+                        disabled={options.isLoading}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

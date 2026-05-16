@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form"
 import { z } from "zod"
 
 import { type EmployeeCreate, EmployeesService } from "@/client"
+import { RelationSelect } from "@/components/Common/RelationSelect"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -25,9 +26,10 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
+import { useEmployeeFormOptions } from "@/features/employees/formOptions"
 import useCustomToast from "@/hooks/useCustomToast"
+import { toasts } from "@/lib/i18n/ru"
 import { handleError } from "@/utils"
 
 const formSchema = z.object({
@@ -36,12 +38,13 @@ const formSchema = z.object({
   start_location_id: z.coerce.number().int().positive(),
 })
 
-type FormData = z.infer<typeof formSchema>
+type FormData = z.output<typeof formSchema>
 
 const AddUser = () => {
   const [isOpen, setIsOpen] = useState(false)
   const queryClient = useQueryClient()
   const { showSuccessToast, showErrorToast } = useCustomToast()
+  const options = useEmployeeFormOptions()
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -53,7 +56,7 @@ const AddUser = () => {
     mutationFn: (data: EmployeeCreate) =>
       EmployeesService.createEmployee({ requestBody: data }),
     onSuccess: () => {
-      showSuccessToast("Employee created successfully")
+      showSuccessToast(toasts.employeeCreated)
       form.reset()
       setIsOpen(false)
     },
@@ -74,7 +77,7 @@ const AddUser = () => {
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Добавить сотрудника</DialogTitle>
-          <DialogDescription>Введите id связанных сущностей.</DialogDescription>
+          <DialogDescription>Выберите пользователя, грейд и стартовую локацию.</DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -84,9 +87,15 @@ const AddUser = () => {
                 name="user_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>ID пользователя</FormLabel>
+                    <FormLabel>Пользователь</FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} />
+                      <RelationSelect
+                        value={field.value ? String(field.value) : ""}
+                        onChange={(v) => field.onChange(Number(v))}
+                        options={options.userOptions}
+                        placeholder="Выберите пользователя"
+                        disabled={options.isLoading}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -97,9 +106,15 @@ const AddUser = () => {
                 name="grade_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>ID грейда</FormLabel>
+                    <FormLabel>Грейд</FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} />
+                      <RelationSelect
+                        value={field.value ? String(field.value) : ""}
+                        onChange={(v) => field.onChange(Number(v))}
+                        options={options.gradeOptions}
+                        placeholder="Выберите грейд"
+                        disabled={options.isLoading}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -110,9 +125,15 @@ const AddUser = () => {
                 name="start_location_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>ID стартовой локации</FormLabel>
+                    <FormLabel>Стартовая локация</FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} />
+                      <RelationSelect
+                        value={field.value ? String(field.value) : ""}
+                        onChange={(v) => field.onChange(Number(v))}
+                        options={options.locationOptions}
+                        placeholder="Выберите локацию"
+                        disabled={options.isLoading}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

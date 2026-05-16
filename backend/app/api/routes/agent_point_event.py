@@ -14,6 +14,7 @@ from app.models import (
 from fastapi import APIRouter, HTTPException
 from sqlmodel import func, select
 from app.repositories import agent_point_event as event_repository
+from app.repositories.eager_loads import agent_point_event_load_options
 from app.services import agent_point_event_service
 
 router = APIRouter(prefix="/agent-point-events", tags=["agent-point-events"])
@@ -61,7 +62,12 @@ def read_agent_point_events(
     if allowed_agent_point_ids is None:
         count_statement = select(func.count()).select_from(AgentPointEvent)
         count = session.exec(count_statement).one()
-        statement = select(AgentPointEvent).offset(skip).limit(limit)
+        statement = (
+            select(AgentPointEvent)
+            .options(*agent_point_event_load_options())
+            .offset(skip)
+            .limit(limit)
+        )
         agent_point_events = session.exec(statement).all()
     else:
         count = event_repository.count_for_agent_points(

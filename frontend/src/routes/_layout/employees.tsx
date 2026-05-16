@@ -5,6 +5,7 @@ import { EmployeesService } from "@/client"
 import { DataTable } from "@/components/Common/DataTable"
 import AddUser from "@/components/Employee/AddUser"
 import { columns, type EmployeeTableData } from "@/components/Employee/columns"
+import { emptyTable, pageTitles } from "@/lib/i18n/ru"
 
 function getEmployeesQueryOptions() {
   return {
@@ -18,7 +19,7 @@ export const Route = createFileRoute("/_layout/employees")({
   head: () => ({
     meta: [
       {
-        title: "Employee - FastAPI Cloud",
+        title: pageTitles.employees,
       },
     ],
   }),
@@ -27,7 +28,13 @@ export const Route = createFileRoute("/_layout/employees")({
 function EmployeesTableContent() {
   const { data: employees } = useSuspenseQuery(getEmployeesQueryOptions())
   const tableData: EmployeeTableData[] = employees.data
-  return <DataTable columns={columns} data={tableData} />
+  return (
+    <DataTable
+      columns={columns}
+      data={tableData}
+      emptyTitle={emptyTable.employees}
+    />
+  )
 }
 
 function EmployeesTable() {

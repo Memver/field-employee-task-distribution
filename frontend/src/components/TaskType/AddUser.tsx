@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form"
 import { z } from "zod"
 
 import { type TaskTypeCreate, TaskTypesService } from "@/client"
+import { RelationSelect } from "@/components/Common/RelationSelect"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -27,7 +28,9 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
+import { useTaskTypeFormOptions } from "@/features/taskTypes/formOptions"
 import useCustomToast from "@/hooks/useCustomToast"
+import { toasts } from "@/lib/i18n/ru"
 import { queryKeys } from "@/lib/queryKeys"
 import { handleError } from "@/utils"
 
@@ -38,12 +41,13 @@ const formSchema = z.object({
   priority_id: z.coerce.number().int().positive(),
 })
 
-type FormData = z.infer<typeof formSchema>
+type FormData = z.output<typeof formSchema>
 
 const AddUser = () => {
   const [isOpen, setIsOpen] = useState(false)
   const queryClient = useQueryClient()
   const { showSuccessToast, showErrorToast } = useCustomToast()
+  const options = useTaskTypeFormOptions()
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -55,7 +59,7 @@ const AddUser = () => {
     mutationFn: (data: TaskTypeCreate) =>
       TaskTypesService.createTaskType({ requestBody: data }),
     onSuccess: () => {
-      showSuccessToast("Task type created successfully")
+      showSuccessToast(toasts.taskTypeCreated)
       form.reset()
       setIsOpen(false)
     },
@@ -123,9 +127,14 @@ const AddUser = () => {
                 name="min_grade_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>ID минимального грейда</FormLabel>
+                    <FormLabel>Мин. грейд</FormLabel>
                     <FormControl>
-                      <Input placeholder="1" type="number" {...field} />
+                      <RelationSelect
+                        value={field.value ? String(field.value) : ""}
+                        onChange={(v) => field.onChange(Number(v))}
+                        options={options.gradeOptions}
+                        disabled={options.isLoading}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -136,9 +145,14 @@ const AddUser = () => {
                 name="priority_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>ID приоритета</FormLabel>
+                    <FormLabel>Приоритет</FormLabel>
                     <FormControl>
-                      <Input placeholder="1" type="number" {...field} />
+                      <RelationSelect
+                        value={field.value ? String(field.value) : ""}
+                        onChange={(v) => field.onChange(Number(v))}
+                        options={options.priorityOptions}
+                        disabled={options.isLoading}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

@@ -24,6 +24,7 @@ export type AgentPointEventPublic = {
     metric_value_bool?: (boolean | null);
     id: number;
     agent_point_id: number;
+    agent_point: AgentPointPublic;
 };
 
 export type AgentPointEventsPublic = {
@@ -66,6 +67,33 @@ export type Body_login_login_access_token = {
     client_secret?: (string | null);
 };
 
+export type DistributionAssignmentPublic = {
+    employee_id: number;
+    employee_full_name: string;
+    agent_point_id: number;
+    agent_point_address: (string | null);
+    task_type_id: number;
+    task_type_name: string;
+    day_index: number;
+    start_time: string;
+    finish_time: string;
+    reason: string;
+};
+
+export type DistributionReportPublic = {
+    message: string;
+    assignments: Array<DistributionAssignmentPublic>;
+    unplaced: Array<DistributionUnplacedPublic>;
+};
+
+export type DistributionUnplacedPublic = {
+    agent_point_id: number;
+    agent_point_address: (string | null);
+    task_type_id: (number | null);
+    task_type_name: (string | null);
+    reason: string;
+};
+
 export type EmployeeCreate = {
     user_id: number;
     grade_id: number;
@@ -77,6 +105,9 @@ export type EmployeePublic = {
     user_id: number;
     grade_id: number;
     start_location_id: number;
+    user: UserRefPublic;
+    grade: GradePublic;
+    start_location: LocationPublic;
 };
 
 export type EmployeesPublic = {
@@ -224,6 +255,10 @@ export type TaskPublic = {
     task_type_id: number;
     agent_point_id: number;
     task_status_id: number;
+    employee: EmployeePublic;
+    task_type: TaskTypePublic;
+    agent_point: AgentPointPublic;
+    task_status: TaskStatusPublic;
 };
 
 /**
@@ -283,6 +318,8 @@ export type TaskTypePublic = {
     id: number;
     min_grade_id: number;
     priority_id: number;
+    min_grade: GradePublic;
+    priority: PriorityPublic;
 };
 
 export type TaskTypesPublic = {
@@ -330,6 +367,14 @@ export type UserPublic = {
     is_superuser?: boolean;
     id: number;
     role: RolePublic;
+};
+
+export type UserRefPublic = {
+    id: number;
+    login: string;
+    name: string;
+    surname: string;
+    middle_name: string;
 };
 
 export type UsersPublic = {
@@ -598,7 +643,7 @@ export type TasksReadTasksData = {
 
 export type TasksReadTasksResponse = (TasksPublic);
 
-export type TasksDistributeTasksResponse = (Message);
+export type TasksDistributeTasksResponse = (DistributionReportPublic);
 
 export type TasksReadTasksMeData = {
     limit?: number;

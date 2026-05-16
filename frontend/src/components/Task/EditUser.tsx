@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form"
 import { z } from "zod"
 
 import { type TaskPublic, TasksService, type TaskUpdate } from "@/client"
+import { RelationSelect } from "@/components/Common/RelationSelect"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -27,21 +28,23 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
+import { useTaskFormOptions } from "@/features/tasks/formOptions"
 import useCustomToast from "@/hooks/useCustomToast"
+import { toasts } from "@/lib/i18n/ru"
 import { queryKeys } from "@/lib/queryKeys"
 import { handleError } from "@/utils"
 
 const formSchema = z.object({
   start_time: z.string().min(1),
   finish_time: z.string().min(1),
-  comment: z.string().min(1),
+  comment: z.string().optional(),
   employee_id: z.coerce.number().int().positive(),
   task_type_id: z.coerce.number().int().positive(),
   agent_point_id: z.coerce.number().int().positive(),
   task_status_id: z.coerce.number().int().positive(),
 })
 
-type FormData = z.infer<typeof formSchema>
+type FormData = z.output<typeof formSchema>
 
 const toIsoDateTime = (value: string) => new Date(value).toISOString()
 const toDateTimeLocal = (value: string) => {
@@ -59,12 +62,18 @@ const EditUser = ({ task, onSuccess }: EditUserProps) => {
   const [isOpen, setIsOpen] = useState(false)
   const queryClient = useQueryClient()
   const { showSuccessToast, showErrorToast } = useCustomToast()
+  const options = useTaskFormOptions()
+
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      ...task,
       start_time: toDateTimeLocal(task.start_time),
       finish_time: toDateTimeLocal(task.finish_time),
+      comment: task.comment ?? "",
+      employee_id: task.employee_id,
+      task_type_id: task.task_type_id,
+      agent_point_id: task.agent_point_id,
+      task_status_id: task.task_status_id,
     },
     mode: "onBlur",
     criteriaMode: "all",
@@ -74,7 +83,7 @@ const EditUser = ({ task, onSuccess }: EditUserProps) => {
     mutationFn: (data: TaskUpdate) =>
       TasksService.updateTask({ id: task.id, requestBody: data }),
     onSuccess: () => {
-      showSuccessToast("Task updated successfully")
+      showSuccessToast(toasts.taskUpdated)
       setIsOpen(false)
       onSuccess()
     },
@@ -86,6 +95,7 @@ const EditUser = ({ task, onSuccess }: EditUserProps) => {
   const onSubmit = (data: FormData) =>
     mutation.mutate({
       ...data,
+      comment: data.comment?.trim() || "",
       start_time: toIsoDateTime(data.start_time),
       finish_time: toIsoDateTime(data.finish_time),
     })
@@ -139,7 +149,10 @@ const EditUser = ({ task, onSuccess }: EditUserProps) => {
                   <FormItem>
                     <FormLabel>Комментарий</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input
+                        placeholder="Комментарий (необязательно)"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -150,9 +163,14 @@ const EditUser = ({ task, onSuccess }: EditUserProps) => {
                 name="employee_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>ID сотрудника</FormLabel>
+                    <FormLabel>Сотрудник</FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} />
+                      <RelationSelect
+                        value={String(field.value)}
+                        onChange={(v) => field.onChange(Number(v))}
+                        options={options.employeeOptions}
+                        disabled={options.isLoading}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -163,9 +181,14 @@ const EditUser = ({ task, onSuccess }: EditUserProps) => {
                 name="task_type_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>ID типа задачи</FormLabel>
+                    <FormLabel>Тип задачи</FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} />
+                      <RelationSelect
+                        value={String(field.value)}
+                        onChange={(v) => field.onChange(Number(v))}
+                        options={options.taskTypeOptions}
+                        disabled={options.isLoading}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -176,9 +199,14 @@ const EditUser = ({ task, onSuccess }: EditUserProps) => {
                 name="agent_point_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>ID точки</FormLabel>
+                    <FormLabel>Агентская точка</FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} />
+                      <RelationSelect
+                        value={String(field.value)}
+                        onChange={(v) => field.onChange(Number(v))}
+                        options={options.agentPointOptions}
+                        disabled={options.isLoading}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -189,9 +217,14 @@ const EditUser = ({ task, onSuccess }: EditUserProps) => {
                 name="task_status_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>ID статуса</FormLabel>
+                    <FormLabel>Статус</FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} />
+                      <RelationSelect
+                        value={String(field.value)}
+                        onChange={(v) => field.onChange(Number(v))}
+                        options={options.taskStatusOptions}
+                        disabled={options.isLoading}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

@@ -8,6 +8,7 @@ import {
   columns,
 } from "@/components/AgentPoint/columns"
 import { DataTable } from "@/components/Common/DataTable"
+import { emptyTable } from "@/lib/i18n/ru"
 
 function getAgentPointsQueryOptions() {
   return {
@@ -32,7 +33,11 @@ function AgentPoints() {
         </div>
         <AddUser />
       </div>
-      <DataTable columns={columns} data={tableData} />
+      <DataTable
+        columns={columns}
+        data={tableData}
+        emptyTitle={emptyTable.agentPoints}
+      />
     </div>
   )
 }

@@ -26,6 +26,7 @@ from app.models import (
 from fastapi import APIRouter, HTTPException
 from sqlmodel import func, select
 from app.repositories import task as task_repository
+from app.repositories.eager_loads import get_task, task_load_options
 from app.services import task_service
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
@@ -40,7 +41,7 @@ def create_task(
     task = Task.model_validate(task_in)
     session.add(task)
     session.commit()
-    session.refresh(task)
+    task = get_task(session, task.id)
     return task
 
 
@@ -67,7 +68,9 @@ def read_tasks(
     count_statement = select(func.count()).select_from(Task)
     count = session.exec(count_statement).one()
 
-    statement = select(Task).offset(skip).limit(limit)
+    statement = (
+        select(Task).options(*task_load_options()).offset(skip).limit(limit)
+    )
     tasks = session.exec(statement).all()
 
     return TasksPublic(data=tasks, count=count)
@@ -115,7 +118,7 @@ def update_my_task_status(
         task.comment = body.comment
     session.add(task)
     session.commit()
-    session.refresh(task)
+    task = get_task(session, task_id)
     return task
 
 
@@ -137,7 +140,8 @@ def complete_my_task(
         field_user=field_user, task_employee_id=task.employee_id
     )
 
-    return task_service.mark_task_completed(session=session, task=task, comment=body.comment)
+    task_service.mark_task_completed(session=session, task=task, comment=body.comment)
+    return get_task(session, task_id)
 
 
 @router.patch("/{task_id}/skip", response_model=TaskPublic)
@@ -158,7 +162,8 @@ def skip_my_task(
         field_user=field_user, task_employee_id=task.employee_id
     )
 
-    return task_service.mark_task_skipped(session=session, task=task, comment=body.comment)
+    task_service.mark_task_skipped(session=session, task=task, comment=body.comment)
+    return get_task(session, task_id)
 
 
 @router.patch("/{task_id}/complete-by-agent-point-manager", response_model=TaskPublic)
@@ -176,13 +181,14 @@ def complete_task_by_agent_point_manager(
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
 
-    return task_service.confirm_task_by_ap_manager(
+    task_service.confirm_task_by_ap_manager(
         session=session,
         task=task,
         ap_manager_id=apm.id,
         confirmed=body.confirmed,
         comment=body.comment,
     )
+    return get_task(session, task_id)
 
 
 @router.get("/{task_id}", response_model=TaskPublic)
@@ -192,7 +198,7 @@ def read_task_by_id(
     """
     Get a specific task by id.
     """
-    task = task_repository.get_by_id(session=session, task_id=task_id)
+    task = get_task(session, task_id)
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
     if is_employee_manager_user(current_user.role):
@@ -227,7 +233,7 @@ def update_task(
     task.sqlmodel_update(update_dict)
     session.add(task)
     session.commit()
-    session.refresh(task)
+    task = get_task(session, id)
     return task
 
 

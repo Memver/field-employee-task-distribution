@@ -466,6 +466,14 @@ class UserUpdateMe(SQLModel):
 
 
 # Properties to return via API, id is always required
+class UserRefPublic(SQLModel):
+    id: int
+    login: str
+    name: str
+    surname: str
+    middle_name: str
+
+
 class UserPublic(UserBase):
     id: int
     role: RolePublic
@@ -493,6 +501,9 @@ class EmployeePublic(EmployeeBase):
     user_id: int = Field(nullable=False)
     grade_id: int = Field(nullable=False)
     start_location_id: int = Field(nullable=False)
+    user: UserRefPublic
+    grade: GradePublic
+    start_location: LocationPublic
 
 
 class EmployeesPublic(SQLModel):
@@ -514,6 +525,8 @@ class TaskTypePublic(TaskTypeBase):
     id: int
     min_grade_id: int = Field(nullable=False)
     priority_id: int = Field(nullable=False)
+    min_grade: GradePublic
+    priority: PriorityPublic
 
 
 class TaskTypesPublic(SQLModel):
@@ -550,6 +563,7 @@ class AgentPointEventUpdate(AgentPointEventBase):
 class AgentPointEventPublic(AgentPointEventBase):
     id: int
     agent_point_id: int = Field(nullable=False)
+    agent_point: AgentPointPublic
 
 
 class AgentPointEventsPublic(SQLModel):
@@ -603,6 +617,10 @@ class TaskPublic(TaskBase):
     task_type_id: int = Field(nullable=False)
     agent_point_id: int = Field(nullable=False)
     task_status_id: int = Field(nullable=False)
+    employee: EmployeePublic
+    task_type: TaskTypePublic
+    agent_point: AgentPointPublic
+    task_status: TaskStatusPublic
 
 
 class TasksPublic(SQLModel):

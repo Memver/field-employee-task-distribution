@@ -10,6 +10,7 @@ import {
   Users,
   Wrench,
 } from "lucide-react"
+import { nav } from "@/lib/i18n/ru"
 
 export type RoleName =
   | "ADMIN"
@@ -28,7 +29,7 @@ export type StartPagePath = "/admin" | "/tasks"
 
 const dashboardSection: NavigationSection = {
   key: "dashboard",
-  title: "Dashboard",
+  title: nav.dashboard,
   path: "/",
   icon: CircleGauge,
 }

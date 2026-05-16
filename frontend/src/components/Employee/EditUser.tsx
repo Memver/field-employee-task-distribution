@@ -10,6 +10,7 @@ import {
   EmployeesService,
   type EmployeeUpdate,
 } from "@/client"
+import { RelationSelect } from "@/components/Common/RelationSelect"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -29,9 +30,10 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
+import { useEmployeeFormOptions } from "@/features/employees/formOptions"
 import useCustomToast from "@/hooks/useCustomToast"
+import { toasts } from "@/lib/i18n/ru"
 import { handleError } from "@/utils"
 
 const formSchema = z.object({
@@ -40,7 +42,7 @@ const formSchema = z.object({
   start_location_id: z.coerce.number().int().positive(),
 })
 
-type FormData = z.infer<typeof formSchema>
+type FormData = z.output<typeof formSchema>
 
 interface Props {
   employee: EmployeePublic
@@ -51,10 +53,15 @@ const EditUser = ({ employee, onSuccess }: Props) => {
   const [isOpen, setIsOpen] = useState(false)
   const queryClient = useQueryClient()
   const { showSuccessToast, showErrorToast } = useCustomToast()
+  const options = useEmployeeFormOptions()
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
-    defaultValues: employee,
+    defaultValues: {
+      user_id: employee.user_id,
+      grade_id: employee.grade_id,
+      start_location_id: employee.start_location_id,
+    },
     mode: "onBlur",
     criteriaMode: "all",
   })
@@ -63,7 +70,7 @@ const EditUser = ({ employee, onSuccess }: Props) => {
     mutationFn: (data: EmployeeUpdate) =>
       EmployeesService.updateEmployee({ id: employee.id, requestBody: data }),
     onSuccess: () => {
-      showSuccessToast("Employee updated successfully")
+      showSuccessToast(toasts.employeeUpdated)
       setIsOpen(false)
       onSuccess()
     },
@@ -86,7 +93,9 @@ const EditUser = ({ employee, onSuccess }: Props) => {
           <form onSubmit={form.handleSubmit(onSubmit)}>
             <DialogHeader>
               <DialogTitle>Редактировать сотрудника</DialogTitle>
-              <DialogDescription>Обновите связанные id.</DialogDescription>
+              <DialogDescription>
+                Обновите пользователя, грейд и стартовую локацию.
+              </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <FormField
@@ -94,9 +103,14 @@ const EditUser = ({ employee, onSuccess }: Props) => {
                 name="user_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>ID пользователя</FormLabel>
+                    <FormLabel>Пользователь</FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} />
+                      <RelationSelect
+                        value={String(field.value)}
+                        onChange={(v) => field.onChange(Number(v))}
+                        options={options.userOptions}
+                        disabled={options.isLoading}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -107,9 +121,14 @@ const EditUser = ({ employee, onSuccess }: Props) => {
                 name="grade_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>ID грейда</FormLabel>
+                    <FormLabel>Грейд</FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} />
+                      <RelationSelect
+                        value={String(field.value)}
+                        onChange={(v) => field.onChange(Number(v))}
+                        options={options.gradeOptions}
+                        disabled={options.isLoading}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -120,9 +139,14 @@ const EditUser = ({ employee, onSuccess }: Props) => {
                 name="start_location_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>ID стартовой локации</FormLabel>
+                    <FormLabel>Стартовая локация</FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} />
+                      <RelationSelect
+                        value={String(field.value)}
+                        onChange={(v) => field.onChange(Number(v))}
+                        options={options.locationOptions}
+                        disabled={options.isLoading}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

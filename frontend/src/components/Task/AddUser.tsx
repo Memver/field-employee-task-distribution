@@ -6,6 +6,9 @@ import { useForm } from "react-hook-form"
 import { z } from "zod"
 
 import { type TaskCreate, TasksService } from "@/client"
+import {
+  RelationSelect,
+} from "@/components/Common/RelationSelect"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -27,28 +30,35 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
+import { useTaskFormOptions } from "@/features/tasks/formOptions"
 import useCustomToast from "@/hooks/useCustomToast"
+import { toasts } from "@/lib/i18n/ru"
 import { queryKeys } from "@/lib/queryKeys"
 import { handleError } from "@/utils"
 
 const formSchema = z.object({
   start_time: z.string().min(1),
   finish_time: z.string().min(1),
-  comment: z.string().min(1),
+  comment: z.string().optional(),
   employee_id: z.coerce.number().int().positive(),
   task_type_id: z.coerce.number().int().positive(),
   agent_point_id: z.coerce.number().int().positive(),
   task_status_id: z.coerce.number().int().positive(),
 })
 
-type FormData = z.infer<typeof formSchema>
+type FormData = z.output<typeof formSchema>
 
 const toIsoDateTime = (value: string) => new Date(value).toISOString()
 
-const AddUser = () => {
+type AddUserProps = {
+  disabled?: boolean
+}
+
+const AddUser = ({ disabled = false }: AddUserProps) => {
   const [isOpen, setIsOpen] = useState(false)
   const queryClient = useQueryClient()
   const { showSuccessToast, showErrorToast } = useCustomToast()
+  const options = useTaskFormOptions()
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -60,7 +70,7 @@ const AddUser = () => {
     mutationFn: (data: TaskCreate) =>
       TasksService.createTask({ requestBody: data }),
     onSuccess: () => {
-      showSuccessToast("Task created successfully")
+      showSuccessToast(toasts.taskCreated)
       form.reset()
       setIsOpen(false)
     },
@@ -73,6 +83,7 @@ const AddUser = () => {
   const onSubmit = (data: FormData) => {
     mutation.mutate({
       ...data,
+      comment: data.comment?.trim() || "",
       start_time: toIsoDateTime(data.start_time),
       finish_time: toIsoDateTime(data.finish_time),
     })
@@ -81,7 +92,7 @@ const AddUser = () => {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button className="my-4">
+        <Button className="my-4" disabled={disabled}>
           <Plus className="mr-2" />
           Добавить задачу
         </Button>
@@ -128,7 +139,7 @@ const AddUser = () => {
                     <FormLabel>Комментарий</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="Описание задачи"
+                        placeholder="Комментарий (необязательно)"
                         type="text"
                         {...field}
                       />
@@ -142,9 +153,15 @@ const AddUser = () => {
                 name="employee_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>ID сотрудника</FormLabel>
+                    <FormLabel>Сотрудник</FormLabel>
                     <FormControl>
-                      <Input placeholder="1" type="number" {...field} />
+                      <RelationSelect
+                        value={field.value ? String(field.value) : ""}
+                        onChange={(v) => field.onChange(Number(v))}
+                        options={options.employeeOptions}
+                        placeholder="Выберите сотрудника"
+                        disabled={options.isLoading}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -155,9 +172,15 @@ const AddUser = () => {
                 name="task_type_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>ID типа задачи</FormLabel>
+                    <FormLabel>Тип задачи</FormLabel>
                     <FormControl>
-                      <Input placeholder="1" type="number" {...field} />
+                      <RelationSelect
+                        value={field.value ? String(field.value) : ""}
+                        onChange={(v) => field.onChange(Number(v))}
+                        options={options.taskTypeOptions}
+                        placeholder="Выберите тип"
+                        disabled={options.isLoading}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -168,9 +191,15 @@ const AddUser = () => {
                 name="agent_point_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>ID агентской точки</FormLabel>
+                    <FormLabel>Агентская точка</FormLabel>
                     <FormControl>
-                      <Input placeholder="1" type="number" {...field} />
+                      <RelationSelect
+                        value={field.value ? String(field.value) : ""}
+                        onChange={(v) => field.onChange(Number(v))}
+                        options={options.agentPointOptions}
+                        placeholder="Выберите точку"
+                        disabled={options.isLoading}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -181,9 +210,15 @@ const AddUser = () => {
                 name="task_status_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>ID статуса задачи</FormLabel>
+                    <FormLabel>Статус</FormLabel>
                     <FormControl>
-                      <Input placeholder="1" type="number" {...field} />
+                      <RelationSelect
+                        value={field.value ? String(field.value) : ""}
+                        onChange={(v) => field.onChange(Number(v))}
+                        options={options.taskStatusOptions}
+                        placeholder="Выберите статус"
+                        disabled={options.isLoading}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

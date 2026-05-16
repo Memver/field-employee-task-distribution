@@ -9,6 +9,7 @@ from app.models import (
     AgentPointUpdate,
     Message,
 )
+from app.repositories.eager_loads import agent_point_load_options, get_agent_point
 from fastapi import APIRouter, HTTPException
 from sqlmodel import func, select
 
@@ -28,7 +29,7 @@ def create_agent_point(
     agent_point = AgentPoint.model_validate(agent_point_in)
     session.add(agent_point)
     session.commit()
-    session.refresh(agent_point)
+    agent_point = get_agent_point(session, agent_point.id)
     return agent_point
 
 
@@ -46,7 +47,12 @@ def read_agent_points(
     count_statement = select(func.count()).select_from(AgentPoint)
     count = session.exec(count_statement).one()
 
-    statement = select(AgentPoint).offset(skip).limit(limit)
+    statement = (
+        select(AgentPoint)
+        .options(*agent_point_load_options())
+        .offset(skip)
+        .limit(limit)
+    )
     agent_points = session.exec(statement).all()
 
     return AgentPointsPublic(data=agent_points, count=count)
@@ -59,7 +65,9 @@ def read_agent_point_by_id(
     """
     Get a specific agent_point by id.
     """
-    agent_point = session.get(AgentPoint, id)
+    agent_point = get_agent_point(session, id)
+    if not agent_point:
+        raise HTTPException(status_code=404, detail="AgentPoint not found")
     return agent_point
 
 
@@ -81,7 +89,7 @@ def update_agent_point(
     agent_point.sqlmodel_update(update_dict)
     session.add(agent_point)
     session.commit()
-    session.refresh(agent_point)
+    agent_point = get_agent_point(session, id)
     return agent_point
 
 

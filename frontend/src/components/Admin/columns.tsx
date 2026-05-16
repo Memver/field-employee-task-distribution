@@ -2,6 +2,7 @@ import type { ColumnDef } from "@tanstack/react-table"
 
 import type { UserPublic } from "@/client"
 import { Badge } from "@/components/ui/badge"
+import { formatRoleName } from "@/lib/i18n/ru"
 import { cn } from "@/lib/utils"
 import { UserActionsMenu } from "./UserActionsMenu"
 
@@ -84,7 +85,9 @@ export const columns: ColumnDef<UserTableData>[] = [
     accessorKey: "role",
     header: "Роль",
     cell: ({ row }) => (
-      <span className="text-muted-foreground">{row.original.role.name}</span>
+      <span className="text-muted-foreground">
+        {formatRoleName(row.original.role.name)}
+      </span>
     ),
   },
   {

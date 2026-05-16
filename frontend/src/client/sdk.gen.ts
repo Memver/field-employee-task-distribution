@@ -864,7 +864,7 @@ export class TasksService {
     
     /**
      * Distribute Tasks
-     * @returns Message Successful Response
+     * @returns DistributionReportPublic Successful Response
      * @throws ApiError
      */
     public static distributeTasks(): CancelablePromise<TasksDistributeTasksResponse> {
@@ -876,7 +876,7 @@ export class TasksService {
     
     /**
      * Read Tasks Me
-     * Retrieve my tasks with route path from start location through all tasks and back.
+     * Retrieve my tasks with route path from start location through all tasks.
      * @param data The data for the request.
      * @param data.skip
      * @param data.limit

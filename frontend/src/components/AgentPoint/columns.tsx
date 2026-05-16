@@ -1,6 +1,7 @@
 import type { ColumnDef } from "@tanstack/react-table"
 
 import type { AgentPointPublic } from "@/client"
+import { formatLocation } from "@/lib/entityLabels"
 import { UserActionsMenu } from "./UserActionsMenu"
 
 export type AgentPointTableData = AgentPointPublic
@@ -14,7 +15,11 @@ export const columns: ColumnDef<AgentPointTableData>[] = [
   },
   { accessorKey: "approved_applications", header: "Одобренные заявки" },
   { accessorKey: "cards_gived", header: "Выдано карт" },
-  { accessorKey: "location.id", header: "ID локации" },
+  {
+    id: "location",
+    header: "Локация",
+    cell: ({ row }) => formatLocation(row.original.location),
+  },
   {
     id: "actions",
     header: () => <span className="sr-only">Действия</span>,

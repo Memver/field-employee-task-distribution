@@ -7,6 +7,7 @@ import {
   columns,
 } from "@/components/AgentPointEvent/columns"
 import { DataTable } from "@/components/Common/DataTable"
+import { emptyTable } from "@/lib/i18n/ru"
 import { queryKeys } from "@/lib/queryKeys"
 
 function getAgentPointEventsQueryOptions() {
@@ -37,7 +38,11 @@ function AgentPointEvents() {
           </p>
         </div>
       </div>
-      <DataTable columns={columns} data={tableData} />
+      <DataTable
+        columns={columns}
+        data={tableData}
+        emptyTitle={emptyTable.agentPointEvents}
+      />
     </div>
   )
 }

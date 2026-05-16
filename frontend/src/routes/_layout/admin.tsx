@@ -5,6 +5,7 @@ import { Suspense } from "react"
 import type { UserPublic } from "@/client"
 import AddUser from "@/components/Admin/AddUser"
 import { columns, type UserTableData } from "@/components/Admin/columns"
+import { emptyTable, pageTitles } from "@/lib/i18n/ru"
 import { DataTable } from "@/components/Common/DataTable"
 import PendingUsers from "@/components/Pending/PendingUsers"
 import { getUsersQueryOptions } from "@/features/admin/queries"
@@ -23,7 +24,7 @@ export const Route = createFileRoute("/_layout/admin")({
   head: () => ({
     meta: [
       {
-        title: "Admin - FastAPI Cloud",
+        title: pageTitles.users,
       },
     ],
   }),
@@ -38,7 +39,13 @@ function UsersTableContent() {
     isCurrentUser: currentUser?.id === user.id,
   }))
 
-  return <DataTable columns={columns} data={tableData} />
+  return (
+    <DataTable
+      columns={columns}
+      data={tableData}
+      emptyTitle={emptyTable.users}
+    />
+  )
 }
 
 function UsersTable() {
