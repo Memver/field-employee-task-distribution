@@ -1,9 +1,12 @@
 from typing import Any
 
-from app.api.deps import AgentPointReaderUser, AgentPointTableEditorUser, SessionDep
-from app.core.roles import is_agent_point_manager_user
+from app.api.deps import (
+    AgentPointReaderUser,
+    AgentPointTableEditorUser,
+    SessionDep,
+    get_allowed_agent_point_ids_for_ap_manager,
+)
 from app.models import (
-    AgentPointManager,
     AgentPointEvent,
     AgentPointEventCreate,
     AgentPointEventPublic,
@@ -30,7 +33,7 @@ def create_agent_point_event(
     """
     Create new agent_point_event.
     """
-    allowed_agent_point_ids = _get_allowed_agent_point_ids_for_ap_manager(
+    allowed_agent_point_ids = get_allowed_agent_point_ids_for_ap_manager(
         session=session, user_id=editor.id, role=editor.role
     )
     if (
@@ -56,7 +59,7 @@ def read_agent_point_events(
     """
     Retrieve agent_point_events.
     """
-    allowed_agent_point_ids = _get_allowed_agent_point_ids_for_ap_manager(
+    allowed_agent_point_ids = get_allowed_agent_point_ids_for_ap_manager(
         session=session, user_id=reader.id, role=reader.role
     )
     if allowed_agent_point_ids is None:
@@ -90,7 +93,7 @@ def read_agent_point_event_by_id(
     """
     Get a specific agent_point_event by id.
     """
-    allowed_agent_point_ids = _get_allowed_agent_point_ids_for_ap_manager(
+    allowed_agent_point_ids = get_allowed_agent_point_ids_for_ap_manager(
         session=session, user_id=reader.id, role=reader.role
     )
     if allowed_agent_point_ids is None:
@@ -119,7 +122,7 @@ def update_agent_point_event(
     """
     Update an agent_point_event.
     """
-    allowed_agent_point_ids = _get_allowed_agent_point_ids_for_ap_manager(
+    allowed_agent_point_ids = get_allowed_agent_point_ids_for_ap_manager(
         session=session, user_id=editor.id, role=editor.role
     )
     if (
@@ -152,7 +155,7 @@ def delete_agent_point_event(
     """
     Delete a agent_point_event.
     """
-    allowed_agent_point_ids = _get_allowed_agent_point_ids_for_ap_manager(
+    allowed_agent_point_ids = get_allowed_agent_point_ids_for_ap_manager(
         session=session, user_id=editor.id, role=editor.role
     )
     if allowed_agent_point_ids is None:
@@ -170,13 +173,3 @@ def delete_agent_point_event(
     session.delete(agent_point_event)
     session.commit()
     return Message(message="AgentPointEvent deleted successfully")
-
-
-def _get_allowed_agent_point_ids_for_ap_manager(
-    *, session: SessionDep, user_id: int, role: object | None
-) -> list[int] | None:
-    if not is_agent_point_manager_user(role):
-        return None
-    return session.exec(
-        select(AgentPointManager.agent_point_id).where(AgentPointManager.user_id == user_id)
-    ).all()

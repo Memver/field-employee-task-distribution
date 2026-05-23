@@ -1,13 +1,17 @@
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
 import { Loader2 } from "lucide-react"
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import type { DistributionReportPublic } from "@/client"
 import { TasksService } from "@/client"
 import { DataTable } from "@/components/Common/DataTable"
 import AddTask from "@/components/Task/AddTask"
 import { DistributionReportPanel } from "@/components/Task/DistributionReportPanel"
-import { columns, type TaskTableData } from "@/components/Task/columns"
+import { getTaskColumns, type TaskTableData } from "@/components/Task/columns"
+import {
+  isAgentPointManagerRole,
+  isEmployeeManagerRole,
+} from "@/features/navigation/roleSections"
 import { getAdminTasksQueryOptions } from "@/features/tasks/queries"
 import useAuth from "@/hooks/useAuth"
 import { LoadingButton } from "@/components/ui/loading-button"
@@ -26,13 +30,17 @@ export const Route = createFileRoute("/_layout/tasks")({
 
 function Tasks() {
   const { user: currentUser } = useAuth()
-  const isEmployeeManager = currentUser?.role?.name === "EMPLOYEE_MANAGER"
+  const roleName = currentUser?.role?.name
+  const isEmployeeManager = isEmployeeManagerRole(roleName)
+  const isApm = isAgentPointManagerRole(roleName)
   const queryClient = useQueryClient()
   const { showSuccessToast, showErrorToast } = useCustomToast()
   const { data } = useSuspenseQuery(getAdminTasksQueryOptions())
   const tableData: TaskTableData[] = data.data
   const [distributionReport, setDistributionReport] =
     useState<DistributionReportPublic | null>(null)
+
+  const columns = useMemo(() => getTaskColumns(isApm), [isApm])
 
   const distributeTasksMutation = useMutation({
     mutationFn: TasksService.distributeTasks,
@@ -53,7 +61,11 @@ function Tasks() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Задачи</h1>
-          <p className="text-muted-foreground">Управление задачами</p>
+          <p className="text-muted-foreground">
+            {isApm
+              ? "Задачи на ваших агентских точках"
+              : "Управление задачами"}
+          </p>
         </div>
         <div className="flex items-center gap-3">
           {isEmployeeManager && (
@@ -66,7 +78,7 @@ function Tasks() {
               {isDistributing ? "Распределение..." : "Распределить задачи"}
             </LoadingButton>
           )}
-          <AddTask disabled={isDistributing} />
+          {isEmployeeManager && <AddTask disabled={isDistributing} />}
         </div>
       </div>
 

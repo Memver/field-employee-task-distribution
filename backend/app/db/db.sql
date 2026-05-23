@@ -166,7 +166,7 @@ INSERT INTO public.agent_point_manager
     agent_point_id, user_id
 )
 VALUES
-    (1, 11);
+    (7, 11);
 
 INSERT INTO public.agent_point_event
 (

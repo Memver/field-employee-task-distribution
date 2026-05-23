@@ -28,12 +28,11 @@ import {
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
 import useCustomToast from "@/hooks/useCustomToast"
+import { toasts, validation } from "@/lib/i18n/ru"
 import { handleError } from "@/utils"
 
 const formSchema = z.object({
-  address: z.string().min(1, { message: "Адрес обязателен" }),
-  lat: z.union([z.coerce.number(), z.literal("")]).optional(),
-  lon: z.union([z.coerce.number(), z.literal("")]).optional(),
+  address: z.string().min(1, { message: validation.required }),
 })
 
 type FormData = z.infer<typeof formSchema>
@@ -45,7 +44,7 @@ const AddLocation = () => {
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
-    defaultValues: { address: "", lat: "", lon: "" },
+    defaultValues: { address: "" },
     mode: "onBlur",
     criteriaMode: "all",
   })
@@ -54,7 +53,7 @@ const AddLocation = () => {
     mutationFn: (data: LocationCreate) =>
       LocationsService.createLocation({ requestBody: data }),
     onSuccess: () => {
-      showSuccessToast("Location created successfully")
+      showSuccessToast(toasts.locationCreated)
       form.reset()
       setIsOpen(false)
     },
@@ -65,8 +64,8 @@ const AddLocation = () => {
   const onSubmit = (data: FormData) => {
     mutation.mutate({
       address: data.address,
-      lat: data.lat === "" ? null : data.lat,
-      lon: data.lon === "" ? null : data.lon,
+      lat: null,
+      lon: null,
     })
   }
 
@@ -94,32 +93,6 @@ const AddLocation = () => {
                     <FormLabel>Адрес</FormLabel>
                     <FormControl>
                       <Input placeholder="Адрес" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="lat"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Широта</FormLabel>
-                    <FormControl>
-                      <Input type="number" placeholder="55.751244" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="lon"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Долгота</FormLabel>
-                    <FormControl>
-                      <Input type="number" placeholder="37.618423" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

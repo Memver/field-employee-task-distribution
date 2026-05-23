@@ -3,7 +3,7 @@
 import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
-import type { AgentPointEventsCreateAgentPointEventData, AgentPointEventsCreateAgentPointEventResponse, AgentPointEventsReadAgentPointEventsData, AgentPointEventsReadAgentPointEventsResponse, AgentPointEventsReadAgentPointEventByIdData, AgentPointEventsReadAgentPointEventByIdResponse, AgentPointEventsDeleteAgentPointEventData, AgentPointEventsDeleteAgentPointEventResponse, AgentPointEventsUpdateAgentPointEventData, AgentPointEventsUpdateAgentPointEventResponse, AgentPointsCreateAgentPointData, AgentPointsCreateAgentPointResponse, AgentPointsReadAgentPointsData, AgentPointsReadAgentPointsResponse, AgentPointsReadAgentPointByIdData, AgentPointsReadAgentPointByIdResponse, AgentPointsUpdateAgentPointData, AgentPointsUpdateAgentPointResponse, AgentPointsDeleteAgentPointData, AgentPointsDeleteAgentPointResponse, EmployeesCreateEmployeeData, EmployeesCreateEmployeeResponse, EmployeesReadEmployeesData, EmployeesReadEmployeesResponse, EmployeesReadEmployeeByIdData, EmployeesReadEmployeeByIdResponse, EmployeesDeleteEmployeeData, EmployeesDeleteEmployeeResponse, EmployeesUpdateEmployeeData, EmployeesUpdateEmployeeResponse, GradesCreateGradeData, GradesCreateGradeResponse, GradesReadGradesData, GradesReadGradesResponse, GradesReadGradeByIdData, GradesReadGradeByIdResponse, GradesDeleteGradeData, GradesDeleteGradeResponse, GradesUpdateGradeData, GradesUpdateGradeResponse, LocationsCreateLocationData, LocationsCreateLocationResponse, LocationsReadLocationsData, LocationsReadLocationsResponse, LocationsReadLocationByIdData, LocationsReadLocationByIdResponse, LocationsDeleteLocationData, LocationsDeleteLocationResponse, LocationsUpdateLocationData, LocationsUpdateLocationResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginTestTokenResponse, PrioritiesCreatePriorityData, PrioritiesCreatePriorityResponse, PrioritiesReadPrioritiesData, PrioritiesReadPrioritiesResponse, PrioritiesReadPriorityByIdData, PrioritiesReadPriorityByIdResponse, PrioritiesDeletePriorityData, PrioritiesDeletePriorityResponse, PrioritiesUpdatePriorityData, PrioritiesUpdatePriorityResponse, RolesCreateRoleData, RolesCreateRoleResponse, RolesReadRolesData, RolesReadRolesResponse, RolesReadRoleByIdData, RolesReadRoleByIdResponse, RolesDeleteRoleData, RolesDeleteRoleResponse, RolesUpdateRoleData, RolesUpdateRoleResponse, TasksCreateTaskData, TasksCreateTaskResponse, TasksReadTasksData, TasksReadTasksResponse, TasksDistributeTasksResponse, TasksReadTasksMeData, TasksReadTasksMeResponse, TasksUpdateMyTaskStatusData, TasksUpdateMyTaskStatusResponse, TasksCompleteMyTaskData, TasksCompleteMyTaskResponse, TasksSkipMyTaskData, TasksSkipMyTaskResponse, TasksCompleteTaskByAgentPointManagerData, TasksCompleteTaskByAgentPointManagerResponse, TasksReadTaskByIdData, TasksReadTaskByIdResponse, TasksDeleteTaskData, TasksDeleteTaskResponse, TasksUpdateTaskData, TasksUpdateTaskResponse, TaskStatusesCreateTaskStatusData, TaskStatusesCreateTaskStatusResponse, TaskStatusesReadTaskStatusesData, TaskStatusesReadTaskStatusesResponse, TaskStatusesReadTaskStatusByIdData, TaskStatusesReadTaskStatusByIdResponse, TaskStatusesDeleteTaskStatusData, TaskStatusesDeleteTaskStatusResponse, TaskStatusesUpdateTaskStatusData, TaskStatusesUpdateTaskStatusResponse, TaskTypesCreateTaskTypeData, TaskTypesCreateTaskTypeResponse, TaskTypesReadTaskTypesData, TaskTypesReadTaskTypesResponse, TaskTypesReadTaskTypeByIdData, TaskTypesReadTaskTypeByIdResponse, TaskTypesDeleteTaskTypeData, TaskTypesDeleteTaskTypeResponse, TaskTypesUpdateTaskTypeData, TaskTypesUpdateTaskTypeResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUsersData, UsersReadUsersResponse, UsersReadUserMeResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersDeleteUserData, UsersDeleteUserResponse, UsersUpdateUserData, UsersUpdateUserResponse, UtilsHealthCheckResponse } from './types.gen';
+import type { AgentPointEventsCreateAgentPointEventData, AgentPointEventsCreateAgentPointEventResponse, AgentPointEventsReadAgentPointEventsData, AgentPointEventsReadAgentPointEventsResponse, AgentPointEventsReadAgentPointEventByIdData, AgentPointEventsReadAgentPointEventByIdResponse, AgentPointEventsDeleteAgentPointEventData, AgentPointEventsDeleteAgentPointEventResponse, AgentPointEventsUpdateAgentPointEventData, AgentPointEventsUpdateAgentPointEventResponse, AgentPointsCreateAgentPointData, AgentPointsCreateAgentPointResponse, AgentPointsReadAgentPointsData, AgentPointsReadAgentPointsResponse, AgentPointsReadAgentPointByIdData, AgentPointsReadAgentPointByIdResponse, AgentPointsUpdateAgentPointData, AgentPointsUpdateAgentPointResponse, AgentPointsDeleteAgentPointData, AgentPointsDeleteAgentPointResponse, EmployeesCreateEmployeeData, EmployeesCreateEmployeeResponse, EmployeesReadEmployeesData, EmployeesReadEmployeesResponse, EmployeesReadEmployeeByIdData, EmployeesReadEmployeeByIdResponse, EmployeesDeleteEmployeeData, EmployeesDeleteEmployeeResponse, EmployeesUpdateEmployeeData, EmployeesUpdateEmployeeResponse, GradesCreateGradeData, GradesCreateGradeResponse, GradesReadGradesData, GradesReadGradesResponse, GradesReadGradeByIdData, GradesReadGradeByIdResponse, GradesDeleteGradeData, GradesDeleteGradeResponse, GradesUpdateGradeData, GradesUpdateGradeResponse, LocationsCreateLocationData, LocationsCreateLocationResponse, LocationsReadLocationsData, LocationsReadLocationsResponse, LocationsReadLocationByIdData, LocationsReadLocationByIdResponse, LocationsDeleteLocationData, LocationsDeleteLocationResponse, LocationsUpdateLocationData, LocationsUpdateLocationResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginTestTokenResponse, PrioritiesCreatePriorityData, PrioritiesCreatePriorityResponse, PrioritiesReadPrioritiesData, PrioritiesReadPrioritiesResponse, PrioritiesReadPriorityByIdData, PrioritiesReadPriorityByIdResponse, PrioritiesDeletePriorityData, PrioritiesDeletePriorityResponse, PrioritiesUpdatePriorityData, PrioritiesUpdatePriorityResponse, RolesCreateRoleData, RolesCreateRoleResponse, RolesReadRolesData, RolesReadRolesResponse, RolesReadRoleByIdData, RolesReadRoleByIdResponse, RolesDeleteRoleData, RolesDeleteRoleResponse, RolesUpdateRoleData, RolesUpdateRoleResponse, TasksCreateTaskData, TasksCreateTaskResponse, TasksReadTasksData, TasksReadTasksResponse, TasksDistributeTasksResponse, TasksReadTasksMeData, TasksReadTasksMeResponse, TasksUpdateMyTaskStatusData, TasksUpdateMyTaskStatusResponse, TasksCompleteMyTaskData, TasksCompleteMyTaskResponse, TasksSkipMyTaskData, TasksSkipMyTaskResponse, TasksCompleteTaskByAgentPointManagerData, TasksCompleteTaskByAgentPointManagerResponse, TasksReadTaskByIdData, TasksReadTaskByIdResponse, TasksDeleteTaskData, TasksDeleteTaskResponse, TasksUpdateTaskData, TasksUpdateTaskResponse, TaskStatusesCreateTaskStatusData, TaskStatusesCreateTaskStatusResponse, TaskStatusesReadTaskStatusesData, TaskStatusesReadTaskStatusesResponse, TaskStatusesReadTaskStatusByIdData, TaskStatusesReadTaskStatusByIdResponse, TaskStatusesDeleteTaskStatusData, TaskStatusesDeleteTaskStatusResponse, TaskStatusesUpdateTaskStatusData, TaskStatusesUpdateTaskStatusResponse, TaskTypesCreateTaskTypeData, TaskTypesCreateTaskTypeResponse, TaskTypesReadTaskTypesData, TaskTypesReadTaskTypesResponse, TaskTypesReadTaskTypeByIdData, TaskTypesReadTaskTypeByIdResponse, TaskTypesDeleteTaskTypeData, TaskTypesDeleteTaskTypeResponse, TaskTypesUpdateTaskTypeData, TaskTypesUpdateTaskTypeResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUsersData, UsersReadUsersResponse, UsersReadUsersForEmployeeFormData, UsersReadUsersForEmployeeFormResponse, UsersReadUserMeResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersDeleteUserData, UsersDeleteUserResponse, UsersUpdateUserData, UsersUpdateUserResponse, UtilsHealthCheckResponse } from './types.gen';
 
 export class AgentPointEventsService {
     /**
@@ -139,7 +139,7 @@ export class AgentPointsService {
     
     /**
      * Read Agent Points
-     * Retrieve agent_points.
+     * Retrieve agent_points (all for employee manager, scoped for agent point manager).
      * @param data The data for the request.
      * @param data.skip
      * @param data.limit
@@ -841,7 +841,7 @@ export class TasksService {
     
     /**
      * Read Tasks
-     * Retrieve tasks.
+     * Retrieve tasks (all for employee manager, scoped for agent point manager).
      * @param data The data for the request.
      * @param data.skip
      * @param data.limit
@@ -1316,6 +1316,29 @@ export class UsersService {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/api/v1/users/',
+            query: {
+                skip: data.skip,
+                limit: data.limit
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Read Users For Employee Form
+     * Пользователи с ролью выездного сотрудника для формы создания/редактирования employee.
+     * @param data The data for the request.
+     * @param data.skip
+     * @param data.limit
+     * @returns UserRefsPublic Successful Response
+     * @throws ApiError
+     */
+    public static readUsersForEmployeeForm(data: UsersReadUsersForEmployeeFormData = {}): CancelablePromise<UsersReadUsersForEmployeeFormResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/users/for-employee-form',
             query: {
                 skip: data.skip,
                 limit: data.limit

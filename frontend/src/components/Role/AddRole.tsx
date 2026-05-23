@@ -25,13 +25,20 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import useCustomToast from "@/hooks/useCustomToast"
+import { roleSelectOptions, toasts, validation } from "@/lib/i18n/ru"
 import { handleError } from "@/utils"
 
 const formSchema = z.object({
-  name: z.string().min(1, { message: "Название роли обязательно" }),
+  name: z.string().min(1, { message: validation.required }),
 })
 
 type FormData = z.infer<typeof formSchema>
@@ -51,7 +58,7 @@ const AddRole = () => {
     mutationFn: (data: RoleCreate) =>
       RolesService.createRole({ requestBody: data }),
     onSuccess: () => {
-      showSuccessToast("Role created successfully")
+      showSuccessToast(toasts.roleCreated)
       form.reset()
       setIsOpen(false)
     },
@@ -88,14 +95,21 @@ const AddRole = () => {
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Название</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Например: ADMIN"
-                        type="text"
-                        {...field}
-                      />
-                    </FormControl>
+                    <FormLabel>Роль</FormLabel>
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Выберите роль" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {roleSelectOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}

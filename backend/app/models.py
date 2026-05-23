@@ -484,6 +484,11 @@ class UsersPublic(SQLModel):
     count: int
 
 
+class UserRefsPublic(SQLModel):
+    data: list[UserRefPublic]
+    count: int
+
+
 class EmployeeCreate(EmployeeBase):
     user_id: int = Field(nullable=False)
     grade_id: int = Field(nullable=False)
@@ -601,7 +606,7 @@ class TaskCompleteUpdate(SQLModel):
 class TaskAgentPointManagerConfirmUpdate(SQLModel):
     """Решение менеджера агентской точки по выполненной задаче."""
 
-    confirmed: bool = Field(nullable=False)
+    confirmed: bool | None = Field(default=None)
     comment: str | None = Field(default=None, max_length=4096)
 
 
@@ -617,6 +622,9 @@ class TaskPublic(TaskBase):
     task_type_id: int = Field(nullable=False)
     agent_point_id: int = Field(nullable=False)
     task_status_id: int = Field(nullable=False)
+    ap_manager_confirmed: bool | None = None
+    ap_manager_comment: str | None = None
+    ap_manager_user_id: int | None = None
     employee: EmployeePublic
     task_type: TaskTypePublic
     agent_point: AgentPointPublic
@@ -631,6 +639,7 @@ class TasksPublic(SQLModel):
 class TaskMePublic(TaskBase):
     id: int
     agent_point: AgentPointPublic
+    task_type: TaskTypePublic
 
 
 class TasksMePublic(SQLModel):

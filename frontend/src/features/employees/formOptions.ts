@@ -2,11 +2,12 @@ import { useQuery } from "@tanstack/react-query"
 import { GradesService, LocationsService, UsersService } from "@/client"
 import { toSelectOptions } from "@/components/Common/RelationSelect"
 import { formatLocation, formatUserRef } from "@/lib/entityLabels"
+import { formatGradeName } from "@/lib/i18n/ru"
 
 export function useEmployeeFormOptions() {
   const users = useQuery({
-    queryKey: ["users", "form-options"],
-    queryFn: () => UsersService.readUsers({ skip: 0, limit: 100 }),
+    queryKey: ["users", "for-employee-form"],
+    queryFn: () => UsersService.readUsersForEmployeeForm({ skip: 0, limit: 100 }),
   })
   const grades = useQuery({
     queryKey: ["grades", "form-options"],
@@ -27,7 +28,7 @@ export function useEmployeeFormOptions() {
     gradeOptions: toSelectOptions(
       grades.data?.data ?? [],
       (g) => g.id,
-      (g) => g.name,
+      (g) => formatGradeName(g.name),
     ),
     locationOptions: toSelectOptions(
       locations.data?.data ?? [],

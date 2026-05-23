@@ -217,7 +217,7 @@ export type RoleUpdate = {
  * Решение менеджера агентской точки по выполненной задаче.
  */
 export type TaskAgentPointManagerConfirmUpdate = {
-    confirmed: boolean;
+    confirmed?: (boolean | null);
     comment?: (string | null);
 };
 
@@ -244,6 +244,7 @@ export type TaskMePublic = {
     comment: string;
     id: number;
     agent_point: AgentPointPublic;
+    task_type: TaskTypePublic;
 };
 
 export type TaskPublic = {
@@ -255,6 +256,9 @@ export type TaskPublic = {
     task_type_id: number;
     agent_point_id: number;
     task_status_id: number;
+    ap_manager_confirmed?: (boolean | null);
+    ap_manager_comment?: (string | null);
+    ap_manager_user_id?: (number | null);
     employee: EmployeePublic;
     task_type: TaskTypePublic;
     agent_point: AgentPointPublic;
@@ -375,6 +379,11 @@ export type UserRefPublic = {
     name: string;
     surname: string;
     middle_name: string;
+};
+
+export type UserRefsPublic = {
+    data: Array<UserRefPublic>;
+    count: number;
 };
 
 export type UsersPublic = {
@@ -775,6 +784,13 @@ export type UsersReadUsersData = {
 };
 
 export type UsersReadUsersResponse = (UsersPublic);
+
+export type UsersReadUsersForEmployeeFormData = {
+    limit?: number;
+    skip?: number;
+};
+
+export type UsersReadUsersForEmployeeFormResponse = (UserRefsPublic);
 
 export type UsersReadUserMeResponse = (UserPublic);
 

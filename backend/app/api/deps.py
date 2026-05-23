@@ -14,13 +14,13 @@ from app.core.roles import (
     is_employee_manager_user,
     is_field_employee_user,
 )
-from app.models import TokenPayload, User
+from app.models import AgentPointManager, TokenPayload, User
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jwt.exceptions import InvalidTokenError
 from pydantic import ValidationError
 from sqlalchemy.orm import joinedload
-from sqlmodel import Session
+from sqlmodel import Session, select
 
 reusable_oauth2 = OAuth2PasswordBearer(
     tokenUrl=f"{settings.API_V1_STR}/login/access-token"
@@ -179,3 +179,50 @@ def ensure_field_employee_task_access(*, field_user: User, task_employee_id: int
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Можно изменять только свои задачи",
         )
+
+
+def get_managed_agent_point_ids(*, session: Session, user_id: int) -> list[int]:
+    return list(
+        session.exec(
+            select(AgentPointManager.agent_point_id).where(
+                AgentPointManager.user_id == user_id
+            )
+        ).all()
+    )
+
+
+def get_allowed_agent_point_ids_for_ap_manager(
+    *, session: Session, user_id: int, role: object | None
+) -> list[int] | None:
+    if not is_agent_point_manager_user(role):
+        return None
+    return get_managed_agent_point_ids(session=session, user_id=user_id)
+
+
+def ensure_ap_manager_agent_point_access(
+    *, session: Session, user_id: int, agent_point_id: int
+) -> None:
+    allowed_ids = get_managed_agent_point_ids(session=session, user_id=user_id)
+    if agent_point_id not in allowed_ids:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Недостаточно прав для задач этой агентской точки",
+        )
+
+
+def get_employee_manager_or_agent_point_manager_user(
+    current_user: CurrentUser,
+) -> User:
+    if is_employee_manager_user(current_user.role) or is_agent_point_manager_user(
+        current_user.role
+    ):
+        return current_user
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="Требуется роль EMPLOYEE_MANAGER или AGENT_POINT_MANAGER",
+    )
+
+
+EmployeeManagerOrAgentPointManagerUser = Annotated[
+    User, Depends(get_employee_manager_or_agent_point_manager_user)
+]

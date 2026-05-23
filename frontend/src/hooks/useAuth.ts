@@ -8,6 +8,7 @@ import {
   type UserRegister,
   UsersService,
 } from "@/client"
+import { getStartPagePath } from "@/features/navigation/roleSections"
 import { handleError } from "@/utils"
 import useCustomToast from "./useCustomToast"
 
@@ -47,8 +48,11 @@ const useAuth = () => {
 
   const loginMutation = useMutation({
     mutationFn: login,
-    onSuccess: () => {
-      navigate({ to: "/" })
+    onSuccess: async () => {
+      const currentUser = await UsersService.readUserMe()
+      queryClient.setQueryData(["currentUser"], currentUser)
+      const startPage = getStartPagePath(currentUser.role?.name)
+      navigate({ to: startPage ?? "/" })
     },
     onError: handleError.bind(showErrorToast),
   })

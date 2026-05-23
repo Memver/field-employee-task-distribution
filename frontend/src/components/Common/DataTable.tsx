@@ -3,8 +3,10 @@ import {
   flexRender,
   getCoreRowModel,
   getPaginationRowModel,
+  type PaginationState,
   useReactTable,
 } from "@tanstack/react-table"
+import { useState } from "react"
 import { DataTablePagination } from "@/components/Common/DataTablePagination"
 import { EmptyState } from "@/components/Common/EmptyState"
 import { emptyTable } from "@/lib/i18n/ru"
@@ -30,9 +32,17 @@ export function DataTable<TData, TValue>({
   emptyTitle,
   emptyDescription,
 }: DataTableProps<TData, TValue>) {
+  const [pagination, setPagination] = useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 10,
+  })
+
   const table = useReactTable({
     data,
     columns,
+    state: { pagination },
+    onPaginationChange: setPagination,
+    autoResetPageIndex: false,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
   })

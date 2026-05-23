@@ -16,6 +16,7 @@ import {
 import { LoadingButton } from "@/components/ui/loading-button"
 import useAuth from "@/hooks/useAuth"
 import useCustomToast from "@/hooks/useCustomToast"
+import { toasts } from "@/lib/i18n/ru"
 import { handleError } from "@/utils"
 
 const DeleteConfirmation = () => {
@@ -27,7 +28,7 @@ const DeleteConfirmation = () => {
   const mutation = useMutation({
     mutationFn: () => UsersService.deleteUserMe(),
     onSuccess: () => {
-      showSuccessToast("Your account has been successfully deleted")
+      showSuccessToast(toasts.accountDeleted)
       logout()
     },
     onError: handleError.bind(showErrorToast),

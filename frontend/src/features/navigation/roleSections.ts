@@ -74,9 +74,21 @@ const sectionsByKey: Record<string, NavigationSection> = {
     path: "/agent-points",
     icon: Target,
   },
+  myAgentPoints: {
+    key: "myAgentPoints",
+    title: "Мои агентские точки",
+    path: "/agent-points",
+    icon: Target,
+  },
   agentPointEvents: {
     key: "agentPointEvents",
     title: "События агентских точек",
+    path: "/agent-point-events",
+    icon: Clock3,
+  },
+  myAgentPointEvents: {
+    key: "myAgentPointEvents",
+    title: "Мои события",
     path: "/agent-point-events",
     icon: Clock3,
   },
@@ -97,7 +109,7 @@ const roleSectionKeys: Record<RoleName, string[]> = {
     "tasks",
   ],
   FIELD_EMPLOYEE: [],
-  AGENT_POINT_MANAGER: ["agentPoints", "tasks"],
+  AGENT_POINT_MANAGER: ["myAgentPoints", "myAgentPointEvents", "tasks"],
 }
 
 const startPageByRole: Partial<Record<RoleName, StartPagePath>> = {
@@ -146,4 +158,12 @@ export function getStartPagePath(
 
 export function isFieldEmployeeRole(roleName: string | undefined): boolean {
   return getRoleName(roleName) === "FIELD_EMPLOYEE"
+}
+
+export function isAgentPointManagerRole(roleName: string | undefined): boolean {
+  return getRoleName(roleName) === "AGENT_POINT_MANAGER"
+}
+
+export function isEmployeeManagerRole(roleName: string | undefined): boolean {
+  return getRoleName(roleName) === "EMPLOYEE_MANAGER"
 }

@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form"
 import { z } from "zod"
 
 import { type AgentPointCreate, AgentPointsService } from "@/client"
+import { DateTimeField } from "@/components/Common/DateTimeField"
 import { RelationSelect } from "@/components/Common/RelationSelect"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -31,11 +32,12 @@ import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
 import { useAgentPointFormOptions } from "@/features/agentPoints/formOptions"
 import useCustomToast from "@/hooks/useCustomToast"
-import { toasts } from "@/lib/i18n/ru"
+import { fromDateTimeLocalToUtcIso } from "@/lib/dateTimeUtc"
+import { toasts, validation } from "@/lib/i18n/ru"
 import { handleError } from "@/utils"
 
 const formSchema = z.object({
-  created_time: z.string().min(1),
+  created_time: z.string().min(1, { message: validation.required }),
   is_cards_delivered: z.boolean(),
   days_since_last_card_gived: z.coerce.number().int().nonnegative(),
   approved_applications: z.coerce.number().int().nonnegative(),
@@ -73,7 +75,12 @@ const AddUser = () => {
   })
 
   const onSubmit = (data: FormData) => {
-    mutation.mutate(data)
+    const created_time = fromDateTimeLocalToUtcIso(data.created_time)
+    if (!created_time) {
+      showErrorToast(validation.invalidDateTime)
+      return
+    }
+    mutation.mutate({ ...data, created_time })
   }
 
   return (
@@ -97,12 +104,11 @@ const AddUser = () => {
                 name="created_time"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Время создания (ISO)</FormLabel>
+                    <FormLabel>Создано</FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder="2026-01-01T10:00:00Z"
-                        type="text"
-                        {...field}
+                      <DateTimeField
+                        value={field.value}
+                        onChange={field.onChange}
                       />
                     </FormControl>
                     <FormMessage />

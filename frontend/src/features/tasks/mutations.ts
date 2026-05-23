@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { TasksService, type TaskSelfUpdate } from "@/client"
 import useCustomToast from "@/hooks/useCustomToast"
+import { toasts } from "@/lib/i18n/ru"
 import { queryKeys } from "@/lib/queryKeys"
 import { handleError } from "@/utils"
 
@@ -17,7 +18,7 @@ export function useUpdateMyTaskStatusMutation() {
     mutationFn: ({ taskId, requestBody }: UpdateMyTaskStatusPayload) =>
       TasksService.updateMyTaskStatus({ taskId, requestBody }),
     onSuccess: () => {
-      showSuccessToast("Статус задачи обновлен")
+      showSuccessToast(toasts.taskStatusUpdatedField)
     },
     onError: handleError.bind(showErrorToast),
     onSettled: () => {

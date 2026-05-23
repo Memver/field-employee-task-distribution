@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query"
 import { GradesService, PrioritiesService } from "@/client"
 import { toSelectOptions } from "@/components/Common/RelationSelect"
+import { formatGradeName, formatPriorityName } from "@/lib/i18n/ru"
 
 export function useTaskTypeFormOptions() {
   const grades = useQuery({
@@ -17,12 +18,12 @@ export function useTaskTypeFormOptions() {
     gradeOptions: toSelectOptions(
       grades.data?.data ?? [],
       (g) => g.id,
-      (g) => g.name,
+      (g) => formatGradeName(g.name),
     ),
     priorityOptions: toSelectOptions(
       priorities.data?.data ?? [],
       (p) => p.id,
-      (p) => p.name,
+      (p) => formatPriorityName(p.name),
     ),
   }
 }

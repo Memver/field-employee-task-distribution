@@ -2,6 +2,7 @@ import type { ColumnDef } from "@tanstack/react-table"
 
 import type { EmployeePublic } from "@/client"
 import { formatLocation, formatUserRef } from "@/lib/entityLabels"
+import { formatGradeName } from "@/lib/i18n/ru"
 import { UserActionsMenu } from "./UserActionsMenu"
 
 export type EmployeeTableData = EmployeePublic
@@ -15,7 +16,7 @@ export const columns: ColumnDef<EmployeeTableData>[] = [
   {
     id: "grade",
     header: "Грейд",
-    cell: ({ row }) => row.original.grade?.name ?? "—",
+    cell: ({ row }) => formatGradeName(row.original.grade?.name),
   },
   {
     id: "start_location",

@@ -990,7 +990,14 @@ export const RolesPublicSchema = {
 export const TaskAgentPointManagerConfirmUpdateSchema = {
     properties: {
         confirmed: {
-            type: 'boolean',
+            anyOf: [
+                {
+                    type: 'boolean'
+                },
+                {
+                    type: 'null'
+                }
+            ],
             title: 'Confirmed'
         },
         comment: {
@@ -1007,7 +1014,6 @@ export const TaskAgentPointManagerConfirmUpdateSchema = {
         }
     },
     type: 'object',
-    required: ['confirmed'],
     title: 'TaskAgentPointManagerConfirmUpdate',
     description: 'Решение менеджера агентской точки по выполненной задаче.'
 } as const;
@@ -1094,10 +1100,13 @@ export const TaskMePublicSchema = {
         },
         agent_point: {
             '$ref': '#/components/schemas/AgentPointPublic'
+        },
+        task_type: {
+            '$ref': '#/components/schemas/TaskTypePublic'
         }
     },
     type: 'object',
-    required: ['start_time', 'finish_time', 'comment', 'id', 'agent_point'],
+    required: ['start_time', 'finish_time', 'comment', 'id', 'agent_point', 'task_type'],
     title: 'TaskMePublic'
 } as const;
 
@@ -1137,6 +1146,39 @@ export const TaskPublicSchema = {
         task_status_id: {
             type: 'integer',
             title: 'Task Status Id'
+        },
+        ap_manager_confirmed: {
+            anyOf: [
+                {
+                    type: 'boolean'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Ap Manager Confirmed'
+        },
+        ap_manager_comment: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Ap Manager Comment'
+        },
+        ap_manager_user_id: {
+            anyOf: [
+                {
+                    type: 'integer'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Ap Manager User Id'
         },
         employee: {
             '$ref': '#/components/schemas/EmployeePublic'
@@ -1586,6 +1628,25 @@ export const UserRefPublicSchema = {
     type: 'object',
     required: ['id', 'login', 'name', 'surname', 'middle_name'],
     title: 'UserRefPublic'
+} as const;
+
+export const UserRefsPublicSchema = {
+    properties: {
+        data: {
+            items: {
+                '$ref': '#/components/schemas/UserRefPublic'
+            },
+            type: 'array',
+            title: 'Data'
+        },
+        count: {
+            type: 'integer',
+            title: 'Count'
+        }
+    },
+    type: 'object',
+    required: ['data', 'count'],
+    title: 'UserRefsPublic'
 } as const;
 
 export const UserUpdateSchema = {

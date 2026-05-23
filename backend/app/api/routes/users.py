@@ -1,18 +1,21 @@
 from typing import Any
 
-from app.api.deps import AdminUser, CurrentUser, SessionDep
-from app.core.roles import is_admin_user
+from app.api.deps import AdminUser, CurrentUser, EmployeeManagerUser, SessionDep
+from app.core.roles import ROLE_FIELD_EMPLOYEE, is_admin_user
 from app.core.security import get_password_hash
 from app.models import (
     Message,
+    Role,
     User,
     UserCreate,
     UserPublic,
+    UserRefPublic,
+    UserRefsPublic,
     UsersPublic,
     UserUpdate,
 )
 from fastapi import APIRouter, HTTPException
-from sqlmodel import func, select
+from sqlmodel import col, func, select
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -51,6 +54,37 @@ def read_users(
     users = session.exec(statement).all()
 
     return UsersPublic(data=users, count=count)
+
+
+@router.get("/for-employee-form", response_model=UserRefsPublic)
+def read_users_for_employee_form(
+    session: SessionDep, _em: EmployeeManagerUser, skip: int = 0, limit: int = 100
+) -> Any:
+    """
+    Пользователи с ролью выездного сотрудника для формы создания/редактирования employee.
+    """
+    field_role = session.exec(
+        select(Role).where(col(Role.name) == ROLE_FIELD_EMPLOYEE)
+    ).first()
+    if field_role is None:
+        return UserRefsPublic(data=[], count=0)
+
+    count_statement = (
+        select(func.count())
+        .select_from(User)
+        .where(col(User.role_id) == field_role.id)
+    )
+    count = session.exec(count_statement).one()
+
+    statement = (
+        select(User)
+        .where(col(User.role_id) == field_role.id)
+        .offset(skip)
+        .limit(limit)
+    )
+    users = session.exec(statement).all()
+    refs = [UserRefPublic.model_validate(user) for user in users]
+    return UserRefsPublic(data=refs, count=count)
 
 
 @router.get("/me", response_model=UserPublic)

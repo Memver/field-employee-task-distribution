@@ -10,6 +10,7 @@ import {
   formatAgentPoint,
   formatEmployee,
 } from "@/lib/entityLabels"
+import { formatTaskStatusName, formatTaskTypeName } from "@/lib/i18n/ru"
 
 export function useTaskFormOptions() {
   const employees = useQuery({
@@ -43,7 +44,7 @@ export function useTaskFormOptions() {
     taskTypeOptions: toSelectOptions(
       taskTypes.data?.data ?? [],
       (t) => t.id,
-      (t) => t.name,
+      (t) => formatTaskTypeName(t.name),
     ),
     agentPointOptions: toSelectOptions(
       agentPoints.data?.data ?? [],
@@ -53,7 +54,7 @@ export function useTaskFormOptions() {
     taskStatusOptions: toSelectOptions(
       taskStatuses.data?.data ?? [],
       (s) => s.id,
-      (s) => s.name,
+      (s) => formatTaskStatusName(s.name),
     ),
   }
 }

@@ -5,6 +5,7 @@ import {
   getStartPagePath,
   isFieldEmployeeRole,
 } from "@/features/navigation/roleSections"
+import { pageTitles } from "@/lib/i18n/ru"
 import { FieldEmployee } from "./FieldEmployee"
 
 export const Route = createFileRoute("/_layout/")({

@@ -3,6 +3,7 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
+  Legend,
   Pie,
   PieChart,
   ResponsiveContainer,
@@ -20,6 +21,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { formatDateTime } from "@/lib/formatDateTime"
+import { formatTaskTypeName } from "@/lib/i18n/ru"
 
 const CHART_COLORS = [
   "#FF4B5F",
@@ -48,11 +51,25 @@ function countByKey<T>(
     .sort((a, b) => b.count - a.count)
 }
 
+function shortenName(fullName: string, maxLength = 14): string {
+  if (fullName.length <= maxLength) {
+    return fullName
+  }
+  const parts = fullName.trim().split(/\s+/)
+  if (parts.length >= 2) {
+    return `${parts[0]} ${parts[1].charAt(0)}.`
+  }
+  return `${fullName.slice(0, maxLength - 1)}…`
+}
+
 export function DistributionReportPanel({ report }: DistributionReportPanelProps) {
   const byEmployee = countByKey(
     report.assignments,
     (a) => a.employee_full_name,
-  )
+  ).map((item) => ({
+    ...item,
+    shortName: shortenName(item.name),
+  }))
   const byReason = countByKey(report.unplaced, (u) => u.reason)
 
   return (
@@ -76,28 +93,33 @@ export function DistributionReportPanel({ report }: DistributionReportPanelProps
       {(byEmployee.length > 0 || byReason.length > 0) && (
         <div className="grid gap-6 lg:grid-cols-2">
           {byEmployee.length > 0 && (
-            <div className="h-64">
+            <div className="h-72">
               <p className="text-sm font-medium mb-2">Задачи по сотрудникам</p>
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={byEmployee} margin={{ bottom: 60 }}>
+                <BarChart data={byEmployee} margin={{ bottom: 80, left: 8, right: 8 }}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis
-                    dataKey="name"
-                    angle={-25}
+                    dataKey="shortName"
+                    angle={-35}
                     textAnchor="end"
                     interval={0}
-                    height={80}
-                    tick={{ fontSize: 11 }}
+                    height={90}
+                    tick={{ fontSize: 10 }}
                   />
                   <YAxis allowDecimals={false} />
-                  <Tooltip />
+                  <Tooltip
+                    formatter={(value) => [value, "Задач"]}
+                    labelFormatter={(_, payload) =>
+                      payload?.[0]?.payload?.name ?? ""
+                    }
+                  />
                   <Bar dataKey="count" fill="#FF4B5F" name="Задач" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           )}
           {byReason.length > 0 && (
-            <div className="h-64">
+            <div className="h-72">
               <p className="text-sm font-medium mb-2">
                 Неразмещённые по причине
               </p>
@@ -108,13 +130,9 @@ export function DistributionReportPanel({ report }: DistributionReportPanelProps
                     dataKey="count"
                     nameKey="name"
                     cx="50%"
-                    cy="50%"
-                    outerRadius={80}
-                    label={(props) => {
-                      const name = props.name ?? ""
-                      const percent = props.percent ?? 0
-                      return `${name} (${(percent * 100).toFixed(0)}%)`
-                    }}
+                    cy="45%"
+                    outerRadius={70}
+                    label={false}
                   >
                     {byReason.map((entry, index) => (
                       <Cell
@@ -123,7 +141,17 @@ export function DistributionReportPanel({ report }: DistributionReportPanelProps
                       />
                     ))}
                   </Pie>
-                  <Tooltip />
+                  <Tooltip
+                    formatter={(value, _name, item) => [
+                      value,
+                      item?.payload?.name ?? "",
+                    ]}
+                  />
+                  <Legend
+                    layout="horizontal"
+                    verticalAlign="bottom"
+                    wrapperStyle={{ fontSize: 11, paddingTop: 8 }}
+                  />
                 </PieChart>
               </ResponsiveContainer>
             </div>
@@ -134,13 +162,13 @@ export function DistributionReportPanel({ report }: DistributionReportPanelProps
       {report.assignments.length > 0 && (
         <div>
           <h3 className="text-sm font-medium mb-2">Назначения</h3>
-          <Table>
+          <div className="overflow-x-auto">
+            <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Сотрудник</TableHead>
                 <TableHead>Точка</TableHead>
                 <TableHead>Тип</TableHead>
-                <TableHead>День</TableHead>
                 <TableHead>Начало</TableHead>
                 <TableHead>Окончание</TableHead>
                 <TableHead>Причина</TableHead>
@@ -149,17 +177,25 @@ export function DistributionReportPanel({ report }: DistributionReportPanelProps
             <TableBody>
               {report.assignments.map((row, index) => (
                 <TableRow key={`${row.employee_id}-${row.agent_point_id}-${index}`}>
-                  <TableCell>{row.employee_full_name}</TableCell>
-                  <TableCell>{row.agent_point_address ?? "—"}</TableCell>
-                  <TableCell>{row.task_type_name}</TableCell>
-                  <TableCell>{row.day_index}</TableCell>
-                  <TableCell>{new Date(row.start_time).toLocaleString("ru-RU")}</TableCell>
-                  <TableCell>{new Date(row.finish_time).toLocaleString("ru-RU")}</TableCell>
-                  <TableCell>{row.reason}</TableCell>
+                  <TableCell className="whitespace-normal break-words">
+                    {row.employee_full_name}
+                  </TableCell>
+                  <TableCell className="whitespace-normal break-words">
+                    {row.agent_point_address ?? "—"}
+                  </TableCell>
+                  <TableCell className="whitespace-normal break-words">
+                    {formatTaskTypeName(row.task_type_name)}
+                  </TableCell>
+                  <TableCell>{formatDateTime(row.start_time)}</TableCell>
+                  <TableCell>{formatDateTime(row.finish_time)}</TableCell>
+                  <TableCell className="whitespace-normal break-words">
+                    {row.reason}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
-          </Table>
+            </Table>
+          </div>
         </div>
       )}
 
@@ -177,9 +213,13 @@ export function DistributionReportPanel({ report }: DistributionReportPanelProps
             <TableBody>
               {report.unplaced.map((row, index) => (
                 <TableRow key={`${row.agent_point_id}-${index}`}>
-                  <TableCell>{row.agent_point_address ?? "—"}</TableCell>
-                  <TableCell>{row.task_type_name ?? "—"}</TableCell>
-                  <TableCell>{row.reason}</TableCell>
+                  <TableCell className="max-w-[200px] truncate" title={row.agent_point_address ?? undefined}>
+                    {row.agent_point_address ?? "—"}
+                  </TableCell>
+                  <TableCell>{formatTaskTypeName(row.task_type_name ?? undefined)}</TableCell>
+                  <TableCell className="max-w-[240px] truncate" title={row.reason}>
+                    {row.reason}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
