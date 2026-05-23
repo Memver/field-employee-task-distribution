@@ -249,14 +249,13 @@ def _priority_penalty(candidate: TaskCandidate, carryover_days: int) -> int:
     if carryover_days > 0 or candidate.priority_level >= 110:
         penalty_hours = (
             DROP_PENALTY_HOURS_BY_PRIORITY["high"]
-            * settings.DROP_PENALTY_HIGH_MULTIPLIER
         )
     elif candidate.priority_level >= 60:
         penalty_hours = DROP_PENALTY_HOURS_BY_PRIORITY["middle"]
     else:
         penalty_hours = DROP_PENALTY_HOURS_BY_PRIORITY["low"]
 
-    return penalty_hours * 60 * 60
+    return int(round(penalty_hours * 60 * 60))
 
 
 def _build_distribution_metrics(
