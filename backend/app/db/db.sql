@@ -87,8 +87,8 @@ INSERT INTO public.user
     (7, 3, 'belyaeva', '$argon2id$v=19$m=65536,t=3,p=4$pzmQ1Xci6dPapoxtj6V5Ag$icHZptf37K0csZaCPlr1+kYha0M76fgttNg6fzLQMRY', 'Евгения', 'Беляева', 'Антоновна', false),
     (8, 3, 'nikolaev', '$argon2id$v=19$m=65536,t=3,p=4$pzmQ1Xci6dPapoxtj6V5Ag$icHZptf37K0csZaCPlr1+kYha0M76fgttNg6fzLQMRY', 'Азарий', 'Николаев', 'Платонович', false),
 	(9, 1, 'admin', '$argon2id$v=19$m=65536,t=3,p=4$pzmQ1Xci6dPapoxtj6V5Ag$icHZptf37K0csZaCPlr1+kYha0M76fgttNg6fzLQMRY', 'Валерий', 'Евдокимов', 'Данилович', true),
-	(10, 2, 'manager', '$argon2id$v=19$m=65536,t=3,p=4$pzmQ1Xci6dPapoxtj6V5Ag$icHZptf37K0csZaCPlr1+kYha0M76fgttNg6fzLQMRY', 'Давид', 'Лебедев', 'Платонович', false),
-    (11, 4, 'ap_manager', '$argon2id$v=19$m=65536,t=3,p=4$pzmQ1Xci6dPapoxtj6V5Ag$icHZptf37K0csZaCPlr1+kYha0M76fgttNg6fzLQMRY', 'Адам', 'Соколов', 'Федорович', false);
+	(10, 2, 'manager', '$argon2id$v=19$m=65536,t=3,p=4$pzmQ1Xci6dPapoxtj6V5Ag$icHZptf37K0csZaCPlr1+kYha0M76fgttNg6fzLQMRY', 'Владимир', 'Белов', 'Андреевич', false),
+    (11, 4, 'ap_manager', '$argon2id$v=19$m=65536,t=3,p=4$pzmQ1Xci6dPapoxtj6V5Ag$icHZptf37K0csZaCPlr1+kYha0M76fgttNg6fzLQMRY', 'Лев', 'Орлов', 'Сергеевич', false);
 
 INSERT INTO public.employee
 (
