@@ -17,6 +17,7 @@ import {
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu"
 import { LoadingButton } from "@/components/ui/loading-button"
 import useCustomToast from "@/hooks/useCustomToast"
+import { toasts } from "@/lib/i18n/ru"
 import { handleError } from "@/utils"
 
 interface DeleteLocationProps {
@@ -34,7 +35,7 @@ const DeleteLocation = ({ id, onSuccess }: DeleteLocationProps) => {
     mutationFn: (locationId: number) =>
       LocationsService.deleteLocation({ locationId }),
     onSuccess: () => {
-      showSuccessToast("Location deleted successfully")
+      showSuccessToast(toasts.locationDeleted)
       setIsOpen(false)
       onSuccess()
     },

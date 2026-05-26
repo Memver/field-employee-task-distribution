@@ -1,10 +1,14 @@
 from sqlmodel import Session, col, func, select
 
 from app.models import AgentPointEvent
+from app.repositories.eager_loads import (
+    agent_point_event_load_options,
+    get_agent_point_event,
+)
 
 
 def get_by_id(*, session: Session, event_id: int) -> AgentPointEvent | None:
-    return session.get(AgentPointEvent, event_id)
+    return get_agent_point_event(session, event_id)
 
 
 def get_by_id_for_agent_points(
@@ -13,10 +17,12 @@ def get_by_id_for_agent_points(
     if not agent_point_ids:
         return None
     return session.exec(
-        select(AgentPointEvent).where(
+        select(AgentPointEvent)
+        .where(
             AgentPointEvent.id == event_id,
             col(AgentPointEvent.agent_point_id).in_(agent_point_ids),
         )
+        .options(*agent_point_event_load_options())
     ).first()
 
 
@@ -28,6 +34,7 @@ def list_for_agent_points(
     return session.exec(
         select(AgentPointEvent)
         .where(col(AgentPointEvent.agent_point_id).in_(agent_point_ids))
+        .options(*agent_point_event_load_options())
         .offset(skip)
         .limit(limit)
     ).all()
@@ -46,5 +53,6 @@ def count_for_agent_points(*, session: Session, agent_point_ids: list[int]) -> i
 def save(*, session: Session, event: AgentPointEvent) -> AgentPointEvent:
     session.add(event)
     session.commit()
-    session.refresh(event)
-    return event
+    loaded = get_agent_point_event(session, event.id)
+    assert loaded is not None
+    return loaded

@@ -28,6 +28,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
 import useCustomToast from "@/hooks/useCustomToast"
+import { toasts } from "@/lib/i18n/ru"
 import { handleError } from "@/utils"
 
 const formSchema = z.object({
@@ -64,7 +65,7 @@ const EditUser = ({ grade, onSuccess }: EditGradeProps) => {
         requestBody: data satisfies GradeUpdate,
       }),
     onSuccess: () => {
-      showSuccessToast("Grade updated successfully")
+      showSuccessToast(toasts.gradeUpdated)
       setIsOpen(false)
       onSuccess()
     },

@@ -32,6 +32,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
 import useCustomToast from "@/hooks/useCustomToast"
+import { toasts } from "@/lib/i18n/ru"
 import { handleError } from "@/utils"
 
 const formSchema = z.object({
@@ -68,7 +69,7 @@ const EditUser = ({ priority, onSuccess }: EditPriorityProps) => {
         requestBody: data satisfies PriorityUpdate,
       }),
     onSuccess: () => {
-      showSuccessToast("Priority updated successfully")
+      showSuccessToast(toasts.priorityUpdated)
       setIsOpen(false)
       onSuccess()
     },

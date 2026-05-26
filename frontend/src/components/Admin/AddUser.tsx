@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form"
 import { z } from "zod"
 
 import { type UserCreate, UsersService } from "@/client"
+import { RelationSelect } from "@/components/Common/RelationSelect"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -27,7 +28,9 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
+import { useAdminFormOptions } from "@/features/admin/formOptions"
 import useCustomToast from "@/hooks/useCustomToast"
+import { toasts } from "@/lib/i18n/ru"
 import { queryKeys } from "@/lib/queryKeys"
 import { handleError } from "@/utils"
 
@@ -57,6 +60,7 @@ const AddUser = () => {
   const [isOpen, setIsOpen] = useState(false)
   const queryClient = useQueryClient()
   const { showSuccessToast, showErrorToast } = useCustomToast()
+  const options = useAdminFormOptions()
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -68,7 +72,7 @@ const AddUser = () => {
     mutationFn: (data: UserCreate) =>
       UsersService.createUser({ requestBody: data }),
     onSuccess: () => {
-      showSuccessToast("User created successfully")
+      showSuccessToast(toasts.userCreated)
       form.reset()
       setIsOpen(false)
     },
@@ -79,7 +83,11 @@ const AddUser = () => {
   })
 
   const onSubmit = (data: FormData) => {
-    mutation.mutate(data)
+    const { confirm_password: _, ...payload } = data
+    mutation.mutate({
+      ...payload,
+      role_id: Number(payload.role_id),
+    })
   }
 
   return (
@@ -146,7 +154,13 @@ const AddUser = () => {
                   <FormItem>
                     <FormLabel>Роль</FormLabel>
                     <FormControl>
-                      <Input placeholder="Роль" type="text" {...field} />
+                      <RelationSelect
+                        value={field.value}
+                        onChange={field.onChange}
+                        options={options.roleOptions}
+                        placeholder="Выберите роль"
+                        disabled={options.isLoading}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

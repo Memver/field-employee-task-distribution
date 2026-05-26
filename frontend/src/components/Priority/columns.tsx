@@ -1,6 +1,7 @@
 import type { ColumnDef } from "@tanstack/react-table"
 
 import type { PriorityPublic } from "@/client"
+import { formatPriorityName } from "@/lib/i18n/ru"
 import { cn } from "@/lib/utils"
 import { UserActionsMenu } from "./UserActionsMenu"
 
@@ -11,10 +12,10 @@ export const columns: ColumnDef<PriorityTableData>[] = [
     accessorKey: "name",
     header: "Название",
     cell: ({ row }) => {
-      const value = row.original.name
+      const value = formatPriorityName(row.original.name)
       return (
-        <span className={cn(!value && "text-muted-foreground")}>
-          {value || "N/A"}
+        <span className={cn(value === "—" && "text-muted-foreground")}>
+          {value}
         </span>
       )
     },

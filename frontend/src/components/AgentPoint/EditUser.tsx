@@ -10,6 +10,8 @@ import {
   AgentPointsService,
   type AgentPointUpdate,
 } from "@/client"
+import { DateTimeField } from "@/components/Common/DateTimeField"
+import { RelationSelect } from "@/components/Common/RelationSelect"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
@@ -32,7 +34,10 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
+import { useAgentPointFormOptions } from "@/features/agentPoints/formOptions"
 import useCustomToast from "@/hooks/useCustomToast"
+import { fromDateTimeLocalToUtcIso, toDateTimeLocalUtc } from "@/lib/dateTimeUtc"
+import { toasts, validation } from "@/lib/i18n/ru"
 import { handleError } from "@/utils"
 
 const formSchema = z.object({
@@ -44,7 +49,7 @@ const formSchema = z.object({
   location_id: z.coerce.number().int().positive(),
 })
 
-type FormData = z.infer<typeof formSchema>
+type FormData = z.output<typeof formSchema>
 
 interface EditUserProps {
   agentPoint: AgentPointPublic
@@ -55,10 +60,11 @@ const EditUser = ({ agentPoint, onSuccess }: EditUserProps) => {
   const [isOpen, setIsOpen] = useState(false)
   const queryClient = useQueryClient()
   const { showSuccessToast, showErrorToast } = useCustomToast()
+  const options = useAgentPointFormOptions()
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      created_time: agentPoint.created_time,
+      created_time: toDateTimeLocalUtc(agentPoint.created_time ?? ""),
       is_cards_delivered: agentPoint.is_cards_delivered,
       days_since_last_card_gived: agentPoint.days_since_last_card_gived,
       approved_applications: agentPoint.approved_applications,
@@ -76,7 +82,7 @@ const EditUser = ({ agentPoint, onSuccess }: EditUserProps) => {
         requestBody: data,
       }),
     onSuccess: () => {
-      showSuccessToast("Agent point updated successfully")
+      showSuccessToast(toasts.agentPointUpdated)
       setIsOpen(false)
       onSuccess()
     },
@@ -85,7 +91,14 @@ const EditUser = ({ agentPoint, onSuccess }: EditUserProps) => {
       queryClient.invalidateQueries({ queryKey: ["agent-points"] }),
   })
 
-  const onSubmit = (data: FormData) => mutation.mutate(data)
+  const onSubmit = (data: FormData) => {
+    const created_time = fromDateTimeLocalToUtcIso(data.created_time)
+    if (!created_time) {
+      showErrorToast(validation.invalidDateTime)
+      return
+    }
+    mutation.mutate({ ...data, created_time })
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -108,9 +121,12 @@ const EditUser = ({ agentPoint, onSuccess }: EditUserProps) => {
                 name="created_time"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Время создания (ISO)</FormLabel>
+                    <FormLabel>Создано</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <DateTimeField
+                        value={field.value}
+                        onChange={field.onChange}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -176,9 +192,14 @@ const EditUser = ({ agentPoint, onSuccess }: EditUserProps) => {
                 name="location_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>ID локации</FormLabel>
+                    <FormLabel>Локация</FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} />
+                      <RelationSelect
+                        value={String(field.value)}
+                        onChange={(v) => field.onChange(Number(v))}
+                        options={options.locationOptions}
+                        disabled={options.isLoading}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

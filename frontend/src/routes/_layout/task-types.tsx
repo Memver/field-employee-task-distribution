@@ -5,6 +5,7 @@ import { TaskTypesService } from "@/client"
 import { DataTable } from "@/components/Common/DataTable"
 import AddTaskType from "@/components/TaskType/AddTaskType"
 import { columns, type TaskTypeTableData } from "@/components/TaskType/columns"
+import { emptyTable } from "@/lib/i18n/ru"
 import { queryKeys } from "@/lib/queryKeys"
 
 function getTaskTypesQueryOptions() {
@@ -21,7 +22,9 @@ export const Route = createFileRoute("/_layout/task-types")({
 function TaskTypesTableContent() {
   const { data } = useSuspenseQuery(getTaskTypesQueryOptions())
   const tableData: TaskTypeTableData[] = data.data
-  return <DataTable columns={columns} data={tableData} />
+  return (
+    <DataTable columns={columns} data={tableData} emptyTitle={emptyTable.taskTypes} />
+  )
 }
 
 function TaskTypes() {

@@ -17,43 +17,9 @@ export const columns: ColumnDef<LocationTableData>[] = [
           <span
             className={cn("font-medium", !fullName && "text-muted-foreground")}
           >
-            {fullName || "N/A"}
+            {fullName || "—"}
           </span>
         </div>
-      )
-    },
-  },
-  {
-    accessorKey: "lat",
-    header: "Широта",
-    cell: ({ row }) => {
-      const fullName = row.original.lat
-      return (
-        <span
-          className={cn(
-            "font-medium",
-            fullName == null && "text-muted-foreground",
-          )}
-        >
-          {fullName == null ? "N/A" : fullName}
-        </span>
-      )
-    },
-  },
-  {
-    accessorKey: "lon",
-    header: "Долгота",
-    cell: ({ row }) => {
-      const fullName = row.original.lon
-      return (
-        <span
-          className={cn(
-            "font-medium",
-            fullName == null && "text-muted-foreground",
-          )}
-        >
-          {fullName == null ? "N/A" : fullName}
-        </span>
       )
     },
   },

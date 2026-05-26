@@ -22,6 +22,7 @@ import {
   getTaskStatusesQueryOptions,
 } from "@/features/tasks/queries"
 import useCustomToast from "@/hooks/useCustomToast"
+import { formatTaskStatusName, formatTaskTypeName } from "@/lib/i18n/ru"
 
 const OSM_TILE_URL =
   import.meta.env.VITE_OSM_TILE_URL ??
@@ -139,7 +140,13 @@ export function FieldEmployee() {
   const hasTasks = data.tasks.length > 0
   const hasValidRoute = routePoints.length >= 2
   const statusesById = useMemo(
-    () => new Map(taskStatuses.data.map((status) => [status.id, status.name])),
+    () =>
+      new Map(
+        taskStatuses.data.map((status) => [
+          status.id,
+          formatTaskStatusName(status.name),
+        ]),
+      ),
     [taskStatuses.data],
   )
 
@@ -273,8 +280,12 @@ export function FieldEmployee() {
                 >
                   <Popup>
                     <div className="space-y-1">
-                      <div className="font-semibold">
-                        Задача #{task.id || "Не указано"}
+                      <div className="font-semibold">Задача №{index + 1}</div>
+                      <div className="text-xs">
+                        Тип:{" "}
+                        <span className="font-medium">
+                          {formatTaskTypeName(task.task_type?.name)}
+                        </span>
                       </div>
                       <div className="text-xs">
                         Статус: <span className="font-medium">{getStatusName(task.id)}</span>
@@ -282,7 +293,7 @@ export function FieldEmployee() {
                       <div className="text-xs">
                         Комментарий:{" "}
                         <span className="font-medium">
-                          {taskForms[task.id]?.comment || task.comment || "Нет комментария"}
+                          {taskForms[task.id]?.comment || task.comment || "—"}
                         </span>
                       </div>
                     </div>
@@ -295,10 +306,13 @@ export function FieldEmployee() {
           </div>
           <div className="w-full max-w-xl space-y-4 mt-5">
             <h2 className="text-xl font-semibold">Мои задачи</h2>
-            {data.tasks.map((task) => (
+            {data.tasks.map((task, index) => (
               <div key={task.id} className="rounded-xl border p-4 space-y-3">
                 <div className="space-y-1">
-                  <div className="font-semibold">Задача #{task.id}</div>
+                  <div className="font-semibold">Задача №{index + 1}</div>
+                  <div className="text-sm text-muted-foreground">
+                    Тип: {formatTaskTypeName(task.task_type?.name)}
+                  </div>
                   <div className="text-sm text-muted-foreground">
                     Текущий статус: {getStatusName(task.id)}
                   </div>
@@ -315,7 +329,7 @@ export function FieldEmployee() {
                   <SelectContent>
                     {taskStatuses.data.map((status) => (
                       <SelectItem key={status.id} value={String(status.id)}>
-                        {status.name}
+                        {formatTaskStatusName(status.name)}
                       </SelectItem>
                     ))}
                   </SelectContent>

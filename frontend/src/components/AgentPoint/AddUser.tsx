@@ -6,6 +6,8 @@ import { useForm } from "react-hook-form"
 import { z } from "zod"
 
 import { type AgentPointCreate, AgentPointsService } from "@/client"
+import { DateTimeField } from "@/components/Common/DateTimeField"
+import { RelationSelect } from "@/components/Common/RelationSelect"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
@@ -28,11 +30,14 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
+import { useAgentPointFormOptions } from "@/features/agentPoints/formOptions"
 import useCustomToast from "@/hooks/useCustomToast"
+import { fromDateTimeLocalToUtcIso } from "@/lib/dateTimeUtc"
+import { toasts, validation } from "@/lib/i18n/ru"
 import { handleError } from "@/utils"
 
 const formSchema = z.object({
-  created_time: z.string().min(1),
+  created_time: z.string().min(1, { message: validation.required }),
   is_cards_delivered: z.boolean(),
   days_since_last_card_gived: z.coerce.number().int().nonnegative(),
   approved_applications: z.coerce.number().int().nonnegative(),
@@ -40,12 +45,13 @@ const formSchema = z.object({
   location_id: z.coerce.number().int().positive(),
 })
 
-type FormData = z.infer<typeof formSchema>
+type FormData = z.output<typeof formSchema>
 
 const AddUser = () => {
   const [isOpen, setIsOpen] = useState(false)
   const queryClient = useQueryClient()
   const { showSuccessToast, showErrorToast } = useCustomToast()
+  const options = useAgentPointFormOptions()
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -58,7 +64,7 @@ const AddUser = () => {
     mutationFn: (data: AgentPointCreate) =>
       AgentPointsService.createAgentPoint({ requestBody: data }),
     onSuccess: () => {
-      showSuccessToast("Agent point created successfully")
+      showSuccessToast(toasts.agentPointCreated)
       form.reset()
       setIsOpen(false)
     },
@@ -69,7 +75,12 @@ const AddUser = () => {
   })
 
   const onSubmit = (data: FormData) => {
-    mutation.mutate(data)
+    const created_time = fromDateTimeLocalToUtcIso(data.created_time)
+    if (!created_time) {
+      showErrorToast(validation.invalidDateTime)
+      return
+    }
+    mutation.mutate({ ...data, created_time })
   }
 
   return (
@@ -93,12 +104,11 @@ const AddUser = () => {
                 name="created_time"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Время создания (ISO)</FormLabel>
+                    <FormLabel>Создано</FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder="2026-01-01T10:00:00Z"
-                        type="text"
-                        {...field}
+                      <DateTimeField
+                        value={field.value}
+                        onChange={field.onChange}
                       />
                     </FormControl>
                     <FormMessage />
@@ -165,9 +175,14 @@ const AddUser = () => {
                 name="location_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>ID локации</FormLabel>
+                    <FormLabel>Локация</FormLabel>
                     <FormControl>
-                      <Input placeholder="1" type="number" {...field} />
+                      <RelationSelect
+                        value={field.value ? String(field.value) : ""}
+                        onChange={(v) => field.onChange(Number(v))}
+                        options={options.locationOptions}
+                        disabled={options.isLoading}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

@@ -9,6 +9,7 @@ from app.models import (
     TaskTypesPublic,
     TaskTypeUpdate,
 )
+from app.repositories.eager_loads import get_task_type, task_type_load_options
 from fastapi import APIRouter, HTTPException
 from sqlmodel import func, select
 
@@ -25,7 +26,7 @@ def create_task_type(
     task_type = TaskType.model_validate(task_type_in)
     session.add(task_type)
     session.commit()
-    session.refresh(task_type)
+    task_type = get_task_type(session, task_type.id)
     return task_type
 
 
@@ -43,7 +44,12 @@ def read_task_types(
     count_statement = select(func.count()).select_from(TaskType)
     count = session.exec(count_statement).one()
 
-    statement = select(TaskType).offset(skip).limit(limit)
+    statement = (
+        select(TaskType)
+        .options(*task_type_load_options())
+        .offset(skip)
+        .limit(limit)
+    )
     task_types = session.exec(statement).all()
 
     return TaskTypesPublic(data=task_types, count=count)
@@ -56,7 +62,9 @@ def read_task_type_by_id(
     """
     Get a specific task_type by id.
     """
-    task_type = session.get(TaskType, task_type_id)
+    task_type = get_task_type(session, task_type_id)
+    if not task_type:
+        raise HTTPException(status_code=404, detail="TaskType not found")
     return task_type
 
 
@@ -78,7 +86,7 @@ def update_task_type(
     task_type.sqlmodel_update(update_dict)
     session.add(task_type)
     session.commit()
-    session.refresh(task_type)
+    task_type = get_task_type(session, id)
     return task_type
 
 
@@ -90,8 +98,6 @@ def delete_task_type(
     Delete a task_type.
     """
     task_type = session.get(TaskType, task_type_id)
-    # statement = delete(Item).where(col(Item.owner_id) == task_type_id)
-    # session.exec(statement)
     session.delete(task_type)
     session.commit()
     return Message(message="TaskType deleted successfully")

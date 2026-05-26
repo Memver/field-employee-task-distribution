@@ -1,4 +1,5 @@
 import { useSuspenseQuery } from "@tanstack/react-query"
+import { pageTitles } from "@/lib/i18n/ru"
 import { createFileRoute } from "@tanstack/react-router"
 
 import { LocationsService } from "@/client"
@@ -18,7 +19,7 @@ export const Route = createFileRoute("/_layout/locations")({
   head: () => ({
     meta: [
       {
-        title: "Location - FastAPI Cloud",
+        title: pageTitles.locations,
       },
     ],
   }),

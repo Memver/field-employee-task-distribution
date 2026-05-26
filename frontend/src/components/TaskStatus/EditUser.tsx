@@ -32,6 +32,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
 import useCustomToast from "@/hooks/useCustomToast"
+import { toasts } from "@/lib/i18n/ru"
 import { handleError } from "@/utils"
 
 const formSchema = z.object({
@@ -66,7 +67,7 @@ const EditUser = ({ taskStatus, onSuccess }: EditTaskStatusProps) => {
         requestBody: data satisfies TaskStatusUpdate,
       }),
     onSuccess: () => {
-      showSuccessToast("Task status updated successfully")
+      showSuccessToast(toasts.taskStatusUpdated)
       setIsOpen(false)
       onSuccess()
     },

@@ -5,7 +5,8 @@ import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 
-import { type UserPublic, UsersService } from "@/client"
+import { type UserPublic, UsersService, type UserUpdate } from "@/client"
+import { RelationSelect } from "@/components/Common/RelationSelect"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -27,7 +28,9 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
+import { useAdminFormOptions } from "@/features/admin/formOptions"
 import useCustomToast from "@/hooks/useCustomToast"
+import { toasts } from "@/lib/i18n/ru"
 import { queryKeys } from "@/lib/queryKeys"
 import { handleError } from "@/utils"
 
@@ -64,6 +67,7 @@ const EditUser = ({ user, onSuccess }: EditUserProps) => {
   const [isOpen, setIsOpen] = useState(false)
   const queryClient = useQueryClient()
   const { showSuccessToast, showErrorToast } = useCustomToast()
+  const options = useAdminFormOptions()
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -79,10 +83,10 @@ const EditUser = ({ user, onSuccess }: EditUserProps) => {
   })
 
   const mutation = useMutation({
-    mutationFn: (data: FormData) =>
+    mutationFn: (data: UserUpdate) =>
       UsersService.updateUser({ id: user.id, requestBody: data }),
     onSuccess: () => {
-      showSuccessToast("User updated successfully")
+      showSuccessToast(toasts.userUpdated)
       setIsOpen(false)
       onSuccess()
     },
@@ -93,12 +97,15 @@ const EditUser = ({ user, onSuccess }: EditUserProps) => {
   })
 
   const onSubmit = (data: FormData) => {
-    // exclude confirm_password from submission data and remove password if empty
-    const { confirm_password: _, ...submitData } = data
-    if (!submitData.password) {
-      delete submitData.password
+    const payload: UserUpdate = {
+      login: data.login ?? user.login,
+      name: data.name ?? user.name,
+      surname: data.surname ?? user.surname,
+      middle_name: data.middle_name ?? user.middle_name,
+      role_id: Number(data.role_id ?? user.role.id),
+      ...(data.password ? { password: data.password } : {}),
     }
-    mutation.mutate(submitData)
+    mutation.mutate(payload)
   }
 
   return (
@@ -166,7 +173,12 @@ const EditUser = ({ user, onSuccess }: EditUserProps) => {
                   <FormItem>
                     <FormLabel>Роль</FormLabel>
                     <FormControl>
-                      <Input placeholder="Роль" type="text" {...field} />
+                      <RelationSelect
+                        value={field.value ?? ""}
+                        onChange={field.onChange}
+                        options={options.roleOptions}
+                        disabled={options.isLoading}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

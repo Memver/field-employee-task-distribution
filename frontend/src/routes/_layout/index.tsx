@@ -1,12 +1,11 @@
-import { createFileRoute } from "@tanstack/react-router"
+import { createFileRoute, Navigate } from "@tanstack/react-router"
 import useAuth from "@/hooks/useAuth"
 import "leaflet/dist/leaflet.css"
-import { Link as RouterLink } from "@tanstack/react-router"
-import { ChevronRight } from "lucide-react"
 import {
-  getDashboardSections,
+  getStartPagePath,
   isFieldEmployeeRole,
 } from "@/features/navigation/roleSections"
+import { pageTitles } from "@/lib/i18n/ru"
 import { FieldEmployee } from "./FieldEmployee"
 
 export const Route = createFileRoute("/_layout/")({
@@ -14,29 +13,11 @@ export const Route = createFileRoute("/_layout/")({
   head: () => ({
     meta: [
       {
-        title: "Dashboard - FastAPI Cloud",
+        title: pageTitles.dashboard,
       },
     ],
   }),
 })
-
-function SectionsDashboard({ roleName }: { roleName: string | undefined }) {
-  const sections = getDashboardSections(roleName)
-  return (
-    <div className="flex flex-col items-start gap-10 text-xl">
-      {sections.map((section) => (
-        <RouterLink
-          key={section.key}
-          to={section.path}
-          className="flex items-center gap-2"
-        >
-          <ChevronRight />
-          {section.title}
-        </RouterLink>
-      ))}
-    </div>
-  )
-}
 
 function Dashboard() {
   const { user: currentUser } = useAuth()
@@ -45,5 +26,10 @@ function Dashboard() {
     return <FieldEmployee />
   }
 
-  return <SectionsDashboard roleName={roleName} />
+  const startPagePath = getStartPagePath(roleName)
+  if (startPagePath) {
+    return <Navigate to={startPagePath} replace />
+  }
+
+  return null
 }

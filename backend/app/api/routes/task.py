@@ -3,32 +3,41 @@ from typing import Any
 from app.api.deps import (
     AgentPointManagerUser,
     CurrentUser,
+    EmployeeManagerOrAgentPointManagerUser,
     EmployeeManagerUser,
     FieldEmployeeUser,
     SessionDep,
+    ensure_ap_manager_agent_point_access,
     ensure_field_employee_task_access,
+    get_allowed_agent_point_ids_for_ap_manager,
 )
-from app.core.roles import is_employee_manager_user, is_field_employee_user
+from app.core.roles import (
+    is_agent_point_manager_user,
+    is_employee_manager_user,
+    is_field_employee_user,
+)
 from app.models import (
     DistributionReportPublic,
     Message,
-    TaskCompleteUpdate,
-    TaskSkipUpdate,
     Task,
     TaskAgentPointManagerConfirmUpdate,
+    TaskCompleteUpdate,
     TaskCreate,
     TaskPublic,
     TaskSelfUpdate,
+    TaskSkipUpdate,
     TasksMePublic,
     TasksPublic,
     TaskUpdate,
 )
 from fastapi import APIRouter, HTTPException
-from sqlmodel import func, select
+from sqlmodel import col, func, select
 from app.repositories import task as task_repository
+from app.repositories.eager_loads import get_task, task_load_options
 from app.services import task_service
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
+
 
 @router.post("/", response_model=TaskPublic)
 def create_task(
@@ -40,7 +49,7 @@ def create_task(
     task = Task.model_validate(task_in)
     session.add(task)
     session.commit()
-    session.refresh(task)
+    task = get_task(session, task.id)
     return task
 
 
@@ -48,8 +57,6 @@ def create_task(
 def distribute_tasks(
     *, session: SessionDep, _em: EmployeeManagerUser
 ) -> DistributionReportPublic:
-    # Контекст: распределение использует матрицы расстояний/времени, а /tasks/me строит маршрут.
-    # Детали интеграции с OSRM вынесены в сервисный слой (task_service + routing gateway).
     return task_service.distribute_tasks(session=session)
 
 
@@ -58,18 +65,47 @@ def distribute_tasks(
     response_model=TasksPublic,
 )
 def read_tasks(
-    session: SessionDep, _em: EmployeeManagerUser, skip: int = 0, limit: int = 100
+    session: SessionDep,
+    current_user: EmployeeManagerOrAgentPointManagerUser,
+    skip: int = 0,
+    limit: int = 100,
 ) -> Any:
     """
-    Retrieve tasks.
+    Retrieve tasks (all for employee manager, scoped for agent point manager).
     """
+    allowed_agent_point_ids = get_allowed_agent_point_ids_for_ap_manager(
+        session=session, user_id=current_user.id, role=current_user.role
+    )
 
-    count_statement = select(func.count()).select_from(Task)
-    count = session.exec(count_statement).one()
+    if allowed_agent_point_ids is not None:
+        if not allowed_agent_point_ids:
+            return TasksPublic(data=[], count=0)
+        count_statement = (
+            select(func.count())
+            .select_from(Task)
+            .where(col(Task.agent_point_id).in_(allowed_agent_point_ids))
+        )
+        count = session.exec(count_statement).one()
+        statement = (
+            select(Task)
+            .where(col(Task.agent_point_id).in_(allowed_agent_point_ids))
+            .options(*task_load_options())
+            .order_by(col(Task.start_time).asc().nulls_last(), col(Task.id).desc())
+            .offset(skip)
+            .limit(limit)
+        )
+    else:
+        count_statement = select(func.count()).select_from(Task)
+        count = session.exec(count_statement).one()
+        statement = (
+            select(Task)
+            .options(*task_load_options())
+            .order_by(col(Task.start_time).asc().nulls_last(), col(Task.id).desc())
+            .offset(skip)
+            .limit(limit)
+        )
 
-    statement = select(Task).offset(skip).limit(limit)
     tasks = session.exec(statement).all()
-
     return TasksPublic(data=tasks, count=count)
 
 
@@ -115,7 +151,7 @@ def update_my_task_status(
         task.comment = body.comment
     session.add(task)
     session.commit()
-    session.refresh(task)
+    task = get_task(session, task_id)
     return task
 
 
@@ -137,7 +173,8 @@ def complete_my_task(
         field_user=field_user, task_employee_id=task.employee_id
     )
 
-    return task_service.mark_task_completed(session=session, task=task, comment=body.comment)
+    task_service.mark_task_completed(session=session, task=task, comment=body.comment)
+    return get_task(session, task_id)
 
 
 @router.patch("/{task_id}/skip", response_model=TaskPublic)
@@ -158,7 +195,8 @@ def skip_my_task(
         field_user=field_user, task_employee_id=task.employee_id
     )
 
-    return task_service.mark_task_skipped(session=session, task=task, comment=body.comment)
+    task_service.mark_task_skipped(session=session, task=task, comment=body.comment)
+    return get_task(session, task_id)
 
 
 @router.patch("/{task_id}/complete-by-agent-point-manager", response_model=TaskPublic)
@@ -176,13 +214,18 @@ def complete_task_by_agent_point_manager(
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
 
-    return task_service.confirm_task_by_ap_manager(
+    ensure_ap_manager_agent_point_access(
+        session=session, user_id=apm.id, agent_point_id=task.agent_point_id
+    )
+
+    task_service.confirm_task_by_ap_manager(
         session=session,
         task=task,
         ap_manager_id=apm.id,
         confirmed=body.confirmed,
         comment=body.comment,
     )
+    return get_task(session, task_id)
 
 
 @router.get("/{task_id}", response_model=TaskPublic)
@@ -192,10 +235,17 @@ def read_task_by_id(
     """
     Get a specific task by id.
     """
-    task = task_repository.get_by_id(session=session, task_id=task_id)
+    task = get_task(session, task_id)
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
     if is_employee_manager_user(current_user.role):
+        return task
+    if is_agent_point_manager_user(current_user.role):
+        ensure_ap_manager_agent_point_access(
+            session=session,
+            user_id=current_user.id,
+            agent_point_id=task.agent_point_id,
+        )
         return task
     if (
         is_field_employee_user(current_user.role)
@@ -227,7 +277,7 @@ def update_task(
     task.sqlmodel_update(update_dict)
     session.add(task)
     session.commit()
-    session.refresh(task)
+    task = get_task(session, id)
     return task
 
 
@@ -241,8 +291,6 @@ def delete_task(
     task = task_repository.get_by_id(session=session, task_id=task_id)
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
-    # statement = delete(Item).where(col(Item.owner_id) == task_id)
-    # session.exec(statement)
     session.delete(task)
     session.commit()
     return Message(message="Task deleted successfully")

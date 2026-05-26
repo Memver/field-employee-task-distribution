@@ -23,6 +23,7 @@ import { LoadingButton } from "@/components/ui/loading-button"
 import { PasswordInput } from "@/components/ui/password-input"
 import { isLoggedIn } from "@/hooks/useAuth"
 import useCustomToast from "@/hooks/useCustomToast"
+import { pageTitles, toasts } from "@/lib/i18n/ru"
 import { handleError } from "@/utils"
 
 const searchSchema = z.object({
@@ -60,7 +61,7 @@ export const Route = createFileRoute("/reset-password")({
   head: () => ({
     meta: [
       {
-        title: "Reset Password - FastAPI Cloud",
+        title: pageTitles.resetPassword,
       },
     ],
   }),
@@ -85,7 +86,7 @@ function ResetPassword() {
     mutationFn: (data: { new_password: string; token: string }) =>
       LoginService.resetPassword({ requestBody: data }),
     onSuccess: () => {
-      showSuccessToast("Password updated successfully")
+      showSuccessToast(toasts.passwordUpdated)
       form.reset()
       navigate({ to: "/login" })
     },

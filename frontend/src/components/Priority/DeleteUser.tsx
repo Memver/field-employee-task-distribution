@@ -17,6 +17,7 @@ import {
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu"
 import { LoadingButton } from "@/components/ui/loading-button"
 import useCustomToast from "@/hooks/useCustomToast"
+import { toasts } from "@/lib/i18n/ru"
 import { handleError } from "@/utils"
 
 interface DeleteUserProps {
@@ -37,7 +38,7 @@ const DeleteUser = ({ id, onSuccess }: DeleteUserProps) => {
   const mutation = useMutation({
     mutationFn: deletePriority,
     onSuccess: () => {
-      showSuccessToast("Priority deleted successfully")
+      showSuccessToast(toasts.priorityDeleted)
       setIsOpen(false)
       onSuccess()
     },

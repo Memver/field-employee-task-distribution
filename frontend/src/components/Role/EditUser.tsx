@@ -25,13 +25,20 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import useCustomToast from "@/hooks/useCustomToast"
+import { roleSelectOptions, toasts, validation } from "@/lib/i18n/ru"
 import { handleError } from "@/utils"
 
 const formSchema = z.object({
-  name: z.string().min(1, { message: "Название роли обязательно" }),
+  name: z.string().min(1, { message: validation.required }),
 })
 
 type FormData = z.infer<typeof formSchema>
@@ -62,7 +69,7 @@ const EditUser = ({ role, onSuccess }: EditRoleProps) => {
         requestBody: data satisfies RoleUpdate,
       }),
     onSuccess: () => {
-      showSuccessToast("Role updated successfully")
+      showSuccessToast(toasts.roleUpdated)
       setIsOpen(false)
       onSuccess()
     },
@@ -83,14 +90,14 @@ const EditUser = ({ role, onSuccess }: EditRoleProps) => {
         onClick={() => setIsOpen(true)}
       >
         <Pencil />
-        Редактировать роль
+        Редактировать
       </DropdownMenuItem>
       <DialogContent className="sm:max-w-md">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
             <DialogHeader>
               <DialogTitle>Редактировать роль</DialogTitle>
-              <DialogDescription>Обновите название роли</DialogDescription>
+              <DialogDescription>Обновите роль</DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <FormField
@@ -98,14 +105,21 @@ const EditUser = ({ role, onSuccess }: EditRoleProps) => {
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Название</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Название роли"
-                        type="text"
-                        {...field}
-                      />
-                    </FormControl>
+                    <FormLabel>Роль</FormLabel>
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Выберите роль" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {roleSelectOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}

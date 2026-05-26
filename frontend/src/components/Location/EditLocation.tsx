@@ -32,12 +32,11 @@ import {
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
 import useCustomToast from "@/hooks/useCustomToast"
+import { toasts, validation } from "@/lib/i18n/ru"
 import { handleError } from "@/utils"
 
 const formSchema = z.object({
-  address: z.string().min(1, { message: "Адрес обязателен" }),
-  lat: z.union([z.coerce.number(), z.literal("")]).optional(),
-  lon: z.union([z.coerce.number(), z.literal("")]).optional(),
+  address: z.string().min(1, { message: validation.required }),
 })
 
 type FormData = z.infer<typeof formSchema>
@@ -58,8 +57,6 @@ const EditLocation = ({ location, onSuccess }: EditLocationProps) => {
     criteriaMode: "all",
     defaultValues: {
       address: location.address,
-      lat: location.lat ?? "",
-      lon: location.lon ?? "",
     },
   })
 
@@ -67,7 +64,7 @@ const EditLocation = ({ location, onSuccess }: EditLocationProps) => {
     mutationFn: (data: LocationUpdate) =>
       LocationsService.updateLocation({ id: location.id, requestBody: data }),
     onSuccess: () => {
-      showSuccessToast("Location updated successfully")
+      showSuccessToast(toasts.locationUpdated)
       setIsOpen(false)
       onSuccess()
     },
@@ -78,8 +75,8 @@ const EditLocation = ({ location, onSuccess }: EditLocationProps) => {
   const onSubmit = (data: FormData) => {
     mutation.mutate({
       address: data.address,
-      lat: data.lat === "" ? null : data.lat,
-      lon: data.lon === "" ? null : data.lon,
+      lat: location.lat,
+      lon: location.lon,
     })
   }
 
@@ -108,32 +105,6 @@ const EditLocation = ({ location, onSuccess }: EditLocationProps) => {
                     <FormLabel>Адрес</FormLabel>
                     <FormControl>
                       <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="lat"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Широта</FormLabel>
-                    <FormControl>
-                      <Input type="number" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="lon"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Долгота</FormLabel>
-                    <FormControl>
-                      <Input type="number" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

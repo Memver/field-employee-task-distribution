@@ -17,10 +17,11 @@ import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
 import { PasswordInput } from "@/components/ui/password-input"
 import useAuth, { isLoggedIn } from "@/hooks/useAuth"
+import { pageTitles } from "@/lib/i18n/ru"
 
 const formSchema = z.object({
   username: z.string(),
-  password: z.string().min(1, { message: "Password is required" }),
+  password: z.string().min(1, { message: "Введите пароль" }),
   // .min(8, { message: "Password must be at least 8 characters" }),
 }) satisfies z.ZodType<AccessToken>
 
@@ -38,7 +39,7 @@ export const Route = createFileRoute("/login")({
   head: () => ({
     meta: [
       {
-        title: "Log In - FastAPI Cloud",
+        title: pageTitles.login,
       },
     ],
   }),

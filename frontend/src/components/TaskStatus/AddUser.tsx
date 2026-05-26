@@ -28,6 +28,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
 import useCustomToast from "@/hooks/useCustomToast"
+import { toasts } from "@/lib/i18n/ru"
 import { queryKeys } from "@/lib/queryKeys"
 import { handleError } from "@/utils"
 
@@ -52,7 +53,7 @@ const AddUser = () => {
     mutationFn: (data: TaskStatusCreate) =>
       TaskStatusesService.createTaskStatus({ requestBody: data }),
     onSuccess: () => {
-      showSuccessToast("Task status created successfully")
+      showSuccessToast(toasts.taskStatusCreated)
       form.reset()
       setIsOpen(false)
     },

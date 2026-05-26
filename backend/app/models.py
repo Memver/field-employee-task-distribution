@@ -7,7 +7,6 @@ from sqlmodel import (
     CheckConstraint,
     Column,
     Field,
-    Index,
     Relationship,
     SQLModel,
     UniqueConstraint,
@@ -346,12 +345,6 @@ class TaskCarryover(TaskCarryoverBase, table=True):
             "planned_for_date",
             name="uq_task_carryover_agent_point_task_type_planned_for_date",
         ),
-        Index("ix_task_carryover_planned_for_date", "planned_for_date"),
-        Index(
-            "ix_task_carryover_agent_point_id_planned_for_date",
-            "agent_point_id",
-            "planned_for_date",
-        ),
     )
 
     id: int = Field(default=None, primary_key=True)
@@ -473,6 +466,14 @@ class UserUpdateMe(SQLModel):
 
 
 # Properties to return via API, id is always required
+class UserRefPublic(SQLModel):
+    id: int
+    login: str
+    name: str
+    surname: str
+    middle_name: str
+
+
 class UserPublic(UserBase):
     id: int
     role: RolePublic
@@ -480,6 +481,11 @@ class UserPublic(UserBase):
 
 class UsersPublic(SQLModel):
     data: list[UserPublic]
+    count: int
+
+
+class UserRefsPublic(SQLModel):
+    data: list[UserRefPublic]
     count: int
 
 
@@ -500,6 +506,9 @@ class EmployeePublic(EmployeeBase):
     user_id: int = Field(nullable=False)
     grade_id: int = Field(nullable=False)
     start_location_id: int = Field(nullable=False)
+    user: UserRefPublic
+    grade: GradePublic
+    start_location: LocationPublic
 
 
 class EmployeesPublic(SQLModel):
@@ -521,6 +530,8 @@ class TaskTypePublic(TaskTypeBase):
     id: int
     min_grade_id: int = Field(nullable=False)
     priority_id: int = Field(nullable=False)
+    min_grade: GradePublic
+    priority: PriorityPublic
 
 
 class TaskTypesPublic(SQLModel):
@@ -557,6 +568,7 @@ class AgentPointEventUpdate(AgentPointEventBase):
 class AgentPointEventPublic(AgentPointEventBase):
     id: int
     agent_point_id: int = Field(nullable=False)
+    agent_point: AgentPointPublic
 
 
 class AgentPointEventsPublic(SQLModel):
@@ -594,7 +606,7 @@ class TaskCompleteUpdate(SQLModel):
 class TaskAgentPointManagerConfirmUpdate(SQLModel):
     """Решение менеджера агентской точки по выполненной задаче."""
 
-    confirmed: bool = Field(nullable=False)
+    confirmed: bool | None = Field(default=None)
     comment: str | None = Field(default=None, max_length=4096)
 
 
@@ -610,6 +622,13 @@ class TaskPublic(TaskBase):
     task_type_id: int = Field(nullable=False)
     agent_point_id: int = Field(nullable=False)
     task_status_id: int = Field(nullable=False)
+    ap_manager_confirmed: bool | None = None
+    ap_manager_comment: str | None = None
+    ap_manager_user_id: int | None = None
+    employee: EmployeePublic
+    task_type: TaskTypePublic
+    agent_point: AgentPointPublic
+    task_status: TaskStatusPublic
 
 
 class TasksPublic(SQLModel):
@@ -620,6 +639,7 @@ class TasksPublic(SQLModel):
 class TaskMePublic(TaskBase):
     id: int
     agent_point: AgentPointPublic
+    task_type: TaskTypePublic
 
 
 class TasksMePublic(SQLModel):

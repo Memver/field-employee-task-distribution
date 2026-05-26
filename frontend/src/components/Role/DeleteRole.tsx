@@ -17,6 +17,7 @@ import {
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu"
 import { LoadingButton } from "@/components/ui/loading-button"
 import useCustomToast from "@/hooks/useCustomToast"
+import { toasts } from "@/lib/i18n/ru"
 import { handleError } from "@/utils"
 
 interface DeleteRoleProps {
@@ -37,7 +38,7 @@ const DeleteRole = ({ id, onSuccess }: DeleteRoleProps) => {
   const mutation = useMutation({
     mutationFn: deleteRole,
     onSuccess: () => {
-      showSuccessToast("Role deleted successfully")
+      showSuccessToast(toasts.roleDeleted)
       setIsOpen(false)
       onSuccess()
     },
@@ -59,7 +60,7 @@ const DeleteRole = ({ id, onSuccess }: DeleteRoleProps) => {
         onClick={() => setIsOpen(true)}
       >
         <Trash2 />
-        Удалить роль
+        Удалить
       </DropdownMenuItem>
       <DialogContent className="sm:max-w-md">
         <form onSubmit={handleSubmit(onSubmit)}>

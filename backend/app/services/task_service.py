@@ -218,7 +218,10 @@ def read_tasks_me(*, session: Session, employee_id: int, start_location_id: int,
     tasks = session.exec(
         select(Task)
         .where(Task.employee_id == employee_id)
-        .options(joinedload(Task.agent_point).selectinload(AgentPoint.location))
+        .options(
+            joinedload(Task.agent_point).selectinload(AgentPoint.location),
+            joinedload(Task.task_type),
+        )
         .order_by(Task.start_time)
         .offset(skip)
         .limit(limit)
@@ -271,9 +274,18 @@ def confirm_task_by_ap_manager(
     session: Session,
     task: Task,
     ap_manager_id: int,
-    confirmed: bool,
+    confirmed: bool | None,
     comment: str | None,
 ) -> Task:
+    if confirmed is None:
+        task.ap_manager_confirmed = None
+        task.ap_manager_comment = None
+        task.ap_manager_user_id = None
+        session.add(task)
+        session.commit()
+        session.refresh(task)
+        return task
+
     task.ap_manager_confirmed = confirmed
     task.ap_manager_comment = comment
     task.ap_manager_user_id = ap_manager_id

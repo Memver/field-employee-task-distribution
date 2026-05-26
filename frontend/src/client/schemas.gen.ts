@@ -157,10 +157,13 @@ export const AgentPointEventPublicSchema = {
         agent_point_id: {
             type: 'integer',
             title: 'Agent Point Id'
+        },
+        agent_point: {
+            '$ref': '#/components/schemas/AgentPointPublic'
         }
     },
     type: 'object',
-    required: ['event_time', 'event_type', 'id', 'agent_point_id'],
+    required: ['event_time', 'event_type', 'id', 'agent_point_id', 'agent_point'],
     title: 'AgentPointEventPublic'
 } as const;
 
@@ -378,6 +381,138 @@ export const Body_login_login_access_tokenSchema = {
     title: 'Body_login-login_access_token'
 } as const;
 
+export const DistributionAssignmentPublicSchema = {
+    properties: {
+        employee_id: {
+            type: 'integer',
+            title: 'Employee Id'
+        },
+        employee_full_name: {
+            type: 'string',
+            title: 'Employee Full Name'
+        },
+        agent_point_id: {
+            type: 'integer',
+            title: 'Agent Point Id'
+        },
+        agent_point_address: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Agent Point Address'
+        },
+        task_type_id: {
+            type: 'integer',
+            title: 'Task Type Id'
+        },
+        task_type_name: {
+            type: 'string',
+            title: 'Task Type Name'
+        },
+        day_index: {
+            type: 'integer',
+            title: 'Day Index'
+        },
+        start_time: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Start Time'
+        },
+        finish_time: {
+            type: 'string',
+            format: 'date-time',
+            title: 'Finish Time'
+        },
+        reason: {
+            type: 'string',
+            title: 'Reason'
+        }
+    },
+    type: 'object',
+    required: ['employee_id', 'employee_full_name', 'agent_point_id', 'agent_point_address', 'task_type_id', 'task_type_name', 'day_index', 'start_time', 'finish_time', 'reason'],
+    title: 'DistributionAssignmentPublic'
+} as const;
+
+export const DistributionReportPublicSchema = {
+    properties: {
+        message: {
+            type: 'string',
+            title: 'Message'
+        },
+        assignments: {
+            items: {
+                '$ref': '#/components/schemas/DistributionAssignmentPublic'
+            },
+            type: 'array',
+            title: 'Assignments'
+        },
+        unplaced: {
+            items: {
+                '$ref': '#/components/schemas/DistributionUnplacedPublic'
+            },
+            type: 'array',
+            title: 'Unplaced'
+        }
+    },
+    type: 'object',
+    required: ['message', 'assignments', 'unplaced'],
+    title: 'DistributionReportPublic'
+} as const;
+
+export const DistributionUnplacedPublicSchema = {
+    properties: {
+        agent_point_id: {
+            type: 'integer',
+            title: 'Agent Point Id'
+        },
+        agent_point_address: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Agent Point Address'
+        },
+        task_type_id: {
+            anyOf: [
+                {
+                    type: 'integer'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Task Type Id'
+        },
+        task_type_name: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Task Type Name'
+        },
+        reason: {
+            type: 'string',
+            title: 'Reason'
+        }
+    },
+    type: 'object',
+    required: ['agent_point_id', 'agent_point_address', 'task_type_id', 'task_type_name', 'reason'],
+    title: 'DistributionUnplacedPublic'
+} as const;
+
 export const EmployeeCreateSchema = {
     properties: {
         user_id: {
@@ -415,10 +550,19 @@ export const EmployeePublicSchema = {
         start_location_id: {
             type: 'integer',
             title: 'Start Location Id'
+        },
+        user: {
+            '$ref': '#/components/schemas/UserRefPublic'
+        },
+        grade: {
+            '$ref': '#/components/schemas/GradePublic'
+        },
+        start_location: {
+            '$ref': '#/components/schemas/LocationPublic'
         }
     },
     type: 'object',
-    required: ['id', 'user_id', 'grade_id', 'start_location_id'],
+    required: ['id', 'user_id', 'grade_id', 'start_location_id', 'user', 'grade', 'start_location'],
     title: 'EmployeePublic'
 } as const;
 
@@ -846,7 +990,14 @@ export const RolesPublicSchema = {
 export const TaskAgentPointManagerConfirmUpdateSchema = {
     properties: {
         confirmed: {
-            type: 'boolean',
+            anyOf: [
+                {
+                    type: 'boolean'
+                },
+                {
+                    type: 'null'
+                }
+            ],
             title: 'Confirmed'
         },
         comment: {
@@ -863,7 +1014,6 @@ export const TaskAgentPointManagerConfirmUpdateSchema = {
         }
     },
     type: 'object',
-    required: ['confirmed'],
     title: 'TaskAgentPointManagerConfirmUpdate',
     description: 'Решение менеджера агентской точки по выполненной задаче.'
 } as const;
@@ -950,10 +1100,13 @@ export const TaskMePublicSchema = {
         },
         agent_point: {
             '$ref': '#/components/schemas/AgentPointPublic'
+        },
+        task_type: {
+            '$ref': '#/components/schemas/TaskTypePublic'
         }
     },
     type: 'object',
-    required: ['start_time', 'finish_time', 'comment', 'id', 'agent_point'],
+    required: ['start_time', 'finish_time', 'comment', 'id', 'agent_point', 'task_type'],
     title: 'TaskMePublic'
 } as const;
 
@@ -993,10 +1146,55 @@ export const TaskPublicSchema = {
         task_status_id: {
             type: 'integer',
             title: 'Task Status Id'
+        },
+        ap_manager_confirmed: {
+            anyOf: [
+                {
+                    type: 'boolean'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Ap Manager Confirmed'
+        },
+        ap_manager_comment: {
+            anyOf: [
+                {
+                    type: 'string'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Ap Manager Comment'
+        },
+        ap_manager_user_id: {
+            anyOf: [
+                {
+                    type: 'integer'
+                },
+                {
+                    type: 'null'
+                }
+            ],
+            title: 'Ap Manager User Id'
+        },
+        employee: {
+            '$ref': '#/components/schemas/EmployeePublic'
+        },
+        task_type: {
+            '$ref': '#/components/schemas/TaskTypePublic'
+        },
+        agent_point: {
+            '$ref': '#/components/schemas/AgentPointPublic'
+        },
+        task_status: {
+            '$ref': '#/components/schemas/TaskStatusPublic'
         }
     },
     type: 'object',
-    required: ['start_time', 'finish_time', 'comment', 'id', 'employee_id', 'task_type_id', 'agent_point_id', 'task_status_id'],
+    required: ['start_time', 'finish_time', 'comment', 'id', 'employee_id', 'task_type_id', 'agent_point_id', 'task_status_id', 'employee', 'task_type', 'agent_point', 'task_status'],
     title: 'TaskPublic'
 } as const;
 
@@ -1110,7 +1308,7 @@ export const TaskTypeCreateSchema = {
             title: 'Name'
         },
         execution_time: {
-            type: 'integer',
+            type: 'number',
             exclusiveMinimum: 0,
             title: 'Execution Time'
         },
@@ -1136,7 +1334,7 @@ export const TaskTypePublicSchema = {
             title: 'Name'
         },
         execution_time: {
-            type: 'integer',
+            type: 'number',
             exclusiveMinimum: 0,
             title: 'Execution Time'
         },
@@ -1151,10 +1349,16 @@ export const TaskTypePublicSchema = {
         priority_id: {
             type: 'integer',
             title: 'Priority Id'
+        },
+        min_grade: {
+            '$ref': '#/components/schemas/GradePublic'
+        },
+        priority: {
+            '$ref': '#/components/schemas/PriorityPublic'
         }
     },
     type: 'object',
-    required: ['name', 'execution_time', 'id', 'min_grade_id', 'priority_id'],
+    required: ['name', 'execution_time', 'id', 'min_grade_id', 'priority_id', 'min_grade', 'priority'],
     title: 'TaskTypePublic'
 } as const;
 
@@ -1166,7 +1370,7 @@ export const TaskTypeUpdateSchema = {
             title: 'Name'
         },
         execution_time: {
-            type: 'integer',
+            type: 'number',
             exclusiveMinimum: 0,
             title: 'Execution Time'
         },
@@ -1396,6 +1600,53 @@ export const UserPublicSchema = {
     type: 'object',
     required: ['login', 'name', 'surname', 'middle_name', 'id', 'role'],
     title: 'UserPublic'
+} as const;
+
+export const UserRefPublicSchema = {
+    properties: {
+        id: {
+            type: 'integer',
+            title: 'Id'
+        },
+        login: {
+            type: 'string',
+            title: 'Login'
+        },
+        name: {
+            type: 'string',
+            title: 'Name'
+        },
+        surname: {
+            type: 'string',
+            title: 'Surname'
+        },
+        middle_name: {
+            type: 'string',
+            title: 'Middle Name'
+        }
+    },
+    type: 'object',
+    required: ['id', 'login', 'name', 'surname', 'middle_name'],
+    title: 'UserRefPublic'
+} as const;
+
+export const UserRefsPublicSchema = {
+    properties: {
+        data: {
+            items: {
+                '$ref': '#/components/schemas/UserRefPublic'
+            },
+            type: 'array',
+            title: 'Data'
+        },
+        count: {
+            type: 'integer',
+            title: 'Count'
+        }
+    },
+    type: 'object',
+    required: ['data', 'count'],
+    title: 'UserRefsPublic'
 } as const;
 
 export const UserUpdateSchema = {
