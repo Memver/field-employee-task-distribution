@@ -78,17 +78,17 @@ INSERT INTO public.user
 	id, role_id, login, hashed_password, name, surname, middle_name, is_superuser
 )
 	VALUES
-    (1, 3, 'deryagin', '$argon2id$v=19$m=65536,t=3,p=4$Cr2d+zOfstb+PKyeE4mQ+w$FDbg5dHzox+LloOT4IM1h5BWZ4q+WZ5CWSGURU2DDwA', 'Никита', 'Дерягин', 'Владимирович', false),
-    (2, 3, 'petroshev', '$argon2id$v=19$m=65536,t=3,p=4$Cr2d+zOfstb+PKyeE4mQ+w$FDbg5dHzox+LloOT4IM1h5BWZ4q+WZ5CWSGURU2DDwA', 'Валерий', 'Петрошев', 'Павлович', false),
-    (3, 3, 'evdokimov', '$argon2id$v=19$m=65536,t=3,p=4$Cr2d+zOfstb+PKyeE4mQ+w$FDbg5dHzox+LloOT4IM1h5BWZ4q+WZ5CWSGURU2DDwA', 'Давид', 'Евдокимов', 'Тихонович', false),
-    (4, 3, 'andreev', '$argon2id$v=19$m=65536,t=3,p=4$Cr2d+zOfstb+PKyeE4mQ+w$FDbg5dHzox+LloOT4IM1h5BWZ4q+WZ5CWSGURU2DDwA', 'Гордий', 'Андреев', 'Данилович', false),
-    (5, 3, 'ivanov', '$argon2id$v=19$m=65536,t=3,p=4$Cr2d+zOfstb+PKyeE4mQ+w$FDbg5dHzox+LloOT4IM1h5BWZ4q+WZ5CWSGURU2DDwA', 'Адам', 'Иванов', 'Федорович', false),
-    (6, 3, 'bobylev', '$argon2id$v=19$m=65536,t=3,p=4$Cr2d+zOfstb+PKyeE4mQ+w$FDbg5dHzox+LloOT4IM1h5BWZ4q+WZ5CWSGURU2DDwA', 'Ипполит', 'Бобылёв', 'Альбертович', false),
-    (7, 3, 'belyaeva', '$argon2id$v=19$m=65536,t=3,p=4$Cr2d+zOfstb+PKyeE4mQ+w$FDbg5dHzox+LloOT4IM1h5BWZ4q+WZ5CWSGURU2DDwA', 'Евгения', 'Беляева', 'Антоновна', false),
-    (8, 3, 'nikolaev', '$argon2id$v=19$m=65536,t=3,p=4$Cr2d+zOfstb+PKyeE4mQ+w$FDbg5dHzox+LloOT4IM1h5BWZ4q+WZ5CWSGURU2DDwA', 'Азарий', 'Николаев', 'Платонович', false),
-	(9, 1, 'admin', '$argon2id$v=19$m=65536,t=3,p=4$Cr2d+zOfstb+PKyeE4mQ+w$FDbg5dHzox+LloOT4IM1h5BWZ4q+WZ5CWSGURU2DDwA', 'Валерий', 'Евдокимов', 'Данилович', true),
-	(10, 2, 'manager', '$argon2id$v=19$m=65536,t=3,p=4$Cr2d+zOfstb+PKyeE4mQ+w$FDbg5dHzox+LloOT4IM1h5BWZ4q+WZ5CWSGURU2DDwA', 'Давид', 'Лебедев', 'Платонович', false),
-    (11, 4, 'ap_manager', '$argon2id$v=19$m=65536,t=3,p=4$Cr2d+zOfstb+PKyeE4mQ+w$FDbg5dHzox+LloOT4IM1h5BWZ4q+WZ5CWSGURU2DDwA', 'Адам', 'Соколов', 'Федорович', false);
+    (1, 3, 'deryagin', '$argon2id$v=19$m=65536,t=3,p=4$pzmQ1Xci6dPapoxtj6V5Ag$icHZptf37K0csZaCPlr1+kYha0M76fgttNg6fzLQMRY', 'Никита', 'Дерягин', 'Владимирович', false),
+    (2, 3, 'petroshev', '$argon2id$v=19$m=65536,t=3,p=4$pzmQ1Xci6dPapoxtj6V5Ag$icHZptf37K0csZaCPlr1+kYha0M76fgttNg6fzLQMRY', 'Валерий', 'Петрошев', 'Павлович', false),
+    (3, 3, 'evdokimov', '$argon2id$v=19$m=65536,t=3,p=4$pzmQ1Xci6dPapoxtj6V5Ag$icHZptf37K0csZaCPlr1+kYha0M76fgttNg6fzLQMRY', 'Давид', 'Евдокимов', 'Тихонович', false),
+    (4, 3, 'andreev', '$argon2id$v=19$m=65536,t=3,p=4$pzmQ1Xci6dPapoxtj6V5Ag$icHZptf37K0csZaCPlr1+kYha0M76fgttNg6fzLQMRY', 'Гордий', 'Андреев', 'Данилович', false),
+    (5, 3, 'ivanov', '$argon2id$v=19$m=65536,t=3,p=4$pzmQ1Xci6dPapoxtj6V5Ag$icHZptf37K0csZaCPlr1+kYha0M76fgttNg6fzLQMRY', 'Адам', 'Иванов', 'Федорович', false),
+    (6, 3, 'bobylev', '$argon2id$v=19$m=65536,t=3,p=4$pzmQ1Xci6dPapoxtj6V5Ag$icHZptf37K0csZaCPlr1+kYha0M76fgttNg6fzLQMRY', 'Ипполит', 'Бобылёв', 'Альбертович', false),
+    (7, 3, 'belyaeva', '$argon2id$v=19$m=65536,t=3,p=4$pzmQ1Xci6dPapoxtj6V5Ag$icHZptf37K0csZaCPlr1+kYha0M76fgttNg6fzLQMRY', 'Евгения', 'Беляева', 'Антоновна', false),
+    (8, 3, 'nikolaev', '$argon2id$v=19$m=65536,t=3,p=4$pzmQ1Xci6dPapoxtj6V5Ag$icHZptf37K0csZaCPlr1+kYha0M76fgttNg6fzLQMRY', 'Азарий', 'Николаев', 'Платонович', false),
+	(9, 1, 'admin', '$argon2id$v=19$m=65536,t=3,p=4$pzmQ1Xci6dPapoxtj6V5Ag$icHZptf37K0csZaCPlr1+kYha0M76fgttNg6fzLQMRY', 'Валерий', 'Евдокимов', 'Данилович', true),
+	(10, 2, 'manager', '$argon2id$v=19$m=65536,t=3,p=4$pzmQ1Xci6dPapoxtj6V5Ag$icHZptf37K0csZaCPlr1+kYha0M76fgttNg6fzLQMRY', 'Давид', 'Лебедев', 'Платонович', false),
+    (11, 4, 'ap_manager', '$argon2id$v=19$m=65536,t=3,p=4$pzmQ1Xci6dPapoxtj6V5Ag$icHZptf37K0csZaCPlr1+kYha0M76fgttNg6fzLQMRY', 'Адам', 'Соколов', 'Федорович', false);
 
 INSERT INTO public.employee
 (

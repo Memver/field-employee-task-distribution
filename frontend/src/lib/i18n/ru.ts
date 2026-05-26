@@ -95,6 +95,8 @@ export const validation = {
   invalidDateTime: "Укажите корректные дату и время",
   invalidNumber: "Укажите корректное число",
   invalidEmail: "Некорректный email",
+  passwordRequired: "Введите пароль",
+  passwordConfirmRequired: "Подтвердите пароль",
   passwordMin: "Пароль должен быть не короче 8 символов",
   passwordsMismatch: "Пароли не совпадают",
 }

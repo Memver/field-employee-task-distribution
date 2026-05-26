@@ -30,27 +30,27 @@ import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
 import { useAdminFormOptions } from "@/features/admin/formOptions"
 import useCustomToast from "@/hooks/useCustomToast"
-import { toasts } from "@/lib/i18n/ru"
+import { toasts, validation } from "@/lib/i18n/ru"
 import { queryKeys } from "@/lib/queryKeys"
 import { handleError } from "@/utils"
 
 const formSchema = z
   .object({
-    login: z.string(),
-    name: z.string(),
-    surname: z.string(),
-    middle_name: z.string(),
+    login: z.string().min(1, { message: validation.required }),
+    name: z.string().min(1, { message: validation.required }),
+    surname: z.string().min(1, { message: validation.required }),
+    middle_name: z.string().min(1, { message: validation.required }),
     password: z
       .string()
-      .min(1, { message: "Password is required" })
-      .min(8, { message: "Password must be at least 8 characters" }),
+      .min(1, { message: validation.passwordRequired })
+      .min(8, { message: validation.passwordMin }),
     confirm_password: z
       .string()
-      .min(1, { message: "Please confirm your password" }),
-    role_id: z.string(),
+      .min(1, { message: validation.passwordConfirmRequired }),
+    role_id: z.string().min(1, { message: validation.required }),
   })
   .refine((data) => data.password === data.confirm_password, {
-    message: "The passwords don't match",
+    message: validation.passwordsMismatch,
     path: ["confirm_password"],
   })
 
@@ -66,6 +66,15 @@ const AddUser = () => {
     resolver: zodResolver(formSchema),
     mode: "onBlur",
     criteriaMode: "all",
+    defaultValues: {
+      login: "",
+      name: "",
+      surname: "",
+      middle_name: "",
+      password: "",
+      confirm_password: "",
+      role_id: "",
+    },
   })
 
   const mutation = useMutation({
