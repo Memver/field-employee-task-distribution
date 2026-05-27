@@ -10,69 +10,47 @@ export type UserTableData = UserPublic & {
   isCurrentUser: boolean
 }
 
+function NameCell({
+  value,
+  showCurrentUserBadge,
+}: {
+  value: string | undefined
+  showCurrentUserBadge?: boolean
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      <span className={cn("font-medium", !value && "text-muted-foreground")}>
+        {value || "N/A"}
+      </span>
+      {showCurrentUserBadge && (
+        <Badge variant="outline" className="text-xs">
+          Вы
+        </Badge>
+      )}
+    </div>
+  )
+}
+
 export const columns: ColumnDef<UserTableData>[] = [
-  {
-    accessorKey: "name",
-    header: "Имя",
-    cell: ({ row }) => {
-      const fullName = row.original.name
-      return (
-        <div className="flex items-center gap-2">
-          <span
-            className={cn("font-medium", !fullName && "text-muted-foreground")}
-          >
-            {fullName || "N/A"}
-          </span>
-          {row.original.isCurrentUser && (
-            <Badge variant="outline" className="text-xs">
-              Вы
-            </Badge>
-          )}
-        </div>
-      )
-    },
-  },
   {
     accessorKey: "surname",
     header: "Фамилия",
-    cell: ({ row }) => {
-      const fullName = row.original.surname
-      return (
-        <div className="flex items-center gap-2">
-          <span
-            className={cn("font-medium", !fullName && "text-muted-foreground")}
-          >
-            {fullName || "N/A"}
-          </span>
-          {row.original.isCurrentUser && (
-            <Badge variant="outline" className="text-xs">
-              Вы
-            </Badge>
-          )}
-        </div>
-      )
-    },
+    cell: ({ row }) => (
+      <NameCell
+        value={row.original.surname}
+        showCurrentUserBadge={row.original.isCurrentUser}
+      />
+    ),
+  },
+  {
+    accessorKey: "name",
+    header: "Имя",
+    cell: ({ row }) => <NameCell value={row.original.name} />,
   },
   {
     accessorKey: "middle_name",
     header: "Отчество",
-    cell: ({ row }) => {
-      const fullName = row.original.middle_name
-      return (
-        <div className="flex items-center gap-2">
-          <span
-            className={cn("font-medium", !fullName && "text-muted-foreground")}
-          >
-            {fullName || "N/A"}
-          </span>
-          {row.original.isCurrentUser && (
-            <Badge variant="outline" className="text-xs">
-              Вы
-            </Badge>
-          )}
-        </div>
-      )
-    },
+    cell: ({ row }) => <NameCell value={row.original.middle_name} />,
   },
   {
     accessorKey: "login",
