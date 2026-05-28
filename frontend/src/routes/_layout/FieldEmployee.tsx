@@ -152,7 +152,10 @@ export function FieldEmployee() {
 
   useEffect(() => {
     setTaskForms((previousForms) => {
-      const nextForms: Record<number, { comment: string; task_status_id: string }> = {}
+      const nextForms: Record<
+        number,
+        { comment: string; task_status_id: string }
+      > = {}
       for (const task of data.tasks) {
         nextForms[task.id] = {
           comment: previousForms[task.id]?.comment ?? task.comment ?? "",
@@ -170,7 +173,11 @@ export function FieldEmployee() {
         const taskId = Number(key)
         const prev = previousForms[taskId]
         const next = nextForms[taskId]
-        if (!prev || prev.comment !== next.comment || prev.task_status_id !== next.task_status_id) {
+        if (
+          !prev ||
+          prev.comment !== next.comment ||
+          prev.task_status_id !== next.task_status_id
+        ) {
           return nextForms
         }
       }
@@ -262,10 +269,7 @@ export function FieldEmployee() {
               zoom={12}
               scrollWheelZoom={false}
             >
-              <TileLayer
-                attribution={OSM_ATTRIBUTION}
-                url={OSM_TILE_URL}
-              />
+              <TileLayer attribution={OSM_ATTRIBUTION} url={OSM_TILE_URL} />
               {hasValidRoute && (
                 <Polyline positions={routePoints} pathOptions={routeOptions} />
               )}
@@ -288,7 +292,10 @@ export function FieldEmployee() {
                         </span>
                       </div>
                       <div className="text-xs">
-                        Статус: <span className="font-medium">{getStatusName(task.id)}</span>
+                        Статус:{" "}
+                        <span className="font-medium">
+                          {getStatusName(task.id)}
+                        </span>
                       </div>
                       <div className="text-xs">
                         Комментарий:{" "}
@@ -341,7 +348,11 @@ export function FieldEmployee() {
                   value={taskForms[task.id]?.comment ?? ""}
                   placeholder="Комментарий к задаче"
                   onChange={(event) =>
-                    handleTaskFieldChange(task.id, "comment", event.target.value)
+                    handleTaskFieldChange(
+                      task.id,
+                      "comment",
+                      event.target.value,
+                    )
                   }
                 />
                 <LoadingButton

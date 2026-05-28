@@ -41,3 +41,36 @@ def remove_by_ids(*, session: Session, item_ids: set[int]) -> int:
     for item in items:
         session.delete(item)
     return len(items)
+
+
+def get_by_id(*, session: Session, task_carryover_id: int) -> TaskCarryover | None:
+    return session.get(TaskCarryover, task_carryover_id)
+
+
+def list_paginated(*, session: Session, skip: int = 0, limit: int = 100) -> list[TaskCarryover]:
+    statement = select(TaskCarryover).offset(skip).limit(limit)
+    return session.exec(statement).all()
+
+
+def count(*, session: Session) -> int:
+    statement = select(TaskCarryover)
+    return len(session.exec(statement).all())
+
+
+def create(*, session: Session, item: TaskCarryover) -> TaskCarryover:
+    session.add(item)
+    session.commit()
+    session.refresh(item)
+    return item
+
+
+def update(*, session: Session, item: TaskCarryover) -> TaskCarryover:
+    session.add(item)
+    session.commit()
+    session.refresh(item)
+    return item
+
+
+def delete(*, session: Session, item: TaskCarryover) -> None:
+    session.delete(item)
+    session.commit()

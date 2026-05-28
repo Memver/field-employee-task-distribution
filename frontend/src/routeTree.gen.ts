@@ -18,6 +18,7 @@ import { Route as LayoutIndexRouteImport } from './routes/_layout/index'
 import { Route as LayoutTasksRouteImport } from './routes/_layout/tasks'
 import { Route as LayoutTaskTypesRouteImport } from './routes/_layout/task-types'
 import { Route as LayoutTaskStatusesRouteImport } from './routes/_layout/task-statuses'
+import { Route as LayoutTaskCarryoversRouteImport } from './routes/_layout/task-carryovers'
 import { Route as LayoutSettingsRouteImport } from './routes/_layout/settings'
 import { Route as LayoutRolesRouteImport } from './routes/_layout/roles'
 import { Route as LayoutPrioritiesRouteImport } from './routes/_layout/priorities'
@@ -71,6 +72,11 @@ const LayoutTaskTypesRoute = LayoutTaskTypesRouteImport.update({
 const LayoutTaskStatusesRoute = LayoutTaskStatusesRouteImport.update({
   id: '/task-statuses',
   path: '/task-statuses',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutTaskCarryoversRoute = LayoutTaskCarryoversRouteImport.update({
+  id: '/task-carryovers',
+  path: '/task-carryovers',
   getParentRoute: () => LayoutRoute,
 } as any)
 const LayoutSettingsRoute = LayoutSettingsRouteImport.update({
@@ -140,6 +146,7 @@ export interface FileRoutesByFullPath {
   '/priorities': typeof LayoutPrioritiesRoute
   '/roles': typeof LayoutRolesRoute
   '/settings': typeof LayoutSettingsRoute
+  '/task-carryovers': typeof LayoutTaskCarryoversRoute
   '/task-statuses': typeof LayoutTaskStatusesRoute
   '/task-types': typeof LayoutTaskTypesRoute
   '/tasks': typeof LayoutTasksRoute
@@ -159,6 +166,7 @@ export interface FileRoutesByTo {
   '/priorities': typeof LayoutPrioritiesRoute
   '/roles': typeof LayoutRolesRoute
   '/settings': typeof LayoutSettingsRoute
+  '/task-carryovers': typeof LayoutTaskCarryoversRoute
   '/task-statuses': typeof LayoutTaskStatusesRoute
   '/task-types': typeof LayoutTaskTypesRoute
   '/tasks': typeof LayoutTasksRoute
@@ -181,6 +189,7 @@ export interface FileRoutesById {
   '/_layout/priorities': typeof LayoutPrioritiesRoute
   '/_layout/roles': typeof LayoutRolesRoute
   '/_layout/settings': typeof LayoutSettingsRoute
+  '/_layout/task-carryovers': typeof LayoutTaskCarryoversRoute
   '/_layout/task-statuses': typeof LayoutTaskStatusesRoute
   '/_layout/task-types': typeof LayoutTaskTypesRoute
   '/_layout/tasks': typeof LayoutTasksRoute
@@ -204,6 +213,7 @@ export interface FileRouteTypes {
     | '/priorities'
     | '/roles'
     | '/settings'
+    | '/task-carryovers'
     | '/task-statuses'
     | '/task-types'
     | '/tasks'
@@ -223,6 +233,7 @@ export interface FileRouteTypes {
     | '/priorities'
     | '/roles'
     | '/settings'
+    | '/task-carryovers'
     | '/task-statuses'
     | '/task-types'
     | '/tasks'
@@ -244,6 +255,7 @@ export interface FileRouteTypes {
     | '/_layout/priorities'
     | '/_layout/roles'
     | '/_layout/settings'
+    | '/_layout/task-carryovers'
     | '/_layout/task-statuses'
     | '/_layout/task-types'
     | '/_layout/tasks'
@@ -321,6 +333,13 @@ declare module '@tanstack/react-router' {
       path: '/task-statuses'
       fullPath: '/task-statuses'
       preLoaderRoute: typeof LayoutTaskStatusesRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/task-carryovers': {
+      id: '/_layout/task-carryovers'
+      path: '/task-carryovers'
+      fullPath: '/task-carryovers'
+      preLoaderRoute: typeof LayoutTaskCarryoversRouteImport
       parentRoute: typeof LayoutRoute
     }
     '/_layout/settings': {
@@ -407,6 +426,7 @@ interface LayoutRouteChildren {
   LayoutPrioritiesRoute: typeof LayoutPrioritiesRoute
   LayoutRolesRoute: typeof LayoutRolesRoute
   LayoutSettingsRoute: typeof LayoutSettingsRoute
+  LayoutTaskCarryoversRoute: typeof LayoutTaskCarryoversRoute
   LayoutTaskStatusesRoute: typeof LayoutTaskStatusesRoute
   LayoutTaskTypesRoute: typeof LayoutTaskTypesRoute
   LayoutTasksRoute: typeof LayoutTasksRoute
@@ -424,6 +444,7 @@ const LayoutRouteChildren: LayoutRouteChildren = {
   LayoutPrioritiesRoute: LayoutPrioritiesRoute,
   LayoutRolesRoute: LayoutRolesRoute,
   LayoutSettingsRoute: LayoutSettingsRoute,
+  LayoutTaskCarryoversRoute: LayoutTaskCarryoversRoute,
   LayoutTaskStatusesRoute: LayoutTaskStatusesRoute,
   LayoutTaskTypesRoute: LayoutTaskTypesRoute,
   LayoutTasksRoute: LayoutTasksRoute,

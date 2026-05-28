@@ -9,6 +9,7 @@ from app.api.routes import (
     private,
     role,
     task,
+    task_carryover,
     task_status,
     task_type,
     users,
@@ -26,6 +27,7 @@ api_router.include_router(location.router)
 api_router.include_router(priority.router)
 api_router.include_router(role.router)
 api_router.include_router(task.router)
+api_router.include_router(task_carryover.router)
 api_router.include_router(task_status.router)
 api_router.include_router(task_type.router)
 api_router.include_router(users.router)

@@ -16,6 +16,10 @@ export const queryKeys = {
   taskStatuses: {
     all: ["task-statuses"] as const,
   },
+  taskCarryovers: {
+    all: ["task-carryovers"] as const,
+    list: ["task-carryovers-list"] as const,
+  },
   employees: {
     all: ["employees"] as const,
   },

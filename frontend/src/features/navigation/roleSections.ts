@@ -68,6 +68,12 @@ const sectionsByKey: Record<string, NavigationSection> = {
     path: "/task-types",
     icon: Wrench,
   },
+  taskCarryovers: {
+    key: "taskCarryovers",
+    title: "Перенесенные задачи",
+    path: "/task-carryovers",
+    icon: Clock3,
+  },
   agentPoints: {
     key: "agentPoints",
     title: "Агентские точки",
@@ -104,6 +110,7 @@ const roleSectionKeys: Record<RoleName, string[]> = {
     "taskStatuses",
     "employees",
     "taskTypes",
+    "taskCarryovers",
     "agentPoints",
     "agentPointEvents",
     "tasks",

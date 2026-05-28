@@ -363,6 +363,35 @@ class TaskCarryover(TaskCarryoverBase, table=True):
     task_type: Optional["TaskType"] = Relationship()
 
 
+class TaskCarryoverCreate(SQLModel):
+    carryover_days: int = Field(gt=0, nullable=False, default=1)
+    planned_for_date: date = Field(nullable=False)
+    source_reason: str = Field(min_length=1, max_length=1024, nullable=False)
+    agent_point_id: int = Field(nullable=False)
+    task_type_id: int = Field(nullable=False)
+
+
+class TaskCarryoverUpdate(SQLModel):
+    carryover_days: int = Field(gt=0, nullable=False, default=1)
+    planned_for_date: date = Field(nullable=False)
+    source_reason: str = Field(min_length=1, max_length=1024, nullable=False)
+    agent_point_id: int = Field(nullable=False)
+    task_type_id: int = Field(nullable=False)
+
+
+class TaskCarryoverPublic(TaskCarryoverBase):
+    id: int
+    agent_point_id: int
+    task_type_id: int
+    agent_point: "AgentPointPublic"
+    task_type: "TaskTypePublic"
+
+
+class TaskCarryoversPublic(SQLModel):
+    data: list[TaskCarryoverPublic]
+    count: int
+
+
 class RoleCreate(RoleBase):
     pass
 
