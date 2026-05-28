@@ -314,6 +314,9 @@ export function FieldEmployee() {
                     Тип: {formatTaskTypeName(task.task_type?.name)}
                   </div>
                   <div className="text-sm text-muted-foreground">
+                    Адрес: {task.agent_point.location.address}
+                  </div>
+                  <div className="text-sm text-muted-foreground">
                     Текущий статус: {getStatusName(task.id)}
                   </div>
                 </div>
