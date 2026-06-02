@@ -12,7 +12,7 @@ export function Header() {
   const sections = getSidebarSections(currentUser?.role?.name)
 
   return (
-    <header className="sticky top-0 z-10 h-16 shrink-0 border-b bg-background/95 px-4 backdrop-blur">
+    <header className="sticky top-0 z-[1000] h-16 shrink-0 border-b bg-background/95 px-4 backdrop-blur">
       <div className="mx-auto flex h-full max-w-7xl items-center gap-4">
         <nav className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto">
           {sections.map((section) => {

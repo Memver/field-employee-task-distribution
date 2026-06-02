@@ -255,6 +255,12 @@ export function FieldEmployee() {
           .leaflet-attribution-flag {
             display: none !important;
           }
+
+          .leaflet-top,
+          .leaflet-bottom,
+          .leaflet-control {
+            z-index: 500 !important;
+          }
         `}
       </style>
       <div className="flex flex-col items-start gap-4">
