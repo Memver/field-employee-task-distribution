@@ -1,0 +1,20 @@
+# Local HTTPS with Caddy internal CA (no Let's Encrypt).
+# Use when DOMAIN resolves to 127.0.0.1 (e.g. localhost.tiangolo.com).
+#
+# Start:  .\scripts\caddy-local.ps1 -Local
+# Trust:  .\scripts\caddy-trust.ps1
+
+{
+	local_certs
+	admin 127.0.0.1:20190
+}
+
+api.localhost.tiangolo.com {
+	tls internal
+	reverse_proxy 127.0.0.1:8000
+}
+
+dashboard.localhost.tiangolo.com {
+	tls internal
+	reverse_proxy 127.0.0.1:5173
+}

@@ -1,6 +1,13 @@
-# Локальный HTTPS через Caddy (без Docker)
+# HTTPS через Caddy (без Docker)
 
-Caddy проксирует трафик на уже запущенные backend и frontend с автоматическим TLS (`tls internal`).
+Caddy устанавливается на **хост** и проксирует уже запущенные backend (`127.0.0.1:8000`) и Vite (`127.0.0.1:5173`).
+
+## Режимы
+
+| Режим | Команда | TLS |
+|-------|---------|-----|
+| **Let's Encrypt** | `.\scripts\caddy-local.ps1` | Автоматически (публичный `DOMAIN`) |
+| **Локальный CA** | `.\scripts\caddy-local.ps1 -Local` | `tls internal` для `localhost.tiangolo.com` |
 
 ## 1. Установка Caddy
 
@@ -8,100 +15,82 @@ Caddy проксирует трафик на уже запущенные backend
 winget install CaddyServer.Caddy
 ```
 
-Или с [caddyserver.com/docs/install](https://caddyserver.com/docs/install#windows).
+## 2. Let's Encrypt
 
-## 2. Доверие локальному CA (один раз)
+### `.env` (корень проекта)
 
-**Важно:** `caddy trust` подключается к **уже запущенному** Caddy (admin API). Сначала запустите Caddy (шаг 4, терминал 4), затем в **другом** терминале:
-
-```powershell
-caddy trust --address 127.0.0.1:20190
+```dotenv
+DOMAIN=your-domain.com
+ACME_EMAIL=you@your-domain.com
+FRONTEND_HOST=https://dashboard.your-domain.com
+BACKEND_CORS_ORIGINS="https://dashboard.your-domain.com"
 ```
 
-Admin API слушает `127.0.0.1:20190` (см. `Caddyfile`), не стандартный `:2019` — так надёжнее на Windows.
+### `frontend/.env`
 
-Если видите `connectex: ... forbidden by its access permissions` на `:2019` — Caddy не был запущен, либо клиент стучится не на тот адрес. Используйте команду выше.
-
-Установка CA в хранилище Windows может потребовать PowerShell **от администратора**. Без trust браузер покажет предупреждение о сертификате (можно принять вручную).
-
-### Ошибка при `caddy run`: порт 443
-
-На Windows для портов 80/443 иногда нужны права администратора. Запустите `.\scripts\caddy-local.ps1` из elevated PowerShell.
-
-### Порт 2019 занят системой
-
-В `Caddyfile` уже задан `admin 127.0.0.1:20190`. Для trust всегда указывайте `--address 127.0.0.1:20190`.
-
-### Ошибка `failed to execute keytool.exe`
-
-На Windows `caddy trust` может упасть на шаге Java (`keytool.exe`), хотя CA для **системы/браузера** уже установлен. Это не мешает работе в Chrome/Edge.
-
-Если браузер всё ещё не доверяет сертификату:
-
-1. Скачайте корневой сертификат (пока Caddy запущен): откройте в браузере `http://127.0.0.1:20190/pki/ca/local` и сохраните файл, **или** выполните:
-   ```powershell
-   Invoke-WebRequest -Uri http://127.0.0.1:20190/pki/ca/local -OutFile caddy-local-ca.crt
-   ```
-2. Дважды щёлкните `caddy-local-ca.crt` → «Установить сертификат» → «Локальный компьютер» → «Поместить в следующее хранилище» → **Доверенные корневые центры сертификации**.
-
-Либо один раз нажмите «Дополнительно» → «Перейти на сайт» в предупреждении браузера.
-
-## 3. Переменные окружения
-
-В проекте уже настроены `.env` и `frontend/.env` под Caddy HTTPS. Эталон — `.env.caddy.example` и `frontend/.env.caddy.example`.
-
-После любой правки env **перезапустите** backend и Vite.
-
-## 4. Запуск сервисов
-
-Порядок: backend и frontend → **Caddy** → при первом запуске `caddy trust`.
-
-Терминал 1 — БД (Docker только для Postgres):
-
-```powershell
-docker compose up db -d
+```dotenv
+VITE_API_URL=https://api.your-domain.com
+VITE_CADDY_DEV=true
+VITE_CADDY_HOST=dashboard.your-domain.com
 ```
 
-Терминал 2 — backend:
+Эталон — `.env.caddy.example` и `frontend/.env.caddy.example`.
 
-```powershell
-cd backend
-uv sync
-fastapi dev app/main.py
-```
+### DNS
 
-Терминал 3 — frontend:
+- `api.your-domain.com` → A на IP этой машины  
+- `dashboard.your-domain.com` → тот же IP  
+- Порты **80** и **443** открыты с интернета  
 
-```powershell
-bun run dev
-```
-
-Терминал 4 — Caddy:
+### Запуск
 
 ```powershell
 .\scripts\caddy-local.ps1
 ```
 
-Или:
+Сертификаты Let's Encrypt Caddy получает и обновляет сам. `caddy trust` не нужен.
+
+Сертификаты на диске: `%AppData%\Caddy` (Windows) или `~/.local/share/caddy` (Linux).
+
+---
+
+## 3. Локальная разработка
+
+Для `localhost.tiangolo.com` (127.0.0.1) Let's Encrypt **не работает**:
 
 ```powershell
-caddy run --config Caddyfile
+.\scripts\caddy-local.ps1 -Local
+.\scripts\caddy-trust.ps1   # один раз, пока Caddy запущен
 ```
 
-## 5. Адреса
+---
 
-| Сервис   | URL |
-|----------|-----|
-| Frontend | https://dashboard.localhost.tiangolo.com |
-| API      | https://api.localhost.tiangolo.com |
-| Swagger  | https://api.localhost.tiangolo.com/docs |
+## 4. Порядок запуска
 
-Домен `*.localhost.tiangolo.com` указывает на `127.0.0.1` (как в `development.md`).
+1. PostgreSQL (локально или `docker compose up db -d` — только БД)  
+2. Backend: `cd backend && fastapi dev app/main.py`  
+3. Frontend: `bun run dev`  
+4. Caddy: `.\scripts\caddy-local.ps1` или `-Local`  
+
+После правки `.env` перезапустите backend, Vite и Caddy.
+
+## 5. URL
+
+| Сервис | Адрес |
+|--------|--------|
+| Frontend | `https://dashboard.$DOMAIN` |
+| API | `https://api.$DOMAIN` |
+| Swagger | `https://api.$DOMAIN/docs` |
 
 ## 6. OSRM
 
-Маршрутизация по-прежнему с хоста: `OSRM_BASE_URL=http://localhost:5000` в `.env` (Caddy её не проксирует).
+`OSRM_BASE_URL=http://localhost:5000` — отдельно на хосте, Caddy не проксирует.
 
-## 7. Откат на HTTP
+## 7. Типичные ошибки
 
-Уберите `VITE_CADDY_DEV` из `frontend/.env`, верните `VITE_API_URL=http://localhost:8000`, используйте `http://localhost:5173`.
+| Проблема | Решение |
+|----------|---------|
+| ACME failed | DNS, порты 80/443, публичный `DOMAIN` |
+| localhost + LE | Используйте `-Local` |
+| Порт 443 | PowerShell от администратора |
+| HMR через HTTPS | `VITE_CADDY_HOST=dashboard.$DOMAIN` |

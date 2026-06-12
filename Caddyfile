@@ -1,24 +1,22 @@
-# Local HTTPS reverse proxy (no Docker).
-# Requires: backend on :8000, Vite frontend on :5173.
-# Domains resolve to 127.0.0.1 (localhost.tiangolo.com is preconfigured).
+# HTTPS via Let's Encrypt (Caddy on host, no Docker).
 #
-# Start:  caddy run --config Caddyfile
-# Trust CA (once, admin):  caddy trust
+# Requirements:
+#   - DOMAIN and ACME_EMAIL in .env (loaded by scripts/caddy-local.ps1)
+#   - DNS: api.$DOMAIN and dashboard.$DOMAIN -> public IP of this machine
+#   - Ports 80 and 443 open; backend :8000 and Vite :5173 running on this host
+#
+# Start:  .\scripts\caddy-local.ps1
+# Local:  .\scripts\caddy-local.ps1 -Local  (Caddyfile.local, tls internal)
 
 {
-	# Local development only — do not use "tls internal" in production.
-	local_certs
-	# IPv4 + non-default port: avoids [::1]:2019 issues on Windows when Caddy is not running yet.
+	email {$ACME_EMAIL}
 	admin 127.0.0.1:20190
 }
 
-api.localhost.tiangolo.com {
-	tls internal
+api.{$DOMAIN} {
 	reverse_proxy 127.0.0.1:8000
 }
 
-dashboard.localhost.tiangolo.com {
-	tls internal
+dashboard.{$DOMAIN} {
 	reverse_proxy 127.0.0.1:5173
 }
-

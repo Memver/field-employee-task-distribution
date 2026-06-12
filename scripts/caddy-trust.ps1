@@ -1,4 +1,5 @@
-# Trust Caddy local CA. Caddy must already be running (scripts/caddy-local.ps1).
+# Trust Caddy local CA (only for Caddyfile.local / -Local mode, not Let's Encrypt).
+# Caddy must already be running: .\scripts\caddy-local.ps1 -Local
 $ErrorActionPreference = "Stop"
 $AdminAddress = "127.0.0.1:20190"
 
