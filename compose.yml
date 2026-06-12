@@ -143,8 +143,38 @@ services:
       # Enable redirection for HTTP and HTTPS
       - traefik.http.routers.${STACK_NAME?Variable not set}-frontend-http.middlewares=https-redirect
 
+  caddy:
+    image: caddy:2-alpine
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./scripts/caddy-docker-entrypoint.sh:/entrypoint.sh:ro
+      - ./Caddyfile.docker.local:/etc/caddy/Caddyfile.docker.local:ro
+      - ./Caddyfile.docker.prod:/etc/caddy/Caddyfile.docker.prod:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    env_file:
+      - .env
+    environment:
+      - DOMAIN=${DOMAIN}
+      - ACME_EMAIL=${ACME_EMAIL:-}
+      - ENVIRONMENT=${ENVIRONMENT:-local}
+    # sed strips CRLF when the script is bind-mounted from Windows
+    entrypoint: ["/bin/sh", "-c", "sed 's/\\r$//' /entrypoint.sh > /tmp/entrypoint.sh && exec /bin/sh /tmp/entrypoint.sh"]
+    depends_on:
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_started
+    networks:
+      - default
+
 volumes:
   app-db-data:
+  caddy-data:
+  caddy-config:
 
 networks:
   traefik-public:

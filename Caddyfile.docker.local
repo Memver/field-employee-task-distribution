@@ -1,0 +1,16 @@
+# Docker Compose, ENVIRONMENT=local — internal TLS (no Let's Encrypt).
+# Hosts must resolve to the machine running Docker (e.g. localhost.tiangolo.com -> 127.0.0.1).
+
+{
+	local_certs
+}
+
+api.localhost.tiangolo.com {
+	tls internal
+	reverse_proxy backend:8000
+}
+
+dashboard.localhost.tiangolo.com {
+	tls internal
+	reverse_proxy frontend:80
+}

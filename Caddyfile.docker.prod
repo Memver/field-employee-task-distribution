@@ -1,0 +1,14 @@
+# Docker Compose, ENVIRONMENT=production|staging — Let's Encrypt.
+# DNS: api.$DOMAIN and dashboard.$DOMAIN -> this host. Ports 80/443 open.
+
+{
+	email {$ACME_EMAIL}
+}
+
+api.{$DOMAIN} {
+	reverse_proxy backend:8000
+}
+
+dashboard.{$DOMAIN} {
+	reverse_proxy frontend:80
+}

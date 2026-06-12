@@ -1,9 +1,9 @@
-# HTTPS via Let's Encrypt (Caddy on host, no Docker).
+# Caddy on host (not Docker). For Docker Compose see Caddyfile.docker.* + service caddy.
 #
 # Requirements:
 #   - DOMAIN and ACME_EMAIL in .env (loaded by scripts/caddy-local.ps1)
 #   - DNS: api.$DOMAIN and dashboard.$DOMAIN -> public IP of this machine
-#   - Ports 80 and 443 open; backend :8000 and Vite :5173 running on this host
+#   - Ports 80 and 443 open; backend :8000 and Vite :5173 on this host
 #
 # Start:  .\scripts\caddy-local.ps1
 # Local:  .\scripts\caddy-local.ps1 -Local  (Caddyfile.local, tls internal)
