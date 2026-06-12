@@ -23,7 +23,6 @@ import { Route as LayoutSettingsRouteImport } from './routes/_layout/settings'
 import { Route as LayoutRolesRouteImport } from './routes/_layout/roles'
 import { Route as LayoutPrioritiesRouteImport } from './routes/_layout/priorities'
 import { Route as LayoutLocationsRouteImport } from './routes/_layout/locations'
-import { Route as LayoutItemsRouteImport } from './routes/_layout/items'
 import { Route as LayoutGradesRouteImport } from './routes/_layout/grades'
 import { Route as LayoutEmployeesRouteImport } from './routes/_layout/employees'
 import { Route as LayoutAgentPointsRouteImport } from './routes/_layout/agent-points'
@@ -99,11 +98,6 @@ const LayoutLocationsRoute = LayoutLocationsRouteImport.update({
   path: '/locations',
   getParentRoute: () => LayoutRoute,
 } as any)
-const LayoutItemsRoute = LayoutItemsRouteImport.update({
-  id: '/items',
-  path: '/items',
-  getParentRoute: () => LayoutRoute,
-} as any)
 const LayoutGradesRoute = LayoutGradesRouteImport.update({
   id: '/grades',
   path: '/grades',
@@ -141,7 +135,6 @@ export interface FileRoutesByFullPath {
   '/agent-points': typeof LayoutAgentPointsRoute
   '/employees': typeof LayoutEmployeesRoute
   '/grades': typeof LayoutGradesRoute
-  '/items': typeof LayoutItemsRoute
   '/locations': typeof LayoutLocationsRoute
   '/priorities': typeof LayoutPrioritiesRoute
   '/roles': typeof LayoutRolesRoute
@@ -161,7 +154,6 @@ export interface FileRoutesByTo {
   '/agent-points': typeof LayoutAgentPointsRoute
   '/employees': typeof LayoutEmployeesRoute
   '/grades': typeof LayoutGradesRoute
-  '/items': typeof LayoutItemsRoute
   '/locations': typeof LayoutLocationsRoute
   '/priorities': typeof LayoutPrioritiesRoute
   '/roles': typeof LayoutRolesRoute
@@ -184,7 +176,6 @@ export interface FileRoutesById {
   '/_layout/agent-points': typeof LayoutAgentPointsRoute
   '/_layout/employees': typeof LayoutEmployeesRoute
   '/_layout/grades': typeof LayoutGradesRoute
-  '/_layout/items': typeof LayoutItemsRoute
   '/_layout/locations': typeof LayoutLocationsRoute
   '/_layout/priorities': typeof LayoutPrioritiesRoute
   '/_layout/roles': typeof LayoutRolesRoute
@@ -208,7 +199,6 @@ export interface FileRouteTypes {
     | '/agent-points'
     | '/employees'
     | '/grades'
-    | '/items'
     | '/locations'
     | '/priorities'
     | '/roles'
@@ -228,7 +218,6 @@ export interface FileRouteTypes {
     | '/agent-points'
     | '/employees'
     | '/grades'
-    | '/items'
     | '/locations'
     | '/priorities'
     | '/roles'
@@ -250,7 +239,6 @@ export interface FileRouteTypes {
     | '/_layout/agent-points'
     | '/_layout/employees'
     | '/_layout/grades'
-    | '/_layout/items'
     | '/_layout/locations'
     | '/_layout/priorities'
     | '/_layout/roles'
@@ -370,13 +358,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutLocationsRouteImport
       parentRoute: typeof LayoutRoute
     }
-    '/_layout/items': {
-      id: '/_layout/items'
-      path: '/items'
-      fullPath: '/items'
-      preLoaderRoute: typeof LayoutItemsRouteImport
-      parentRoute: typeof LayoutRoute
-    }
     '/_layout/grades': {
       id: '/_layout/grades'
       path: '/grades'
@@ -421,7 +402,6 @@ interface LayoutRouteChildren {
   LayoutAgentPointsRoute: typeof LayoutAgentPointsRoute
   LayoutEmployeesRoute: typeof LayoutEmployeesRoute
   LayoutGradesRoute: typeof LayoutGradesRoute
-  LayoutItemsRoute: typeof LayoutItemsRoute
   LayoutLocationsRoute: typeof LayoutLocationsRoute
   LayoutPrioritiesRoute: typeof LayoutPrioritiesRoute
   LayoutRolesRoute: typeof LayoutRolesRoute
@@ -439,7 +419,6 @@ const LayoutRouteChildren: LayoutRouteChildren = {
   LayoutAgentPointsRoute: LayoutAgentPointsRoute,
   LayoutEmployeesRoute: LayoutEmployeesRoute,
   LayoutGradesRoute: LayoutGradesRoute,
-  LayoutItemsRoute: LayoutItemsRoute,
   LayoutLocationsRoute: LayoutLocationsRoute,
   LayoutPrioritiesRoute: LayoutPrioritiesRoute,
   LayoutRolesRoute: LayoutRolesRoute,
