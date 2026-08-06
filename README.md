@@ -3,7 +3,8 @@
 <img width="261" height="610" alt="image" src="https://github.com/user-attachments/assets/68ff2c65-6d3a-4e81-b981-1278b21c3c2f" />
 <img width="1048" height="725" alt="image" src="https://github.com/user-attachments/assets/6d4b4c0d-f817-46c1-9bcc-577b9b770583" />
 
-Видео демонстрация решения
+# Видео Демонстрация решения
+https://github.com/user-attachments/assets/7b1d8e6d-5c2c-4149-99de-611b548a6e6e
 
 # Актуальность
 - ООО «Совкомбанк Технологии» выдвинул задачу создания веб-сервиса распределения задач на хакатоне. Компания предоставила техническое задание и датасет.
@@ -12,11 +13,25 @@
 
 # Выбор моделей или методик для решения
 <img width="1243" height="550" alt="image" src="https://github.com/user-attachments/assets/761e48f6-4f89-4d7d-a311-6fbf428631ba" />
+
 # UML Диаграмма последовательности для распределения задач
 <img width="1110" height="656" alt="image" src="https://github.com/user-attachments/assets/7452fef8-b9bc-4eab-892c-45249b7b9569" />
 
 # Стек
 <img width="1282" height="567" alt="image" src="https://github.com/user-attachments/assets/a023e0c3-c7c3-4150-967a-737c99c59daa" />
+
+# Схема баз данных в нотации Мартина
+<img width="1223" height="691" alt="image" src="https://github.com/user-attachments/assets/5a17fcc1-d409-440a-815a-6f27eae2ba7e" />
+
+# Контекстная диаграмма IDEF0
+<img width="1190" height="660" alt="image" src="https://github.com/user-attachments/assets/413967c5-5689-4d85-b54e-78e509e6e0e8" />
+
+# Декомпозиция процесса А0: “Распределить задачи для выездных сотрудников банка” 
+<img width="1182" height="653" alt="image" src="https://github.com/user-attachments/assets/ed54d8ad-20a6-443d-a9cc-9f8f8ae7908a" />
+
+# Анализ сложности Big O
+<img width="1263" height="561" alt="image" src="https://github.com/user-attachments/assets/8832cb33-fa0e-4694-b2cb-5d901c86c7da" />
+
 
 
 #
