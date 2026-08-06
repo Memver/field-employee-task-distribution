@@ -36,29 +36,13 @@ https://github.com/user-attachments/assets/7b1d8e6d-5c2c-4149-99de-611b548a6e6e
 <img width="1263" height="561" alt="image" src="https://github.com/user-attachments/assets/8832cb33-fa0e-4694-b2cb-5d901c86c7da" />
 
 # Выбор типа задачи для агентской точки
-<img width="1441" height="670" alt="image" src="https://github.com/user-attachments/assets/a8eb742f-4865-408e-9967-a76899d683ed" />
+<img width="487" height="621" alt="image" src="https://github.com/user-attachments/assets/a5686b9a-03ef-44be-b154-2ab51d029d04" />
 <img width="639" height="620" alt="image" src="https://github.com/user-attachments/assets/e50bfea9-afc5-4d6d-b032-559e450dc37e" />
-Листинг 1 – Максимальный приоритет
-selected_task_type, selected_reason = max(
-        matched_candidates,
-        key=lambda candidate: (candidate[0].priority.level if candidate[0].priority else 0),)
-Листинг 2 - Настройка штрафов
-context.routing.AddDisjunction(
-  [task_index],
-  _priority_penalty(candidate),
-)
+<img width="407" height="141" alt="image" src="https://github.com/user-attachments/assets/af1cb0e8-0813-4cd0-9912-3b5a02f89aec" />
 
-Листинг 3 - Настройка поисковых параметров
-from ortools.constraint_solver import pywrapcp
+# Листинги
+<img width="721" height="389" alt="image" src="https://github.com/user-attachments/assets/bd14298c-10de-4311-ae52-fcb0f46c3511" />
 
-search_parameters = pywrapcp.DefaultRoutingSearchParameters() 
-search_parameters.first_solution_strategy = (
-  routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC
- )
-search_parameters.local_search_metaheuristic = (
-  routing_enums_pb2.LocalSearchMetaheuristic.AUTOMATIC
-)
-search_parameters.time_limit.seconds = FIXED_SOLVER_TIME_LIMIT_SECONDS <img width="1146" height="622" alt="image" src="https://github.com/user-attachments/assets/5066080d-6ef1-4f1d-bad3-543aef92fbd8" />
 
 # Штрафы OR-Tools
 <img width="1289" height="612" alt="image" src="https://github.com/user-attachments/assets/286cc6f3-82c4-4a3f-906e-c570dd4fb705" />
@@ -133,8 +117,6 @@ http://localhost:5000/route/v1/driving/38.975313,45.035470;39.033889,45.118611?s
   - 💃 Using TypeScript, hooks, [Vite](https://vitejs.dev), and other parts of a modern frontend stack.
   - 🎨 [Tailwind CSS](https://tailwindcss.com) and [shadcn/ui](https://ui.shadcn.com) for the frontend components.
   - 🤖 An automatically generated frontend client.
-  - 🧪 [Playwright](https://playwright.dev) for End-to-End testing.
-  - 🦇 Dark mode support.
 - 🐋 [Docker Compose](https://www.docker.com) for development and production.
 - 🔒 Secure password hashing by default.
 - 🔑 JWT (JSON Web Token) authentication.
