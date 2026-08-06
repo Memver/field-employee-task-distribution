@@ -35,7 +35,56 @@ https://github.com/user-attachments/assets/7b1d8e6d-5c2c-4149-99de-611b548a6e6e
 # Анализ сложности Big O
 <img width="1263" height="561" alt="image" src="https://github.com/user-attachments/assets/8832cb33-fa0e-4694-b2cb-5d901c86c7da" />
 
+# Выбор типа задачи для агентской точки
+<img width="1441" height="670" alt="image" src="https://github.com/user-attachments/assets/a8eb742f-4865-408e-9967-a76899d683ed" />
+<img width="639" height="620" alt="image" src="https://github.com/user-attachments/assets/e50bfea9-afc5-4d6d-b032-559e450dc37e" />
+Листинг 1 – Максимальный приоритет
+selected_task_type, selected_reason = max(
+        matched_candidates,
+        key=lambda candidate: (candidate[0].priority.level if candidate[0].priority else 0),)
+Листинг 2 - Настройка штрафов
+context.routing.AddDisjunction(
+  [task_index],
+  _priority_penalty(candidate),
+)
 
+Листинг 3 - Настройка поисковых параметров
+from ortools.constraint_solver import pywrapcp
+
+search_parameters = pywrapcp.DefaultRoutingSearchParameters() 
+search_parameters.first_solution_strategy = (
+  routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC
+ )
+search_parameters.local_search_metaheuristic = (
+  routing_enums_pb2.LocalSearchMetaheuristic.AUTOMATIC
+)
+search_parameters.time_limit.seconds = FIXED_SOLVER_TIME_LIMIT_SECONDS <img width="1146" height="622" alt="image" src="https://github.com/user-attachments/assets/5066080d-6ef1-4f1d-bad3-543aef92fbd8" />
+
+# Штрафы OR-Tools
+<img width="1289" height="612" alt="image" src="https://github.com/user-attachments/assets/286cc6f3-82c4-4a3f-906e-c570dd4fb705" />
+
+# Экран выездного сотрудника
+- Карта с точками посещения и эффективным маршрутом
+- Задачи с адресом и типом работ
+- Отметка выполнения задач
+
+# Экран менеджера
+- Кнопка «Распределить задачи»
+- Диаграмма баланса нагрузки сотрудников
+- Прозрачные причины переноса
+- Контроль сотрудников
+
+# Экраны веб-сервиса 1 из 2
+<img width="1500" height="382" alt="image" src="https://github.com/user-attachments/assets/1deae902-cf1c-4e44-9b36-ec600cfabd49" />
+
+# Экраны веб-сервиса 2 из 2
+<img width="1500" height="436" alt="image" src="https://github.com/user-attachments/assets/afa48971-f936-4926-8f6a-6eec662dc8a5" />
+
+# Выводы по работе 
+<img width="1311" height="634" alt="image" src="https://github.com/user-attachments/assets/6cb662f4-bebf-45e2-a56c-6ea3c438f566" />
+
+# Перспективы развития
+- Замена OpenStreetMap и Leaflet на Яндекс Карты для учета пробок
 
 #
 Скачать .pbf.osm с геофабрик
